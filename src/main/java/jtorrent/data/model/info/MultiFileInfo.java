@@ -33,6 +33,7 @@ public class MultiFileInfo extends BencodedInfo {
         return new MultiFileInfo(pieceLength, pieces, name, files);
     }
 
+    @Override
     public List<BencodedFile> getFiles() {
         return files;
     }

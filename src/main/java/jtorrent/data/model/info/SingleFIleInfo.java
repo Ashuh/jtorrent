@@ -6,6 +6,7 @@ import static jtorrent.data.util.MapUtil.getValueAsString;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -27,18 +28,9 @@ public class SingleFIleInfo extends BencodedInfo {
         return new SingleFIleInfo(pieceLength, pieces, name, length);
     }
 
-    public int getLength() {
-        return length;
-    }
-
     @Override
-    public Map<String, Object> toMap() {
-        return Map.of(
-                KEY_PIECE_LENGTH, pieceLength,
-                KEY_PIECES, ByteBuffer.wrap(pieces),
-                KEY_NAME, name,
-                KEY_LENGTH, length
-        );
+    public List<BencodedFile> getFiles() {
+        return List.of(new BencodedFile(length, List.of(name)));
     }
 
     @Override
@@ -59,6 +51,20 @@ public class SingleFIleInfo extends BencodedInfo {
         }
         SingleFIleInfo that = (SingleFIleInfo) o;
         return length == that.length;
+    }
+
+    public int getLength() {
+        return length;
+    }
+
+    @Override
+    public Map<String, Object> toMap() {
+        return Map.of(
+                KEY_PIECE_LENGTH, pieceLength,
+                KEY_PIECES, ByteBuffer.wrap(pieces),
+                KEY_NAME, name,
+                KEY_LENGTH, length
+        );
     }
 
     @Override
