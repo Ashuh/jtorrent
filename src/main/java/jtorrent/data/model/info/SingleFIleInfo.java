@@ -9,7 +9,7 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
 
-public class SingleFIleInfo extends Info {
+public class SingleFIleInfo extends BencodedInfo {
 
     private final int length;
 

@@ -17,9 +17,9 @@ import java.util.stream.Collectors;
 
 import com.dampcake.bencode.BencodeInputStream;
 
-import jtorrent.data.model.info.Info;
+import jtorrent.data.model.info.BencodedInfo;
 
-public class TorrentFile extends BencodedObject {
+public class BencodedTorrent extends BencodedObject {
 
     private static final String KEY_ANNOUNCE = "announce";
     private static final String KEY_ANNOUNCE_LIST = "announce-list";
@@ -33,10 +33,10 @@ public class TorrentFile extends BencodedObject {
     private final Long creationDate;
     private final String comment;
     private final String createdBy;
-    private final Info info;
+    private final BencodedInfo info;
 
-    public TorrentFile(Long creationDate, String announce, List<List<String>> announceList,
-            String comment, String createdBy, Info info) {
+    public BencodedTorrent(Long creationDate, String announce, List<List<String>> announceList,
+            String comment, String createdBy, BencodedInfo info) {
         this.announce = announce;
         this.announceList = announceList;
         this.creationDate = creationDate;
@@ -45,13 +45,13 @@ public class TorrentFile extends BencodedObject {
         this.info = info;
     }
 
-    public static TorrentFile decode(InputStream inputStream) throws IOException, NoSuchAlgorithmException {
+    public static BencodedTorrent decode(InputStream inputStream) throws IOException, NoSuchAlgorithmException {
         BencodeInputStream bis = new BencodeInputStream(inputStream, StandardCharsets.UTF_8, true);
         Map<String, Object> topLevelDict = bis.readDictionary();
         return fromMap(topLevelDict);
     }
 
-    public static TorrentFile fromMap(Map<String, Object> map) {
+    public static BencodedTorrent fromMap(Map<String, Object> map) {
         String announce = getValueAsString(map, KEY_ANNOUNCE).orElse(null);
 
         List<List<ByteBuffer>> annouceListRaw = getValueAsList(map, KEY_ANNOUNCE_LIST);
@@ -66,9 +66,9 @@ public class TorrentFile extends BencodedObject {
         String createdBy = getValueAsString(map, KEY_CREATED_BY).orElse("");
 
         Map<String, Object> infoDict = getValueAsMap(map, KEY_INFO);
-        Info info = Info.fromMap(infoDict);
+        BencodedInfo info = BencodedInfo.fromMap(infoDict);
 
-        return new TorrentFile(creationDate, announce, announceList, comment, createdBy, info);
+        return new BencodedTorrent(creationDate, announce, announceList, comment, createdBy, info);
     }
 
     public String getAnnounce() {
@@ -91,7 +91,7 @@ public class TorrentFile extends BencodedObject {
         return createdBy;
     }
 
-    public Info getInfo() {
+    public BencodedInfo getInfo() {
         return info;
     }
 
@@ -120,7 +120,7 @@ public class TorrentFile extends BencodedObject {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        TorrentFile that = (TorrentFile) o;
+        BencodedTorrent that = (BencodedTorrent) o;
         return Objects.equals(announce, that.announce)
                 && Objects.equals(announceList, that.announceList)
                 && Objects.equals(creationDate, that.creationDate)

@@ -15,11 +15,11 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-public class MultiFileInfo extends Info {
+public class MultiFileInfo extends BencodedInfo {
 
-    private final List<File> files;
+    private final List<BencodedFile> files;
 
-    public MultiFileInfo(int pieceLength, byte[] pieces, String name, List<File> files) {
+    public MultiFileInfo(int pieceLength, byte[] pieces, String name, List<BencodedFile> files) {
         super(pieceLength, pieces, name);
         this.files = files;
     }
@@ -29,14 +29,14 @@ public class MultiFileInfo extends Info {
         byte[] pieces = getValueAsByteArray(map, KEY_PIECES).orElseThrow();
         String name = getValueAsString(map, KEY_NAME).orElseThrow();
         List<Map<String, Object>> filesRaw = getValueAsList(map, KEY_FILES);
-        List<File> files = filesRaw.stream()
-                .map(File::fromMap)
+        List<BencodedFile> files = filesRaw.stream()
+                .map(BencodedFile::fromMap)
                 .collect(Collectors.toList());
 
         return new MultiFileInfo(pieceLength, pieces, name, files);
     }
 
-    public List<File> getFiles() {
+    public List<BencodedFile> getFiles() {
         return files;
     }
 
@@ -51,7 +51,7 @@ public class MultiFileInfo extends Info {
                 KEY_PIECE_LENGTH, pieceLength,
                 KEY_PIECES, ByteBuffer.wrap(pieces),
                 KEY_NAME, name,
-                KEY_FILES, files.stream().map(File::toMap).collect(Collectors.toList())
+                KEY_FILES, files.stream().map(BencodedFile::toMap).collect(Collectors.toList())
         );
     }
 

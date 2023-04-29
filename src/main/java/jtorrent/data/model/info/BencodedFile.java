@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 
 import jtorrent.data.model.BencodedObject;
 
-public class File extends BencodedObject {
+public class BencodedFile extends BencodedObject {
 
     private static final String KEY_LENGTH = "length";
     private static final String KEY_PATH = "path";
@@ -19,18 +19,18 @@ public class File extends BencodedObject {
     private final int length;
     private final List<String> path;
 
-    public File(int length, List<String> path) {
+    public BencodedFile(int length, List<String> path) {
         this.length = length;
         this.path = path;
     }
 
-    public static File fromMap(Map<String, Object> map) {
+    public static BencodedFile fromMap(Map<String, Object> map) {
         int length = getValueAsLong(map, KEY_LENGTH).orElseThrow().intValue();
         List<ByteBuffer> pathRaw = getValueAsList(map, KEY_PATH);
         List<String> path = pathRaw.stream()
                 .map(buffer -> new String(buffer.array()))
                 .collect(Collectors.toList());
-        return new File(length, path);
+        return new BencodedFile(length, path);
     }
 
     public int getLength() {
@@ -62,7 +62,7 @@ public class File extends BencodedObject {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        File file = (File) o;
+        BencodedFile file = (BencodedFile) o;
         return length == file.length && Objects.equals(path, file.path);
     }
 

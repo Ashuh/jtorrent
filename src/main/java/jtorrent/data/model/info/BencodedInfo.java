@@ -6,7 +6,7 @@ import java.util.Objects;
 
 import jtorrent.data.model.BencodedObject;
 
-public abstract class Info extends BencodedObject {
+public abstract class BencodedInfo extends BencodedObject {
 
     protected static final String KEY_PIECE_LENGTH = "piece length";
     protected static final String KEY_PIECES = "pieces";
@@ -18,13 +18,13 @@ public abstract class Info extends BencodedObject {
     protected final byte[] pieces;
     protected final String name;
 
-    public Info(int pieceLength, byte[] pieces, String name) {
+    public BencodedInfo(int pieceLength, byte[] pieces, String name) {
         this.pieceLength = pieceLength;
         this.pieces = pieces;
         this.name = name;
     }
 
-    public static Info fromMap(Map<String, Object> map) {
+    public static BencodedInfo fromMap(Map<String, Object> map) {
         if (map.containsKey(KEY_LENGTH)) {
             return SingleFIleInfo.fromMap(map);
         } else if (map.containsKey(KEY_FILES)) {
@@ -61,7 +61,7 @@ public abstract class Info extends BencodedObject {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        Info info = (Info) o;
+        BencodedInfo info = (BencodedInfo) o;
         return pieceLength == info.pieceLength
                 && Arrays.equals(pieces, info.pieces)
                 && Objects.equals(name, info.name);
