@@ -1,5 +1,8 @@
 package jtorrent.data.model.info;
 
+import java.io.IOException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
@@ -44,6 +47,11 @@ public abstract class BencodedInfo extends BencodedObject {
 
     public String getName() {
         return name;
+    }
+
+    public byte[] getInfoHash() throws NoSuchAlgorithmException, IOException {
+        MessageDigest md = MessageDigest.getInstance("SHA-1");
+        return md.digest(bencode());
     }
 
     @Override

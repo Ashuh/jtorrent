@@ -5,10 +5,7 @@ import static jtorrent.data.util.MapUtil.getValueAsList;
 import static jtorrent.data.util.MapUtil.getValueAsLong;
 import static jtorrent.data.util.MapUtil.getValueAsString;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -38,11 +35,6 @@ public class MultiFileInfo extends BencodedInfo {
 
     public List<BencodedFile> getFiles() {
         return files;
-    }
-
-    public byte[] getInfoHash() throws NoSuchAlgorithmException, IOException {
-        MessageDigest md = MessageDigest.getInstance("SHA-1");
-        return md.digest(bencode());
     }
 
     @Override
