@@ -30,7 +30,7 @@ public abstract class BencodedInfo extends BencodedObject {
 
     public static BencodedInfo fromMap(Map<String, Object> map) {
         if (map.containsKey(KEY_LENGTH)) {
-            return SingleFIleInfo.fromMap(map);
+            return SingleFileInfo.fromMap(map);
         } else if (map.containsKey(KEY_FILES)) {
             return MultiFileInfo.fromMap(map);
         }

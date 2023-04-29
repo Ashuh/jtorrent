@@ -10,22 +10,22 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-public class SingleFIleInfo extends BencodedInfo {
+public class SingleFileInfo extends BencodedInfo {
 
     private final int length;
 
-    public SingleFIleInfo(int pieceLength, byte[] pieces, String name, int length) {
+    public SingleFileInfo(int pieceLength, byte[] pieces, String name, int length) {
         super(pieceLength, pieces, name);
         this.length = length;
     }
 
-    public static SingleFIleInfo fromMap(Map<String, Object> map) {
+    public static SingleFileInfo fromMap(Map<String, Object> map) {
         int pieceLength = getValueAsLong(map, KEY_PIECE_LENGTH).orElseThrow().intValue();
         byte[] pieces = getValueAsByteArray(map, KEY_PIECES).orElseThrow();
         String name = getValueAsString(map, KEY_NAME).orElseThrow();
         int length = getValueAsLong(map, KEY_LENGTH).orElseThrow().intValue();
 
-        return new SingleFIleInfo(pieceLength, pieces, name, length);
+        return new SingleFileInfo(pieceLength, pieces, name, length);
     }
 
     @Override
@@ -49,7 +49,7 @@ public class SingleFIleInfo extends BencodedInfo {
         if (!super.equals(o)) {
             return false;
         }
-        SingleFIleInfo that = (SingleFIleInfo) o;
+        SingleFileInfo that = (SingleFileInfo) o;
         return length == that.length;
     }
 
