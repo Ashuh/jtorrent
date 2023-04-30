@@ -12,11 +12,11 @@ import jtorrent.data.model.BencodedObject;
 
 public abstract class BencodedInfo extends BencodedObject {
 
-    protected static final String KEY_PIECE_LENGTH = "piece length";
-    protected static final String KEY_PIECES = "pieces";
-    protected static final String KEY_NAME = "name";
-    protected static final String KEY_LENGTH = "length";
-    protected static final String KEY_FILES = "files";
+    public static final String KEY_PIECE_LENGTH = "piece length";
+    public static final String KEY_PIECES = "pieces";
+    public static final String KEY_NAME = "name";
+    public static final String KEY_LENGTH = "length";
+    public static final String KEY_FILES = "files";
 
     protected final int pieceLength;
     protected final byte[] pieces;

@@ -21,12 +21,12 @@ import jtorrent.data.model.info.BencodedInfo;
 
 public class BencodedTorrent extends BencodedObject {
 
-    private static final String KEY_ANNOUNCE = "announce";
-    private static final String KEY_ANNOUNCE_LIST = "announce-list";
-    private static final String KEY_CREATION_DATE = "creation date";
-    private static final String KEY_COMMENT = "comment";
-    private static final String KEY_CREATED_BY = "created by";
-    private static final String KEY_INFO = "info";
+    public static final String KEY_ANNOUNCE = "announce";
+    public static final String KEY_ANNOUNCE_LIST = "announce-list";
+    public static final String KEY_CREATION_DATE = "creation date";
+    public static final String KEY_COMMENT = "comment";
+    public static final String KEY_CREATED_BY = "created by";
+    public static final String KEY_INFO = "info";
 
     private final String announce;
     private final List<List<String>> announceList;

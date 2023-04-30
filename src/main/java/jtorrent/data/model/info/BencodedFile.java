@@ -13,8 +13,8 @@ import jtorrent.data.model.BencodedObject;
 
 public class BencodedFile extends BencodedObject {
 
-    private static final String KEY_LENGTH = "length";
-    private static final String KEY_PATH = "path";
+    public static final String KEY_LENGTH = "length";
+    public static final String KEY_PATH = "path";
 
     private final int length;
     private final List<String> path;
