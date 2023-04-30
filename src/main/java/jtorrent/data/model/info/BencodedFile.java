@@ -4,12 +4,14 @@ import static jtorrent.data.util.MapUtil.getValueAsList;
 import static jtorrent.data.util.MapUtil.getValueAsLong;
 
 import java.nio.ByteBuffer;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
 import jtorrent.data.model.BencodedObject;
+import jtorrent.domain.model.torrent.File;
 
 public class BencodedFile extends BencodedObject {
 
@@ -39,6 +41,10 @@ public class BencodedFile extends BencodedObject {
 
     public List<String> getPath() {
         return path;
+    }
+
+    public File toDomain() {
+        return new File(length, Path.of(String.join("/", path)));
     }
 
     @Override

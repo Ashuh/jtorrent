@@ -7,9 +7,13 @@ import static jtorrent.data.util.MapUtil.getValueAsString;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -17,7 +21,12 @@ import java.util.stream.Collectors;
 
 import com.dampcake.bencode.BencodeInputStream;
 
+import jtorrent.data.model.exception.MappingException;
+import jtorrent.data.model.info.BencodedFile;
 import jtorrent.data.model.info.BencodedInfo;
+import jtorrent.domain.model.torrent.File;
+import jtorrent.domain.model.torrent.Sha1Hash;
+import jtorrent.domain.model.torrent.Torrent;
 
 public class BencodedTorrent extends BencodedObject {
 
@@ -93,6 +102,39 @@ public class BencodedTorrent extends BencodedObject {
 
     public BencodedInfo getInfo() {
         return info;
+    }
+
+    public Torrent toDomain() {
+        try {
+            // ignore announceList for now
+            List<URI> trackers = List.of(new URI(announce));
+            LocalDateTime creationDateTime = LocalDateTime.ofEpochSecond(creationDate, 0, ZoneOffset.UTC);
+            List<Sha1Hash> pieceHashes = mapPieces(info.getPieces());
+            int pieceLength = info.getPieceLength();
+            String name = info.getName();
+            List<File> files = mapFiles(info.getFiles());
+            Sha1Hash infoHash = new Sha1Hash(info.getInfoHash());
+            return new Torrent(trackers, creationDateTime, comment, createdBy,
+                    pieceLength, pieceHashes, name, files, infoHash);
+        } catch (Exception e) {
+            throw new MappingException("Failed to map BencodedTorrent to Torrent", e);
+        }
+    }
+
+    private List<Sha1Hash> mapPieces(byte[] pieces) {
+        List<Sha1Hash> pieceHashes = new ArrayList<>();
+        for (int i = 0; i < pieces.length; i += Sha1Hash.HASH_SIZE) {
+            byte[] pieceHash = new byte[Sha1Hash.HASH_SIZE];
+            System.arraycopy(pieces, i, pieceHash, 0, Sha1Hash.HASH_SIZE);
+            pieceHashes.add(new Sha1Hash(pieceHash));
+        }
+        return pieceHashes;
+    }
+
+    private List<File> mapFiles(List<BencodedFile> files) {
+        return files.stream()
+                .map(BencodedFile::toDomain)
+                .collect(Collectors.toList());
     }
 
     @Override
