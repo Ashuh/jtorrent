@@ -6,8 +6,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.ByteBuffer;
+import java.nio.file.Path;
 import java.security.NoSuchAlgorithmException;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -20,6 +24,9 @@ import jtorrent.data.model.info.BencodedFile;
 import jtorrent.data.model.info.BencodedInfo;
 import jtorrent.data.model.info.MultiFileInfo;
 import jtorrent.data.model.info.SingleFileInfo;
+import jtorrent.domain.model.torrent.File;
+import jtorrent.domain.model.torrent.Sha1Hash;
+import jtorrent.domain.model.torrent.Torrent;
 
 class BencodedTorrentTest {
 
@@ -212,6 +219,95 @@ class BencodedTorrentTest {
         assertArrayEquals(expected, actual);
     }
 
+    @Test
+    void toDomain_singleFile() throws NoSuchAlgorithmException, IOException {
+        SingleFileInfo info = new SingleFileInfoBuilder()
+                .setPieceLength(100)
+                .setLength(100)
+                .setName("name")
+                .setPieces(new byte[20])
+                .build();
+        BencodedTorrent bencodedTorrent = new BencodedTorrentBuilder()
+                .setAnnounce("announce")
+                .setAnnounceList(Collections.emptyList())
+                .setCreationDate(123456789L)
+                .setComment("comment")
+                .setCreatedBy("created by")
+                .setInfo(info)
+                .build();
+        Torrent actual = bencodedTorrent.toDomain();
+
+        Torrent expected = new TorrentBuilder()
+                .setTrackers(List.of(URI.create("announce")))
+                .setCreationDate(LocalDateTime.ofEpochSecond(123456789L, 0, ZoneOffset.UTC))
+                .setComment("comment")
+                .setCreatedBy("created by")
+                .setPieceSize(100)
+                .setPieceHashes(List.of(new Sha1Hash(new byte[20])))
+                .setName("name")
+                .setFiles(List.of(
+                        new FileBuilder()
+                                .setLength(100)
+                                .setPath(Path.of("name"))
+                                .build()
+                ))
+                .setInfoHash(new Sha1Hash(info.getInfoHash()))
+                .build();
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    void toDomain_multiFile() throws NoSuchAlgorithmException, IOException {
+        MultiFileInfo info = new MultiFileInfoBuilder()
+                .setPieceLength(100)
+                .setPieces(new byte[20])
+                .setName("name")
+                .setFiles(List.of(
+                        new BencodedFileBuilder()
+                                .setLength(100)
+                                .setPath(List.of("path1", "path2"))
+                                .build(),
+                        new BencodedFileBuilder()
+                                .setLength(200)
+                                .setPath(List.of("path3", "path4"))
+                                .build()
+                ))
+                .build();
+        BencodedTorrent bencodedTorrent = new BencodedTorrentBuilder()
+                .setAnnounce("announce")
+                .setAnnounceList(Collections.emptyList())
+                .setCreationDate(123456789L)
+                .setComment("comment")
+                .setCreatedBy("created by")
+                .setInfo(info)
+                .build();
+        Torrent actual = bencodedTorrent.toDomain();
+
+        Torrent expected = new TorrentBuilder()
+                .setTrackers(List.of(URI.create("announce")))
+                .setCreationDate(LocalDateTime.ofEpochSecond(123456789L, 0, ZoneOffset.UTC))
+                .setComment("comment")
+                .setCreatedBy("created by")
+                .setPieceSize(100)
+                .setPieceHashes(List.of(new Sha1Hash(new byte[20])))
+                .setName("name")
+                .setFiles(List.of(
+                        new FileBuilder()
+                                .setLength(100)
+                                .setPath(Path.of("path1", "path2"))
+                                .build(),
+                        new FileBuilder()
+                                .setLength(200)
+                                .setPath(Path.of("path3", "path4"))
+                                .build()
+                ))
+                .setInfoHash(new Sha1Hash(info.getInfoHash()))
+                .build();
+
+        assertEquals(expected, actual);
+    }
+
     private static class BencodedTorrentBuilder {
 
         private Long creationDate = 0L;
@@ -337,6 +433,90 @@ class BencodedTorrentTest {
 
         public BencodedFile build() {
             return new BencodedFile(length, path);
+        }
+    }
+
+    private static class TorrentBuilder {
+
+        private List<URI> trackers = Collections.emptyList();
+        private LocalDateTime creationDate = LocalDateTime.ofEpochSecond(0, 0, ZoneOffset.UTC);
+        private String comment = "";
+        private String createdBy = "";
+        private int pieceSize = 0;
+        private List<Sha1Hash> pieceHashes = Collections.emptyList();
+        private String name = "";
+        private List<File> files = Collections.emptyList();
+        private Sha1Hash infoHash = new Sha1Hash(new byte[20]);
+
+        public TorrentBuilder setTrackers(List<URI> trackers) {
+            this.trackers = trackers;
+            return this;
+        }
+
+        public TorrentBuilder setCreationDate(LocalDateTime creationDate) {
+            this.creationDate = creationDate;
+            return this;
+        }
+
+        public TorrentBuilder setComment(String comment) {
+            this.comment = comment;
+            return this;
+        }
+
+        public TorrentBuilder setCreatedBy(String createdBy) {
+            this.createdBy = createdBy;
+            return this;
+        }
+
+        public TorrentBuilder setPieceSize(int pieceSize) {
+            this.pieceSize = pieceSize;
+            return this;
+        }
+
+        public TorrentBuilder setPieceHashes(List<Sha1Hash> pieceHashes) {
+            this.pieceHashes = pieceHashes;
+            return this;
+        }
+
+        public TorrentBuilder setName(String name) {
+            this.name = name;
+            return this;
+        }
+
+        public TorrentBuilder setFiles(List<File> files) {
+            this.files = files;
+            return this;
+        }
+
+        public TorrentBuilder setInfoHash(Sha1Hash infoHash) {
+            this.infoHash = infoHash;
+            return this;
+        }
+
+        public Torrent build() {
+            return new Torrent(trackers, creationDate, comment, createdBy,
+                    pieceSize, pieceHashes, name, files, infoHash);
+        }
+    }
+
+
+    private static class FileBuilder {
+
+        private int length = 0;
+        private Path path = Path.of("");
+
+        public FileBuilder setLength(int length) {
+            this.length = length;
+            return this;
+        }
+
+        public FileBuilder setPath(Path path) {
+            this.path = path;
+            return this;
+        }
+
+        public File build() {
+            return new File(length, path);
         }
     }
 }
