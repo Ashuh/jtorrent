@@ -54,6 +54,18 @@ public class Handshake implements PeerMessage {
         return new Handshake(infoHash, peerId);
     }
 
+    public Sha1Hash getInfoHash() {
+        return infoHash;
+    }
+
+    public byte[] getPeerId() {
+        return peerId;
+    }
+
+    public byte[] getFlags() {
+        return flags;
+    }
+
     @Override
     public byte[] pack() {
         return ByteBuffer.allocate(BYTES)
