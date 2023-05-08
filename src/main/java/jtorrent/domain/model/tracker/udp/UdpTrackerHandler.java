@@ -188,7 +188,7 @@ public class UdpTrackerHandler implements Runnable {
                 throw new IOException("Transaction ID mismatch");
             }
 
-            LOGGER.log(Level.DEBUG, "Received announce response: {}", announceResponse);
+            LOGGER.log(Level.DEBUG, "Received announce response: {0}", announceResponse);
             return announceResponse;
         }
 
