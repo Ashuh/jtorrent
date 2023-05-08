@@ -1,5 +1,6 @@
 package jtorrent.domain.model.tracker.udp.message;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
@@ -38,7 +39,12 @@ public class PeerResponse {
         } catch (UnknownHostException ignored) {
             // this should never happen
         }
-        return new Peer(address, port);
+
+        try {
+            return new Peer(address, port);
+        } catch (IOException e) {
+            return null; //TODO: temporary solution
+        }
     }
 
     public int getIpv4() {
