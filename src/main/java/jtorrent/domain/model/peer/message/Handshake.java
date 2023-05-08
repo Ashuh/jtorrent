@@ -4,6 +4,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
 
+import jtorrent.domain.model.peer.message.exception.UnpackException;
 import jtorrent.domain.model.torrent.Sha1Hash;
 
 public class Handshake implements PeerMessage {
@@ -22,15 +23,11 @@ public class Handshake implements PeerMessage {
     }
 
     public static Handshake unpack(byte[] payload) {
-        if (payload.length != BYTES) {
-            throw new IllegalArgumentException();
-        }
-
         ByteBuffer buffer = ByteBuffer.wrap(payload);
         byte length = buffer.get();
 
         if (length != PROTOCOL_IDENTIFIER_LENGTH) {
-            throw new IllegalArgumentException();
+            throw new UnpackException("Invalid protocol identifier length: " + length);
         }
 
         byte[] identifierBytes = new byte[PROTOCOL_IDENTIFIER_LENGTH];
@@ -38,7 +35,7 @@ public class Handshake implements PeerMessage {
         String identifier = new String(identifierBytes);
 
         if (!identifier.equals(PROTOCOL_IDENTIFIER)) {
-            throw new IllegalArgumentException();
+            throw new UnpackException("Invalid protocol identifier: " + identifier);
         }
 
         byte[] flags = new byte[8];
