@@ -1,5 +1,7 @@
 package jtorrent.domain.model.peer.message;
 
+import static java.util.Objects.requireNonNull;
+
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
@@ -18,8 +20,8 @@ public class Handshake implements PeerMessage {
     private final byte[] flags = new byte[8];
 
     public Handshake(Sha1Hash infoHash, byte[] peerId) {
-        this.infoHash = infoHash;
-        this.peerId = peerId;
+        this.infoHash = requireNonNull(infoHash);
+        this.peerId = requireNonNull(peerId);
     }
 
     public static Handshake unpack(byte[] payload) {
