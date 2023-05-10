@@ -1,7 +1,6 @@
 package jtorrent.domain.model.peer.message.typed;
 
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 
 public class Piece extends TypedPeerMessage {
 
@@ -66,7 +65,6 @@ public class Piece extends TypedPeerMessage {
         return "Piece{" +
                 "index=" + index +
                 ", begin=" + begin +
-                ", block=" + Arrays.toString(block) +
                 '}';
     }
 }
