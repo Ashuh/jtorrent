@@ -5,6 +5,7 @@ import static java.util.Objects.requireNonNull;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Represents an announce response.
@@ -64,6 +65,26 @@ public class AnnounceResponse extends UdpMessage {
 
     public List<PeerResponse> getPeers() {
         return peers;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(interval, leechers, seeders, peers);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        AnnounceResponse that = (AnnounceResponse) o;
+        return interval == that.interval
+                && leechers == that.leechers
+                && seeders == that.seeders
+                && peers.equals(that.peers);
     }
 
     @Override

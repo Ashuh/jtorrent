@@ -3,6 +3,7 @@ package jtorrent.domain.model.tracker.udp.message;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
+import java.util.Objects;
 
 import jtorrent.domain.model.peer.Peer;
 
@@ -48,6 +49,23 @@ public class PeerResponse {
 
     public int getPort() {
         return port;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(ipv4, port);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        PeerResponse that = (PeerResponse) o;
+        return ipv4 == that.ipv4 && port == that.port;
     }
 
     @Override
