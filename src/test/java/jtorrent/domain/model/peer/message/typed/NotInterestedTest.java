@@ -1,6 +1,6 @@
 package jtorrent.domain.model.peer.message.typed;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
 import java.nio.ByteBuffer;
 
