@@ -6,6 +6,7 @@ import static jtorrent.domain.Constants.PORT;
 import java.io.IOException;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
+import java.net.SocketException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -58,6 +59,13 @@ public class UdpTrackerHandler implements Runnable {
 
     @Override
     public void run() {
+        try {
+            tracker.init();
+        } catch (SocketException e) {
+            LOGGER.log(Level.ERROR, "Failed to initialize tracker", e);
+            return;
+        }
+
         scheduleAnnounce(0);
 
         while (isRunning) {

@@ -19,9 +19,14 @@ public class UdpTracker {
     private static final System.Logger LOGGER = System.getLogger(UdpTracker.class.getName());
     private static final int UDP_MAX_PACKET_SIZE = 65536;
 
-    private final DatagramSocket socket;
+    private final InetSocketAddress address;
+    private DatagramSocket socket;
 
-    public UdpTracker(InetSocketAddress address) throws SocketException {
+    public UdpTracker(InetSocketAddress address) {
+        this.address = address;
+    }
+
+    public void init() throws SocketException {
         this.socket = new DatagramSocket();
         this.socket.connect(address);
     }
