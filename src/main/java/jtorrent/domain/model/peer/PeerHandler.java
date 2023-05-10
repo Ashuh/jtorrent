@@ -17,6 +17,7 @@ import jtorrent.domain.model.peer.message.typed.Have;
 import jtorrent.domain.model.peer.message.typed.Interested;
 import jtorrent.domain.model.peer.message.typed.Piece;
 import jtorrent.domain.model.peer.message.typed.Request;
+import jtorrent.domain.model.torrent.Block;
 import jtorrent.domain.model.torrent.Sha1Hash;
 import jtorrent.domain.model.torrent.Torrent;
 
