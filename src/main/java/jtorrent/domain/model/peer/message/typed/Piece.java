@@ -3,6 +3,8 @@ package jtorrent.domain.model.peer.message.typed;
 import static java.util.Objects.requireNonNull;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
+import java.util.Objects;
 
 public class Piece extends TypedPeerMessage {
 
@@ -60,6 +62,25 @@ public class Piece extends TypedPeerMessage {
                 .putInt(begin)
                 .put(block)
                 .array();
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hash(index, begin);
+        result = 31 * result + Arrays.hashCode(block);
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        Piece piece = (Piece) o;
+        return index == piece.index && begin == piece.begin && Arrays.equals(block, piece.block);
     }
 
     @Override
