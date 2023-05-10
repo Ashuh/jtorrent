@@ -45,6 +45,7 @@ class BitfieldTest {
         Bitfield expected = new Bitfield(bitSet);
 
         byte[] payload = ByteBuffer.allocate(9)
+                .order(ByteOrder.BIG_ENDIAN)
                 .put(bitSet.toByteArray())
                 .array();
         Bitfield actual = Bitfield.unpack(payload);

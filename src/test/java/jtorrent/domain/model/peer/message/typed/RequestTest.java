@@ -32,6 +32,7 @@ class RequestTest {
         Request expected = new Request(1, 2, 3);
 
         byte[] payload = ByteBuffer.allocate(12)
+                .order(ByteOrder.BIG_ENDIAN)
                 .putInt(1)
                 .putInt(2)
                 .putInt(3)
