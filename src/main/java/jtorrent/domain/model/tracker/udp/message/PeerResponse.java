@@ -1,6 +1,5 @@
 package jtorrent.domain.model.tracker.udp.message;
 
-import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
