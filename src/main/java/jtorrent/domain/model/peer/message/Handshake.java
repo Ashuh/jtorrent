@@ -5,6 +5,7 @@ import static java.util.Objects.requireNonNull;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
+import java.util.Objects;
 
 import jtorrent.domain.model.peer.exception.UnpackException;
 import jtorrent.domain.model.torrent.Sha1Hash;
@@ -75,6 +76,28 @@ public class Handshake implements PeerMessage {
                 .put(infoHash.getBytes())
                 .put(peerId)
                 .array();
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hash(infoHash);
+        result = 31 * result + Arrays.hashCode(peerId);
+        result = 31 * result + Arrays.hashCode(flags);
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        Handshake handshake = (Handshake) o;
+        return infoHash.equals(handshake.infoHash)
+                && Arrays.equals(peerId, handshake.peerId)
+                && Arrays.equals(flags, handshake.flags);
     }
 
     @Override
