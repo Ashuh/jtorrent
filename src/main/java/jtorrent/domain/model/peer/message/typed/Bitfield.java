@@ -4,6 +4,7 @@ import static java.util.Objects.requireNonNull;
 
 import java.nio.ByteBuffer;
 import java.util.BitSet;
+import java.util.Objects;
 
 public class Bitfield extends TypedPeerMessage {
 
@@ -22,13 +23,20 @@ public class Bitfield extends TypedPeerMessage {
     }
 
     @Override
-    protected MessageType getMessageType() {
-        return MessageType.BITFIELD;
+    public int hashCode() {
+        return Objects.hash(bitSet);
     }
 
     @Override
-    protected byte[] getPayload() {
-        return bitSet.toByteArray();
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        Bitfield bitfield = (Bitfield) o;
+        return bitSet.equals(bitfield.bitSet);
     }
 
     @Override
@@ -36,5 +44,15 @@ public class Bitfield extends TypedPeerMessage {
         return "Bitfield{" +
                 "bitSet=" + bitSet +
                 '}';
+    }
+
+    @Override
+    protected MessageType getMessageType() {
+        return MessageType.BITFIELD;
+    }
+
+    @Override
+    protected byte[] getPayload() {
+        return bitSet.toByteArray();
     }
 }
