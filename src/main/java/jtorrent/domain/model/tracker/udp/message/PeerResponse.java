@@ -40,11 +40,7 @@ public class PeerResponse {
             // this should never happen
         }
 
-        try {
-            return new Peer(address, port);
-        } catch (IOException e) {
-            return null; //TODO: temporary solution
-        }
+        return new Peer(address, port);
     }
 
     public int getIpv4() {
