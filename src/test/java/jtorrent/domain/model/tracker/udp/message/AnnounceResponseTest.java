@@ -43,4 +43,11 @@ class AnnounceResponseTest {
         byte[] payloadBytes = payload.array();
         assertThrows(IllegalArgumentException.class, () -> AnnounceResponse.unpack(payloadBytes));
     }
+
+    @Test
+    void unpack_equalToMinimumExpectedBytes_doesNotThrow() {
+        ByteBuffer payload = ByteBuffer.allocate(16);
+        byte[] payloadBytes = payload.array();
+        assertDoesNotThrow(() -> AnnounceResponse.unpack(payloadBytes));
+    }
 }
