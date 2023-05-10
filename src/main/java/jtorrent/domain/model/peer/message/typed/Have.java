@@ -2,6 +2,7 @@ package jtorrent.domain.model.peer.message.typed;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.Objects;
 
 public class Have extends TypedPeerMessage {
 
@@ -34,6 +35,23 @@ public class Have extends TypedPeerMessage {
 
     public int getPieceIndex() {
         return pieceIndex;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(pieceIndex);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        Have have = (Have) o;
+        return pieceIndex == have.pieceIndex;
     }
 
     @Override
