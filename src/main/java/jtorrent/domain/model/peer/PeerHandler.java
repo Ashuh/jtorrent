@@ -62,6 +62,7 @@ public class PeerHandler implements Runnable, Peer.Listener {
     @Override
     public void run() {
         try {
+            peer.init();
             handshake();
             sendInterested();
 

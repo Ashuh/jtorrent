@@ -27,17 +27,20 @@ import jtorrent.domain.model.peer.message.typed.Request;
 public class Peer {
 
     private static final Logger LOGGER = System.getLogger(Peer.class.getName());
-
-    private final Socket socket;
-    private final OutputStream outputStream;
-    private final InputStream inputStream;
     private final InetAddress address;
     private final int port; // unsigned short
     private final List<Listener> listeners = new ArrayList<>();
 
-    public Peer(InetAddress address, int port) throws IOException {
+    private Socket socket;
+    private OutputStream outputStream;
+    private InputStream inputStream;
+
+    public Peer(InetAddress address, int port) {
         this.address = requireNonNull(address);
         this.port = port;
+    }
+
+    public void init() throws IOException {
         this.socket = new Socket(address, port);
         this.outputStream = socket.getOutputStream();
         this.inputStream = socket.getInputStream();
