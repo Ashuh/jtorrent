@@ -2,7 +2,7 @@ package jtorrent.domain.model.tracker.udp.message;
 
 public abstract class Request extends UdpMessage {
 
-    public Request() {
+    protected Request() {
         super(generateTransactionId());
     }
 

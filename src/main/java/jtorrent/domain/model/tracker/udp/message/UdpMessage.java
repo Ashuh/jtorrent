@@ -4,7 +4,7 @@ public abstract class UdpMessage {
 
     protected final int transactionId;
 
-    public UdpMessage(int transactionId) {
+    protected UdpMessage(int transactionId) {
         this.transactionId = transactionId;
     }
 
