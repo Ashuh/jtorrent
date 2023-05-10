@@ -1,4 +1,4 @@
-package jtorrent.domain.model.peer;
+package jtorrent.domain.model.torrent;
 
 import java.util.Objects;
 
