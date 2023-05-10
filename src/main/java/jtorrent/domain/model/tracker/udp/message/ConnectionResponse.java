@@ -1,6 +1,7 @@
 package jtorrent.domain.model.tracker.udp.message;
 
 import java.nio.ByteBuffer;
+import java.util.Objects;
 
 /**
  * Represents a connection response.
@@ -31,6 +32,23 @@ public class ConnectionResponse extends UdpMessage {
 
     public long getConnectionId() {
         return connectionId;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(connectionId);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        ConnectionResponse that = (ConnectionResponse) o;
+        return connectionId == that.connectionId;
     }
 
     @Override
