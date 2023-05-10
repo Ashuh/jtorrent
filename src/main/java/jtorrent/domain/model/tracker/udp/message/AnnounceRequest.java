@@ -1,5 +1,7 @@
 package jtorrent.domain.model.tracker.udp.message;
 
+import static java.util.Objects.requireNonNull;
+
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
@@ -35,12 +37,12 @@ public class AnnounceRequest extends Request {
         }
 
         this.connectionId = connectionId;
-        this.infoHash = infoHash;
+        this.infoHash = requireNonNull(infoHash);
         this.peerId = peerId;
         this.downloaded = downloaded;
         this.left = left;
         this.uploaded = uploaded;
-        this.event = event;
+        this.event = requireNonNull(event);
         this.ipv4 = ipv4;
         this.key = key;
         this.numWant = numWant;
