@@ -1,5 +1,7 @@
 package jtorrent.domain.model.tracker.udp.message;
 
+import static java.util.Objects.requireNonNull;
+
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,7 +26,7 @@ public class AnnounceResponse extends UdpMessage {
         this.interval = interval;
         this.leechers = leechers;
         this.seeders = seeders;
-        this.peers = peers;
+        this.peers = requireNonNull(peers);
     }
 
     public static AnnounceResponse unpack(byte[] payload) {
