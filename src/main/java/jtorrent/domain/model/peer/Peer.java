@@ -41,6 +41,7 @@ public class Peer {
     }
 
     public void init() throws IOException {
+        LOGGER.log(Level.DEBUG, "Connecting to peer: {0}:{1}", address, port);
         this.socket = new Socket(address, port);
         this.outputStream = socket.getOutputStream();
         this.inputStream = socket.getInputStream();
