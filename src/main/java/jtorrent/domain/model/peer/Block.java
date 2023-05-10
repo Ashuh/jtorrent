@@ -1,5 +1,7 @@
 package jtorrent.domain.model.peer;
 
+import java.util.Objects;
+
 public class Block {
 
     private final int index;
@@ -22,5 +24,33 @@ public class Block {
 
     public int getLength() {
         return length;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        Block block = (Block) o;
+        return index == block.index
+                && offset == block.offset
+                && length == block.length;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(index, offset, length);
+    }
+
+    @Override
+    public String toString() {
+        return "Block{" +
+                "index=" + index +
+                ", offset=" + offset +
+                ", length=" + length +
+                '}';
     }
 }
