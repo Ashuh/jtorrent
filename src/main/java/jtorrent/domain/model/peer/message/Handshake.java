@@ -21,6 +21,9 @@ public class Handshake implements PeerMessage {
     private final byte[] flags = new byte[8];
 
     public Handshake(Sha1Hash infoHash, byte[] peerId) {
+        if (peerId.length != 20) {
+            throw new IllegalArgumentException("Peer ID must be 20 bytes long");
+        }
         this.infoHash = requireNonNull(infoHash);
         this.peerId = requireNonNull(peerId);
     }
