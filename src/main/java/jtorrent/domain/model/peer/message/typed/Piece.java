@@ -1,5 +1,7 @@
 package jtorrent.domain.model.peer.message.typed;
 
+import static java.util.Objects.requireNonNull;
+
 import java.nio.ByteBuffer;
 
 public class Piece extends TypedPeerMessage {
@@ -22,7 +24,7 @@ public class Piece extends TypedPeerMessage {
     public Piece(int index, int begin, byte[] block) {
         this.index = index;
         this.begin = begin;
-        this.block = block;
+        this.block = requireNonNull(block);
     }
 
     public static Piece unpack(byte[] payload) {
