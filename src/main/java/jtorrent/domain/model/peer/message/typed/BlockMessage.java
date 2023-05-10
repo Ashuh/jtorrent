@@ -22,7 +22,7 @@ public abstract class BlockMessage extends TypedPeerMessage {
      */
     protected final int length;
 
-    public BlockMessage(int index, int begin, int length) {
+    protected BlockMessage(int index, int begin, int length) {
         this.index = index;
         this.begin = begin;
         this.length = length;
