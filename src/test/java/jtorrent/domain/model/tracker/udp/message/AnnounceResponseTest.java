@@ -2,7 +2,6 @@ package jtorrent.domain.model.tracker.udp.message;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -15,7 +14,7 @@ class AnnounceResponseTest {
     @Test
     void unpack() {
         int numPeers = 2;
-        int size = AnnounceResponse.PAYLOAD_MIN_BYTES + numPeers * PeerResponse.BYTES;
+        int size = 16 + numPeers * 6;
         ByteBuffer payload = ByteBuffer.allocate(size)
                 .putInt(9999)
                 .putInt(100)
@@ -45,7 +44,6 @@ class AnnounceResponseTest {
                 .putInt(100)
                 .putInt(10);
         byte[] payloadBytes = payload.array();
-        assertTrue(payloadBytes.length < AnnounceResponse.PAYLOAD_MIN_BYTES);
         assertThrows(IllegalArgumentException.class, () -> AnnounceResponse.unpack(payloadBytes));
     }
 }

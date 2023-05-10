@@ -29,7 +29,7 @@ class AnnounceRequestTest {
                 8000);
         byte[] actual = announceRequest.pack();
 
-        byte[] expected = ByteBuffer.allocate(AnnounceRequest.BYTES)
+        byte[] expected = ByteBuffer.allocate(98)
                 .order(ByteOrder.BIG_ENDIAN)
                 .putLong(9999)
                 .putInt(Action.ANNOUNCE.getValue())
