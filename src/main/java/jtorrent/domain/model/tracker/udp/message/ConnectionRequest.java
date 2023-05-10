@@ -13,10 +13,6 @@ public class ConnectionRequest extends Request {
     public static final int BYTES = 16;
     private static final long PROTOCOL_ID = 0x41727101980L; // magic constant
 
-    public int getTransactionId() {
-        return transactionId;
-    }
-
     @Override
     public byte[] pack() {
         return ByteBuffer.allocate(BYTES)
