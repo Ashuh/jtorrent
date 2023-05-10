@@ -4,7 +4,7 @@ import java.nio.ByteBuffer;
 
 public class KeepAlive implements PeerMessage {
 
-    private static final int BYTES = 1;
+    private static final int BYTES = 4;
 
     @Override
     public byte[] pack() {
