@@ -4,7 +4,7 @@ import java.util.Arrays;
 
 public class Sha1Hash {
 
-    public static int HASH_SIZE = 20;
+    public static final int HASH_SIZE = 20;
 
     private final byte[] bytes;
 
