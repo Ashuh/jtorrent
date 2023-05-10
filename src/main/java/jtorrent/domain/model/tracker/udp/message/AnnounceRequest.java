@@ -13,7 +13,7 @@ import jtorrent.domain.model.torrent.Sha1Hash;
  */
 public class AnnounceRequest extends Request {
 
-    private final static int BYTES = 98;
+    private static final int BYTES = 98;
 
     private final long connectionId;
     private final Sha1Hash infoHash;
