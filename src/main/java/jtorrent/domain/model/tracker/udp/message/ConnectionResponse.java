@@ -3,6 +3,8 @@ package jtorrent.domain.model.tracker.udp.message;
 import java.nio.ByteBuffer;
 import java.util.Objects;
 
+import jtorrent.domain.model.exception.UnpackException;
+
 /**
  * Represents a connection response.
  *
@@ -22,7 +24,7 @@ public class ConnectionResponse extends UdpMessage {
 
     public static ConnectionResponse unpack(byte[] payload) {
         if (payload.length != PAYLOAD_BYTES) {
-            throw new IllegalArgumentException();
+            throw new UnpackException("Expected " + PAYLOAD_BYTES + " bytes but got " + payload.length + " bytes");
         }
         ByteBuffer buffer = ByteBuffer.wrap(payload);
         int transactionId = buffer.getInt();

@@ -10,6 +10,8 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import jtorrent.domain.model.exception.UnpackException;
+
 class AnnounceResponseTest {
 
     @Test
@@ -38,10 +40,10 @@ class AnnounceResponseTest {
     }
 
     @Test
-    void unpack_lessThanMinimumExpectedBytes_throwsIllegalArgumentException() {
+    void unpack_lessThanMinimumExpectedBytes_throwsUnpackException() {
         ByteBuffer payload = ByteBuffer.allocate(15);
         byte[] payloadBytes = payload.array();
-        assertThrows(IllegalArgumentException.class, () -> AnnounceResponse.unpack(payloadBytes));
+        assertThrows(UnpackException.class, () -> AnnounceResponse.unpack(payloadBytes));
     }
 
     @Test

@@ -2,6 +2,8 @@ package jtorrent.domain.model.tracker.udp.message;
 
 import java.nio.ByteBuffer;
 
+import jtorrent.domain.model.exception.UnpackException;
+
 /**
  * Represents an error response.
  *
@@ -19,7 +21,8 @@ public class ErrorResponse {
 
     public static ErrorResponse unpack(byte[] payload) {
         if (payload.length < Integer.BYTES) {
-            throw new IllegalArgumentException();
+            throw new UnpackException(
+                    "Expected at least " + Integer.BYTES + " bytes but got " + payload.length + " bytes");
         }
         ByteBuffer buffer = ByteBuffer.wrap(payload);
         int transactionId = buffer.getInt();

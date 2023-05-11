@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import jtorrent.domain.model.exception.UnpackException;
+
 /**
  * Represents an announce response.
  *
@@ -32,7 +34,8 @@ public class AnnounceResponse extends UdpMessage {
 
     public static AnnounceResponse unpack(byte[] payload) {
         if (payload.length < PAYLOAD_MIN_BYTES) {
-            throw new IllegalArgumentException();
+            throw new UnpackException(
+                    "Expected at least " + PAYLOAD_MIN_BYTES + " bytes but got " + payload.length + " bytes.");
         }
         ByteBuffer buffer = ByteBuffer.wrap(payload);
         int transactionId = buffer.getInt();

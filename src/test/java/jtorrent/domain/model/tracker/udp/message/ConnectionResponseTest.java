@@ -6,6 +6,8 @@ import java.nio.ByteBuffer;
 
 import org.junit.jupiter.api.Test;
 
+import jtorrent.domain.model.exception.UnpackException;
+
 class ConnectionResponseTest {
 
     @Test
@@ -22,8 +24,8 @@ class ConnectionResponseTest {
     }
 
     @Test
-    void unpack_lessThanExpectedBytes_throwsIllegalArgumentException() {
+    void unpack_lessThanExpectedBytes_throwsUnpackException() {
         byte[] payload = ByteBuffer.allocate(11).array();
-        assertThrows(IllegalArgumentException.class, () -> ConnectionResponse.unpack(payload));
+        assertThrows(UnpackException.class, () -> ConnectionResponse.unpack(payload));
     }
 }

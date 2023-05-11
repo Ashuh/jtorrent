@@ -5,6 +5,7 @@ import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.Objects;
 
+import jtorrent.domain.model.exception.UnpackException;
 import jtorrent.domain.model.peer.Peer;
 
 public class PeerResponse {
@@ -21,7 +22,7 @@ public class PeerResponse {
 
     public static PeerResponse unpack(byte[] payload) {
         if (payload.length != BYTES) {
-            throw new IllegalArgumentException();
+            throw new UnpackException("Expected " + BYTES + " bytes but got " + payload.length + " bytes");
         }
         ByteBuffer buffer = ByteBuffer.wrap(payload);
         int ipv4 = buffer.getInt();
