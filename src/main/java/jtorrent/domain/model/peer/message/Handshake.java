@@ -7,7 +7,7 @@ import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.Objects;
 
-import jtorrent.domain.model.peer.exception.UnpackException;
+import jtorrent.domain.model.exception.UnpackException;
 import jtorrent.domain.model.torrent.Sha1Hash;
 
 public class Handshake implements PeerMessage {

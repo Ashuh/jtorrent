@@ -1,4 +1,4 @@
-package jtorrent.domain.model.peer.exception;
+package jtorrent.domain.model.exception;
 
 public class UnpackException extends RuntimeException {
 
