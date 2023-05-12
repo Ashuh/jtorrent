@@ -31,7 +31,7 @@ import jtorrent.domain.model.torrent.Torrent;
 class BencodedTorrentTest {
 
     @Test
-    void decode_singleFile() throws IOException, NoSuchAlgorithmException {
+    void decode_singleFile() throws IOException {
         BencodedTorrent expected = new BencodedTorrentBuilder()
                 .setAnnounce("announce")
                 .setAnnounceList(Collections.emptyList())
@@ -68,7 +68,7 @@ class BencodedTorrentTest {
     }
 
     @Test
-    void decode_multiFile() throws IOException, NoSuchAlgorithmException {
+    void decode_multiFile() throws IOException {
         BencodedTorrent expected = new BencodedTorrentBuilder()
                 .setAnnounce("announce")
                 .setAnnounceList(Collections.emptyList())
