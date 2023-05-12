@@ -28,16 +28,6 @@ public abstract class BencodedInfo extends BencodedObject {
         this.name = name;
     }
 
-    public static BencodedInfo fromMap(Map<String, Object> map) {
-        if (map.containsKey(KEY_LENGTH)) {
-            return SingleFileInfo.fromMap(map);
-        } else if (map.containsKey(KEY_FILES)) {
-            return MultiFileInfo.fromMap(map);
-        }
-
-        throw new IllegalArgumentException("Invalid info dictionary");
-    }
-
     public int getPieceLength() {
         return pieceLength;
     }
