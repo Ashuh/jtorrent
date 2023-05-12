@@ -22,7 +22,7 @@ public abstract class BencodedInfo extends BencodedObject {
     protected final byte[] pieces;
     protected final String name;
 
-    public BencodedInfo(int pieceLength, byte[] pieces, String name) {
+    protected BencodedInfo(int pieceLength, byte[] pieces, String name) {
         this.pieceLength = pieceLength;
         this.pieces = pieces;
         this.name = name;
