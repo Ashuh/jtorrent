@@ -1,4 +1,4 @@
-package jtorrent.data.model;
+package jtorrent.data.model.torrent;
 
 import static jtorrent.data.util.MapUtil.getValueAsList;
 import static jtorrent.data.util.MapUtil.getValueAsLong;
@@ -10,7 +10,6 @@ import java.io.InputStream;
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
@@ -21,10 +20,11 @@ import java.util.stream.Collectors;
 
 import com.dampcake.bencode.BencodeInputStream;
 
+import jtorrent.data.model.BencodedObject;
 import jtorrent.data.model.exception.MappingException;
-import jtorrent.data.model.info.BencodedFile;
-import jtorrent.data.model.info.BencodedInfo;
-import jtorrent.data.model.info.BencodedInfoFactory;
+import jtorrent.data.model.torrent.info.BencodedFile;
+import jtorrent.data.model.torrent.info.BencodedInfo;
+import jtorrent.data.model.torrent.info.BencodedInfoFactory;
 import jtorrent.domain.model.torrent.File;
 import jtorrent.domain.model.torrent.Sha1Hash;
 import jtorrent.domain.model.torrent.Torrent;

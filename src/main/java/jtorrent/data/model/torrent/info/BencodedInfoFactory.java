@@ -1,7 +1,7 @@
-package jtorrent.data.model.info;
+package jtorrent.data.model.torrent.info;
 
-import static jtorrent.data.model.info.BencodedInfo.KEY_FILES;
-import static jtorrent.data.model.info.BencodedInfo.KEY_LENGTH;
+import static jtorrent.data.model.torrent.info.BencodedInfo.KEY_FILES;
+import static jtorrent.data.model.torrent.info.BencodedInfo.KEY_LENGTH;
 
 import java.util.Map;
 

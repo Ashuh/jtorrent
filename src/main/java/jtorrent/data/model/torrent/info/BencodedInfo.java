@@ -1,4 +1,4 @@
-package jtorrent.data.model.info;
+package jtorrent.data.model.torrent.info;
 
 import java.io.IOException;
 import java.security.MessageDigest;

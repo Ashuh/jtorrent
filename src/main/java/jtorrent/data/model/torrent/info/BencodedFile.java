@@ -1,4 +1,4 @@
-package jtorrent.data.model.info;
+package jtorrent.data.model.torrent.info;
 
 import static jtorrent.data.util.MapUtil.getValueAsList;
 import static jtorrent.data.util.MapUtil.getValueAsLong;

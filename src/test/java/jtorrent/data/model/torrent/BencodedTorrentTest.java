@@ -1,4 +1,4 @@
-package jtorrent.data.model;
+package jtorrent.data.model.torrent;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -20,10 +20,10 @@ import org.junit.jupiter.api.Test;
 
 import com.dampcake.bencode.BencodeOutputStream;
 
-import jtorrent.data.model.info.BencodedFile;
-import jtorrent.data.model.info.BencodedInfo;
-import jtorrent.data.model.info.MultiFileInfo;
-import jtorrent.data.model.info.SingleFileInfo;
+import jtorrent.data.model.torrent.info.BencodedFile;
+import jtorrent.data.model.torrent.info.BencodedInfo;
+import jtorrent.data.model.torrent.info.MultiFileInfo;
+import jtorrent.data.model.torrent.info.SingleFileInfo;
 import jtorrent.domain.model.torrent.File;
 import jtorrent.domain.model.torrent.Sha1Hash;
 import jtorrent.domain.model.torrent.Torrent;
