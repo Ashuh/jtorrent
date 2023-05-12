@@ -49,7 +49,7 @@ public class TorrentHandler implements UdpTrackerHandler.Listener, PeerHandler.L
         this.trackerHandlers = torrent.getTrackers().stream()
                 .map(x -> new InetSocketAddress(x.getHost(), x.getPort()))
                 .map(UdpTracker::new)
-                .map(x -> new UdpTrackerHandler(x, torrent.getInfoHash()))
+                .map(x -> new UdpTrackerHandler(x, torrent))
                 .collect(Collectors.toSet());
 
         WorkDispatcher dispatcher = new WorkDispatcher();

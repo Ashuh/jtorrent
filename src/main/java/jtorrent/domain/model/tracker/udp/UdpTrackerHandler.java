@@ -20,7 +20,7 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import jtorrent.domain.model.torrent.Sha1Hash;
+import jtorrent.domain.model.torrent.Torrent;
 import jtorrent.domain.model.tracker.udp.exception.ExceededMaxTriesException;
 import jtorrent.domain.model.tracker.udp.message.AnnounceRequest;
 import jtorrent.domain.model.tracker.udp.message.AnnounceResponse;
@@ -38,7 +38,7 @@ public class UdpTrackerHandler implements Runnable {
     private static final int MAX_TRIES = 8;
 
     private final UdpTracker tracker;
-    private final Sha1Hash infoHash;
+    private final Torrent torrent;
     private final List<Listener> listeners = new ArrayList<>();
     private final AnnounceTask announceTask = new AnnounceTask();
     private final Lock lock = new ReentrantLock();
@@ -48,9 +48,9 @@ public class UdpTrackerHandler implements Runnable {
     private boolean isRunning = true;
     private boolean isActive = true;
 
-    public UdpTrackerHandler(UdpTracker tracker, Sha1Hash infoHash) {
+    public UdpTrackerHandler(UdpTracker tracker, Torrent torrent) {
         this.tracker = tracker;
-        this.infoHash = infoHash;
+        this.torrent = torrent;
     }
 
     public void addListener(Listener listener) {
@@ -153,7 +153,7 @@ public class UdpTrackerHandler implements Runnable {
                 int timeout = calculateTimeout(i);
                 try {
                     tracker.setTimeout(timeout);
-                    return announce(infoHash);
+                    return announce();
                 } catch (IOException e) {
                     // TODO: handle each failure type separately. Assume only will fail due to timeout for now.
                     LOGGER.log(Level.WARNING, "Announce timed out after " + timeout + "ms");
@@ -168,20 +168,20 @@ public class UdpTrackerHandler implements Runnable {
             return (int) Math.pow(2, tries) * TIMEOUT_MILLIS;
         }
 
-        private AnnounceResponse announce(Sha1Hash infoHash) throws IOException {
+        private AnnounceResponse announce() throws IOException {
             LOGGER.log(Level.INFO, "Announcing to tracker");
 
             if (!hasValidConnectionId()) {
                 getConnectionId();
             }
 
-            // TODO: populate fields with actual values
+            // TODO: what to set for ipv4, key, numWant?
             AnnounceRequest announceRequest = new AnnounceRequest(connectionId,
-                    infoHash,
+                    torrent.getInfoHash(),
                     PEER_ID.getBytes(),
-                    0,
-                    0,
-                    0,
+                    torrent.getDownloaded(),
+                    torrent.getLeft(),
+                    torrent.getUploaded(),
                     Event.NONE,
                     0,
                     0,
