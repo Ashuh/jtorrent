@@ -55,7 +55,7 @@ public class BencodedTorrent extends BencodedObject {
         this.info = info;
     }
 
-    public static BencodedTorrent decode(InputStream inputStream) throws IOException, NoSuchAlgorithmException {
+    public static BencodedTorrent decode(InputStream inputStream) throws IOException {
         BencodeInputStream bis = new BencodeInputStream(inputStream, StandardCharsets.UTF_8, true);
         Map<String, Object> topLevelDict = bis.readDictionary();
         return fromMap(topLevelDict);
