@@ -1,4 +1,4 @@
-package jtorrent.domain.model.torrent;
+package jtorrent.domain.handler;
 
 import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level;
@@ -19,10 +19,10 @@ import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.stream.Collectors;
 
-import jtorrent.domain.model.peer.PeerHandler;
 import jtorrent.domain.model.peer.message.typed.Piece;
+import jtorrent.domain.model.torrent.Block;
+import jtorrent.domain.model.torrent.Torrent;
 import jtorrent.domain.model.tracker.udp.UdpTracker;
-import jtorrent.domain.model.tracker.udp.UdpTrackerHandler;
 import jtorrent.domain.model.tracker.udp.message.PeerResponse;
 
 public class TorrentHandler implements UdpTrackerHandler.Listener, PeerHandler.Listener {

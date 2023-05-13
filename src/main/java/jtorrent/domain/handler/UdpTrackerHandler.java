@@ -1,4 +1,4 @@
-package jtorrent.domain.model.tracker.udp;
+package jtorrent.domain.handler;
 
 import static jtorrent.domain.Constants.PEER_ID;
 import static jtorrent.domain.Constants.PORT;
@@ -21,6 +21,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import jtorrent.domain.model.torrent.Torrent;
+import jtorrent.domain.model.tracker.udp.UdpTracker;
 import jtorrent.domain.model.tracker.udp.exception.ExceededMaxTriesException;
 import jtorrent.domain.model.tracker.udp.message.AnnounceRequest;
 import jtorrent.domain.model.tracker.udp.message.AnnounceResponse;
