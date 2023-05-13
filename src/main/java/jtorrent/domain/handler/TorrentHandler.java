@@ -59,9 +59,7 @@ public class TorrentHandler implements UdpTrackerHandler.Listener, PeerHandler.L
 
     public void start() {
         trackerHandlers.forEach(trackerHandler -> trackerHandler.addListener(this));
-        trackerHandlers.stream()
-                .map(Thread::new)
-                .forEach(Thread::start);
+        trackerHandlers.forEach(UdpTrackerHandler::start);
     }
 
     @Override
@@ -96,6 +94,7 @@ public class TorrentHandler implements UdpTrackerHandler.Listener, PeerHandler.L
 
         if (remainingBlocks.isEmpty()) {
             LOGGER.log(Level.DEBUG, "All pieces received");
+            trackerHandlers.forEach(UdpTrackerHandler::stop);
         }
     }
 

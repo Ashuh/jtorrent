@@ -16,13 +16,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
+import jtorrent.domain.handler.exception.ExceededMaxTriesException;
 import jtorrent.domain.model.torrent.Torrent;
 import jtorrent.domain.model.tracker.udp.UdpTracker;
-import jtorrent.domain.handler.exception.ExceededMaxTriesException;
 import jtorrent.domain.model.tracker.udp.message.AnnounceRequest;
 import jtorrent.domain.model.tracker.udp.message.AnnounceResponse;
 import jtorrent.domain.model.tracker.udp.message.ConnectionRequest;
@@ -41,13 +38,9 @@ public class UdpTrackerHandler implements Runnable {
     private final UdpTracker tracker;
     private final Torrent torrent;
     private final List<Listener> listeners = new ArrayList<>();
-    private final AnnounceTask announceTask = new AnnounceTask();
-    private final Lock lock = new ReentrantLock();
-    private final Condition condition = lock.newCondition();
-
-    private ScheduledFuture<AnnounceResponse> responseScheduledFuture;
-    private boolean isRunning = true;
-    private boolean isActive = true;
+    private final Thread announceSchedulerThread = new Thread(this);
+    private Long connectionId;
+    private LocalDateTime connectionIdExpiration;
 
     public UdpTrackerHandler(UdpTracker tracker, Torrent torrent) {
         this.tracker = tracker;
@@ -67,73 +60,43 @@ public class UdpTrackerHandler implements Runnable {
             return;
         }
 
-        scheduleAnnounce(0);
+        ScheduledFuture<AnnounceResponse> scheduledFuture = scheduleAnnounce(Event.STARTED, 0);
 
-        while (isRunning) {
-            waitForActiveState();
-
+        while (!announceSchedulerThread.isInterrupted()) {
             try {
                 LOGGER.log(Level.TRACE, "Waiting for announce to execute");
-                AnnounceResponse announceResponse = responseScheduledFuture.get();
+                AnnounceResponse announceResponse = scheduledFuture.get();
                 LOGGER.log(Level.TRACE, "Received announce response");
                 listeners.forEach(listener -> listener.onAnnounceResponse(announceResponse.getPeers()));
                 int interval = announceResponse.getInterval();
-                scheduleAnnounce(interval);
+                scheduledFuture = scheduleAnnounce(Event.NONE, interval);
             } catch (InterruptedException e) {
-                LOGGER.log(Level.ERROR, "Announce interrupted");
+                LOGGER.log(Level.DEBUG, "Interrupted while waiting for announce to execute");
                 Thread.currentThread().interrupt();
             } catch (ExecutionException e) {
-                LOGGER.log(Level.ERROR, "Announce failed", e);
-                pause();
+                LOGGER.log(Level.ERROR, "Announce failed: {}", e.getMessage());
+                return;
             }
         }
+
+        scheduledFuture.cancel(true);
+        LOGGER.log(Level.DEBUG, "Announce scheduler thread stopped");
     }
 
-    private void scheduleAnnounce(int delaySecs) {
-        if (responseScheduledFuture != null && !responseScheduledFuture.isDone()) {
-            LOGGER.log(Level.TRACE, "Cancelling scheduled announce request");
-            responseScheduledFuture.cancel(true);
-        }
-        LOGGER.log(Level.DEBUG, "Scheduled next announce request in " + delaySecs + " seconds");
-        responseScheduledFuture = EXECUTOR_SERVICE.schedule(announceTask, delaySecs, TimeUnit.SECONDS);
+    private ScheduledFuture<AnnounceResponse> scheduleAnnounce(Event event, long delaySecs) {
+        LOGGER.log(Level.DEBUG, "Scheduled next announce request ({0}) in {1} seconds", event, delaySecs);
+        return EXECUTOR_SERVICE.schedule(new AnnounceTask(event), delaySecs, TimeUnit.SECONDS);
     }
 
-    private void waitForActiveState() {
-        lock.lock();
-        try {
-            while (!isActive) {
-                LOGGER.log(Level.TRACE, "Waiting for active state");
-                condition.await();
-                LOGGER.log(Level.TRACE, "Received active state");
-            }
-        } catch (InterruptedException e) {
-            LOGGER.log(Level.ERROR, "Waiting for active state interrupted");
-            Thread.currentThread().interrupt();
-        } finally {
-            lock.unlock();
-        }
+    public void start() {
+        LOGGER.log(Level.DEBUG, "Starting tracker handler");
+        announceSchedulerThread.start();
     }
 
-    public void pause() {
-        lock.lock();
-        try {
-            LOGGER.log(Level.TRACE, "Pausing tracker handler");
-            isActive = false;
-            condition.signal();
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    public void resume() {
-        lock.lock();
-        try {
-            LOGGER.log(Level.TRACE, "Resuming tracker handler");
-            isActive = true;
-            condition.signal();
-        } finally {
-            lock.unlock();
-        }
+    public void stop() {
+        LOGGER.log(Level.DEBUG, "Stopping tracker handler");
+        announceSchedulerThread.interrupt();
+        new AnnounceTask(Event.STOPPED).call();
     }
 
     public interface Listener {
@@ -143,25 +106,30 @@ public class UdpTrackerHandler implements Runnable {
 
     private class AnnounceTask implements Callable<AnnounceResponse> {
 
-        private Long connectionId;
-        private LocalDateTime connectionIdExpiration;
+        private final Event event;
+
+        public AnnounceTask(Event event) {
+            this.event = event;
+        }
 
         @Override
         public AnnounceResponse call() {
             LOGGER.log(Level.TRACE, "Running announce task");
+            return tryAnnounce(event);
+        }
 
+        private AnnounceResponse tryAnnounce(Event event) {
             for (int i = 0; i < MAX_TRIES; i++) {
                 int timeout = calculateTimeout(i);
                 try {
                     tracker.setTimeout(timeout);
-                    return announce();
+                    return announce(event);
                 } catch (IOException e) {
                     // TODO: handle each failure type separately. Assume only will fail due to timeout for now.
                     LOGGER.log(Level.WARNING, "Announce timed out after " + timeout + "ms");
                 }
             }
 
-            LOGGER.log(Level.ERROR, "Announce exceeded max tries");
             throw new ExceededMaxTriesException("announce task", MAX_TRIES);
         }
 
@@ -169,7 +137,7 @@ public class UdpTrackerHandler implements Runnable {
             return (int) Math.pow(2, tries) * TIMEOUT_MILLIS;
         }
 
-        private AnnounceResponse announce() throws IOException {
+        private AnnounceResponse announce(Event event) throws IOException {
             LOGGER.log(Level.INFO, "Announcing to tracker");
 
             if (!hasValidConnectionId()) {
@@ -183,7 +151,7 @@ public class UdpTrackerHandler implements Runnable {
                     torrent.getDownloaded(),
                     torrent.getLeft(),
                     torrent.getUploaded(),
-                    Event.NONE,
+                    event,
                     0,
                     0,
                     -1,
