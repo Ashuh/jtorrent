@@ -22,7 +22,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import jtorrent.domain.model.torrent.Torrent;
 import jtorrent.domain.model.tracker.udp.UdpTracker;
-import jtorrent.domain.model.tracker.udp.exception.ExceededMaxTriesException;
+import jtorrent.domain.handler.exception.ExceededMaxTriesException;
 import jtorrent.domain.model.tracker.udp.message.AnnounceRequest;
 import jtorrent.domain.model.tracker.udp.message.AnnounceResponse;
 import jtorrent.domain.model.tracker.udp.message.ConnectionRequest;

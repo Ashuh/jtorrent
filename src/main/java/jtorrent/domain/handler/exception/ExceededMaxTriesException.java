@@ -1,4 +1,4 @@
-package jtorrent.domain.model.tracker.udp.exception;
+package jtorrent.domain.handler.exception;
 
 public class ExceededMaxTriesException extends RuntimeException {
 
