@@ -74,9 +74,9 @@ public class BencodedFile extends BencodedObject {
 
     @Override
     public String toString() {
-        return "File{" +
-                "length=" + length +
-                ", path=" + path +
-                '}';
+        return "File{"
+                + "length=" + length
+                + ", path=" + path
+                + '}';
     }
 }

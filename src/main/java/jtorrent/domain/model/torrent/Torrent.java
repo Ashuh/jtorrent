@@ -59,6 +59,13 @@ public class Torrent {
         return pieceSize;
     }
 
+    public int getPieceSize(int pieceIndex) {
+        if (pieceIndex == getNumPieces() - 1) {
+            return getTotalSize() % pieceSize;
+        }
+        return pieceSize;
+    }
+
     public List<Sha1Hash> getPieceHashes() {
         return pieceHashes;
     }
@@ -94,13 +101,6 @@ public class Torrent {
         return verifiedPieces.stream()
                 .mapToInt(this::getPieceSize)
                 .sum();
-    }
-
-    public int getPieceSize(int pieceIndex) {
-        if (pieceIndex == getNumPieces() - 1) {
-            return getTotalSize() % pieceSize;
-        }
-        return pieceSize;
     }
 
     public int getNumPieces() {
@@ -150,16 +150,16 @@ public class Torrent {
 
     @Override
     public String toString() {
-        return "Torrent{" +
-                "trackers=" + trackers +
-                ", creationDate=" + creationDate +
-                ", comment='" + comment + '\'' +
-                ", createdBy='" + createdBy + '\'' +
-                ", pieceSize=" + pieceSize +
-                ", pieceHashes=" + pieceHashes +
-                ", name='" + name + '\'' +
-                ", files=" + files +
-                ", infoHash=" + infoHash +
-                '}';
+        return "Torrent{"
+                + "trackers=" + trackers
+                + ", creationDate=" + creationDate
+                + ", comment='" + comment + '\''
+                + ", createdBy='" + createdBy + '\''
+                + ", pieceSize=" + pieceSize
+                + ", pieceHashes=" + pieceHashes
+                + ", name='" + name + '\''
+                + ", files=" + files
+                + ", infoHash=" + infoHash
+                + '}';
     }
 }

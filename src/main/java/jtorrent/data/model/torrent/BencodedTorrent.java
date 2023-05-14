@@ -174,13 +174,13 @@ public class BencodedTorrent extends BencodedObject {
 
     @Override
     public String toString() {
-        return "TorrentFile{" +
-                "announce='" + announce + '\'' +
-                ", announceList=" + announceList +
-                ", creationDate=" + creationDate +
-                ", comment='" + comment + '\'' +
-                ", createdBy='" + createdBy + '\'' +
-                ", info=" + info +
-                '}';
+        return "TorrentFile{"
+                + "announce='" + announce + '\''
+                + ", announceList=" + announceList
+                + ", creationDate=" + creationDate
+                + ", comment='" + comment + '\''
+                + ", createdBy='" + createdBy + '\''
+                + ", info=" + info
+                + '}';
     }
 }

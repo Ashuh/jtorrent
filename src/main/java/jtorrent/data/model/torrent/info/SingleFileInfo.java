@@ -69,11 +69,11 @@ public class SingleFileInfo extends BencodedInfo {
 
     @Override
     public String toString() {
-        return "SingleFIleInfo{" +
-                "pieceLength=" + pieceLength +
-                ", pieces=" + Arrays.toString(pieces) +
-                ", name='" + name + '\'' +
-                ", length=" + length +
-                '}';
+        return "SingleFIleInfo{"
+                + "pieceLength=" + pieceLength
+                + ", pieces=" + Arrays.toString(pieces)
+                + ", name='" + name + '\''
+                + ", length=" + length
+                + '}';
     }
 }

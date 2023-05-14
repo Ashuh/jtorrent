@@ -161,10 +161,10 @@ public class Peer {
 
     @Override
     public String toString() {
-        return "Peer{" +
-                "address=" + address +
-                ", port=" + port +
-                '}';
+        return "Peer{"
+                + "address=" + address
+                + ", port=" + port
+                + '}';
     }
 
     public interface Listener {

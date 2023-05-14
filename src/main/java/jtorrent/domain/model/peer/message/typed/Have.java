@@ -56,8 +56,8 @@ public class Have extends TypedPeerMessage {
 
     @Override
     public String toString() {
-        return "Have{" +
-                "pieceIndex=" + pieceIndex +
-                '}';
+        return "Have{"
+                + "pieceIndex=" + pieceIndex
+                + '}';
     }
 }

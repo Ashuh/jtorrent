@@ -92,12 +92,12 @@ public class AnnounceResponse extends UdpMessage {
 
     @Override
     public String toString() {
-        return "AnnounceResponse{" +
-                "interval=" + interval +
-                ", leechers=" + leechers +
-                ", seeders=" + seeders +
-                ", peers=" + peers +
-                ", transactionId=" + transactionId +
-                '}';
+        return "AnnounceResponse{"
+                + "interval=" + interval
+                + ", leechers=" + leechers
+                + ", seeders=" + seeders
+                + ", peers=" + peers
+                + ", transactionId=" + transactionId
+                + '}';
     }
 }
