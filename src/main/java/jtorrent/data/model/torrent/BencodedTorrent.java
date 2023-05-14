@@ -1,4 +1,4 @@
-package jtorrent.data.model;
+package jtorrent.data.model.torrent;
 
 import static jtorrent.data.util.MapUtil.getValueAsList;
 import static jtorrent.data.util.MapUtil.getValueAsLong;
@@ -10,7 +10,6 @@ import java.io.InputStream;
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
@@ -21,9 +20,11 @@ import java.util.stream.Collectors;
 
 import com.dampcake.bencode.BencodeInputStream;
 
+import jtorrent.data.model.BencodedObject;
 import jtorrent.data.model.exception.MappingException;
-import jtorrent.data.model.info.BencodedFile;
-import jtorrent.data.model.info.BencodedInfo;
+import jtorrent.data.model.torrent.info.BencodedFile;
+import jtorrent.data.model.torrent.info.BencodedInfo;
+import jtorrent.data.model.torrent.info.BencodedInfoFactory;
 import jtorrent.domain.model.torrent.File;
 import jtorrent.domain.model.torrent.Sha1Hash;
 import jtorrent.domain.model.torrent.Torrent;
@@ -54,7 +55,7 @@ public class BencodedTorrent extends BencodedObject {
         this.info = info;
     }
 
-    public static BencodedTorrent decode(InputStream inputStream) throws IOException, NoSuchAlgorithmException {
+    public static BencodedTorrent decode(InputStream inputStream) throws IOException {
         BencodeInputStream bis = new BencodeInputStream(inputStream, StandardCharsets.UTF_8, true);
         Map<String, Object> topLevelDict = bis.readDictionary();
         return fromMap(topLevelDict);
@@ -75,7 +76,7 @@ public class BencodedTorrent extends BencodedObject {
         String createdBy = getValueAsString(map, KEY_CREATED_BY).orElse("");
 
         Map<String, Object> infoDict = getValueAsMap(map, KEY_INFO);
-        BencodedInfo info = BencodedInfo.fromMap(infoDict);
+        BencodedInfo info = BencodedInfoFactory.fromMap(infoDict);
 
         return new BencodedTorrent(creationDate, announce, announceList, comment, createdBy, info);
     }

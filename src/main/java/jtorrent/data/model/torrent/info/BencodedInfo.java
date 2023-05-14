@@ -1,11 +1,10 @@
-package jtorrent.data.model.info;
+package jtorrent.data.model.torrent.info;
 
 import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 import jtorrent.data.model.BencodedObject;
@@ -22,20 +21,10 @@ public abstract class BencodedInfo extends BencodedObject {
     protected final byte[] pieces;
     protected final String name;
 
-    public BencodedInfo(int pieceLength, byte[] pieces, String name) {
+    protected BencodedInfo(int pieceLength, byte[] pieces, String name) {
         this.pieceLength = pieceLength;
         this.pieces = pieces;
         this.name = name;
-    }
-
-    public static BencodedInfo fromMap(Map<String, Object> map) {
-        if (map.containsKey(KEY_LENGTH)) {
-            return SingleFileInfo.fromMap(map);
-        } else if (map.containsKey(KEY_FILES)) {
-            return MultiFileInfo.fromMap(map);
-        }
-
-        throw new IllegalArgumentException("Invalid info dictionary");
     }
 
     public int getPieceLength() {
