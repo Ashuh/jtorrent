@@ -55,9 +55,9 @@ public class ConnectionResponse extends UdpMessage {
 
     @Override
     public String toString() {
-        return "ConnectionResponse{" +
-                "connectionId=" + connectionId +
-                ", transactionId=" + transactionId +
-                '}';
+        return "ConnectionResponse{"
+                + "connectionId=" + connectionId
+                + ", transactionId=" + transactionId
+                + '}';
     }
 }

@@ -40,9 +40,9 @@ public class File {
 
     @Override
     public String toString() {
-        return "File{" +
-                "size=" + size +
-                ", path=" + path +
-                '}';
+        return "File{"
+                + "size=" + size
+                + ", path=" + path
+                + '}';
     }
 }

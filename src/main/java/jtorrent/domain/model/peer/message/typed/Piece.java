@@ -85,9 +85,9 @@ public class Piece extends TypedPeerMessage {
 
     @Override
     public String toString() {
-        return "Piece{" +
-                "index=" + index +
-                ", begin=" + begin +
-                '}';
+        return "Piece{"
+                + "index=" + index
+                + ", begin=" + begin
+                + '}';
     }
 }

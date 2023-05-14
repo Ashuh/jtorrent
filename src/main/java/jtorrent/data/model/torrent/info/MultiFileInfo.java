@@ -39,16 +39,6 @@ public class MultiFileInfo extends BencodedInfo {
     }
 
     @Override
-    public Map<String, Object> toMap() {
-        return Map.of(
-                KEY_PIECE_LENGTH, pieceLength,
-                KEY_PIECES, ByteBuffer.wrap(pieces),
-                KEY_NAME, name,
-                KEY_FILES, files.stream().map(BencodedFile::toMap).collect(Collectors.toList())
-        );
-    }
-
-    @Override
     public int hashCode() {
         return Objects.hash(super.hashCode(), files);
     }
@@ -69,12 +59,22 @@ public class MultiFileInfo extends BencodedInfo {
     }
 
     @Override
+    public Map<String, Object> toMap() {
+        return Map.of(
+                KEY_PIECE_LENGTH, pieceLength,
+                KEY_PIECES, ByteBuffer.wrap(pieces),
+                KEY_NAME, name,
+                KEY_FILES, files.stream().map(BencodedFile::toMap).collect(Collectors.toList())
+        );
+    }
+
+    @Override
     public String toString() {
-        return "MultiFileInfo{" +
-                "pieceLength=" + pieceLength +
-                ", pieces=" + Arrays.toString(pieces) +
-                ", name='" + name + '\'' +
-                ", files=" + files +
-                '}';
+        return "MultiFileInfo{"
+                + "pieceLength=" + pieceLength
+                + ", pieces=" + Arrays.toString(pieces)
+                + ", name='" + name + '\''
+                + ", files=" + files
+                + '}';
     }
 }

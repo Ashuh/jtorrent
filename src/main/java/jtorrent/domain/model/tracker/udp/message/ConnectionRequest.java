@@ -25,8 +25,8 @@ public class ConnectionRequest extends Request {
 
     @Override
     public String toString() {
-        return "ConnectionRequest{" +
-                "transactionId=" + transactionId +
-                '}';
+        return "ConnectionRequest{"
+                + "transactionId=" + transactionId
+                + '}';
     }
 }

@@ -27,6 +27,11 @@ public class Block {
     }
 
     @Override
+    public int hashCode() {
+        return Objects.hash(index, offset, length);
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) {
             return true;
@@ -41,16 +46,11 @@ public class Block {
     }
 
     @Override
-    public int hashCode() {
-        return Objects.hash(index, offset, length);
-    }
-
-    @Override
     public String toString() {
-        return "Block{" +
-                "index=" + index +
-                ", offset=" + offset +
-                ", length=" + length +
-                '}';
+        return "Block{"
+                + "index=" + index
+                + ", offset=" + offset
+                + ", length=" + length
+                + '}';
     }
 }

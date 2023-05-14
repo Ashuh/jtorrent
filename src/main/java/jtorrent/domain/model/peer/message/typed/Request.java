@@ -23,10 +23,10 @@ public class Request extends BlockMessage {
 
     @Override
     public String toString() {
-        return "Request{" +
-                "index=" + index +
-                ", begin=" + begin +
-                ", length=" + length +
-                '}';
+        return "Request{"
+                + "index=" + index
+                + ", begin=" + begin
+                + ", length=" + length
+                + '}';
     }
 }

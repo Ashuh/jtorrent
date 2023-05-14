@@ -119,19 +119,19 @@ public class AnnounceRequest extends Request {
 
     @Override
     public String toString() {
-        return "AnnounceRequest{" +
-                "connectionId=" + connectionId +
-                ", infoHash=" + infoHash +
-                ", peerId=" + Arrays.toString(peerId) +
-                ", downloaded=" + downloaded +
-                ", left=" + left +
-                ", uploaded=" + uploaded +
-                ", event=" + event +
-                ", ipv4=" + ipv4 +
-                ", key=" + key +
-                ", numWant=" + numWant +
-                ", port=" + port +
-                ", transactionId=" + transactionId +
-                '}';
+        return "AnnounceRequest{"
+                + "connectionId=" + connectionId
+                + ", infoHash=" + infoHash
+                + ", peerId=" + Arrays.toString(peerId)
+                + ", downloaded=" + downloaded
+                + ", left=" + left
+                + ", uploaded=" + uploaded
+                + ", event=" + event
+                + ", ipv4=" + ipv4
+                + ", key=" + key
+                + ", numWant=" + numWant
+                + ", port=" + port
+                + ", transactionId=" + transactionId
+                + '}';
     }
 }

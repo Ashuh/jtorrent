@@ -71,9 +71,9 @@ public class PeerResponse {
 
     @Override
     public String toString() {
-        return "PeerResponse{" +
-                "ipv4=" + ipv4 +
-                ", port=" + port +
-                '}';
+        return "PeerResponse{"
+                + "ipv4=" + ipv4
+                + ", port=" + port
+                + '}';
     }
 }

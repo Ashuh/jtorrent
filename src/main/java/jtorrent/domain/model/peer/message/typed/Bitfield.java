@@ -41,9 +41,9 @@ public class Bitfield extends TypedPeerMessage {
 
     @Override
     public String toString() {
-        return "Bitfield{" +
-                "bitSet=" + bitSet +
-                '}';
+        return "Bitfield{"
+                + "bitSet=" + bitSet
+                + '}';
     }
 
     @Override

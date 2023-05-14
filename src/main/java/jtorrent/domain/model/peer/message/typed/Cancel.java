@@ -23,10 +23,10 @@ public class Cancel extends BlockMessage {
 
     @Override
     public String toString() {
-        return "Cancel{" +
-                "index=" + index +
-                ", begin=" + begin +
-                ", length=" + length +
-                '}';
+        return "Cancel{"
+                + "index=" + index
+                + ", begin=" + begin
+                + ", length=" + length
+                + '}';
     }
 }
