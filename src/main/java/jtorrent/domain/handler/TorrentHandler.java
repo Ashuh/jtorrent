@@ -92,6 +92,8 @@ public class TorrentHandler implements UdpTrackerHandler.Listener, PeerHandler.L
         buffer.position(offset);
         buffer.put(data);
 
+        torrent.incrementDownloaded(piece.getBlock().length);
+
         if (remainingBlocks.isEmpty()) {
             LOGGER.log(Level.DEBUG, "All pieces received");
             trackerHandlers.forEach(UdpTrackerHandler::stop);
