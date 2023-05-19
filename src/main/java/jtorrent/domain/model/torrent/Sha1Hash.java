@@ -9,7 +9,7 @@ public class Sha1Hash {
     private final byte[] bytes;
 
     public Sha1Hash(byte[] hash) {
-        if (hash.length != 20) {
+        if (hash.length != HASH_SIZE) {
             throw new IllegalArgumentException("SHA1 hash must be 20 bytes long");
         }
         this.bytes = hash;
