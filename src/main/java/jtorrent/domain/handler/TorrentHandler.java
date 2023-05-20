@@ -106,8 +106,7 @@ public class TorrentHandler implements UdpTrackerHandler.Listener, PeerHandler.L
         torrent.setDataReceived(pieceIndex, from, to);
 
         if (torrent.isPieceComplete(pieceIndex)) {
-            LOGGER.log(Level.DEBUG, "Piece complete: {0}", pieceIndex);
-
+            LOGGER.log(Level.DEBUG, "Piece {0} complete", pieceIndex);
 
             byte[] pieceBytes = new byte[torrent.getPieceSize(pieceIndex)];
             buffer.position(pieceIndex * torrent.getPieceSize());
