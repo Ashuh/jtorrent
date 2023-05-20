@@ -1,10 +1,24 @@
 package jtorrent.domain.model.torrent;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
+
+import jtorrent.domain.model.torrent.exception.Sha1AlgorithmUnavailableException;
 
 public class Sha1Hash {
 
     public static final int HASH_SIZE = 20;
+
+    private static final MessageDigest MESSAGE_DIGEST;
+
+    static {
+        try {
+            MESSAGE_DIGEST = MessageDigest.getInstance("SHA-1");
+        } catch (NoSuchAlgorithmException e) {
+            throw new Sha1AlgorithmUnavailableException(e);
+        }
+    }
 
     private final byte[] bytes;
 
@@ -13,6 +27,18 @@ public class Sha1Hash {
             throw new IllegalArgumentException("SHA1 hash must be 20 bytes long");
         }
         this.bytes = hash;
+    }
+
+    /**
+     * Computes the SHA-1 hash of the given bytes.
+     *
+     * @param bytes the bytes to hash
+     * @return the SHA-1 hash of the given bytes
+     */
+    public static Sha1Hash of(byte[] bytes) {
+        byte[] hash = MESSAGE_DIGEST.digest(bytes);
+        MESSAGE_DIGEST.reset();
+        return new Sha1Hash(hash);
     }
 
     public byte[] getBytes() {
