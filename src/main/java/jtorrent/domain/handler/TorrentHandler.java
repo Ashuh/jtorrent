@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 
 import jtorrent.domain.model.peer.message.typed.Piece;
 import jtorrent.domain.model.torrent.Block;
+import jtorrent.domain.model.torrent.Sha1Hash;
 import jtorrent.domain.model.torrent.Torrent;
 import jtorrent.domain.model.tracker.udp.UdpTracker;
 import jtorrent.domain.model.tracker.udp.message.PeerResponse;
@@ -62,6 +63,14 @@ public class TorrentHandler implements UdpTrackerHandler.Listener, PeerHandler.L
         trackerHandlers.forEach(UdpTrackerHandler::start);
     }
 
+    private void addBlockToWorkQueue(Block block) {
+        if (remainingBlocks.contains(block)
+                && !workQueue.contains(block)
+                && !pieceIndexToAvailablePeerHandlers.get(block.getIndex()).isEmpty()) {
+            workQueue.add(block);
+        }
+    }
+
     @Override
     public void onReady(PeerHandler peerHandler) {
         LOGGER.log(Level.DEBUG, "PeerHandler ready: {0}", peerHandler);
@@ -91,6 +100,31 @@ public class TorrentHandler implements UdpTrackerHandler.Listener, PeerHandler.L
         LOGGER.log(Level.TRACE, "Writing {0} bytes at offset {1}", data.length, offset);
         buffer.position(offset);
         buffer.put(data);
+
+        int from = piece.getBegin();
+        int to = from + piece.getBlock().length;
+        torrent.setDataReceived(pieceIndex, from, to);
+
+        if (torrent.isPieceComplete(pieceIndex)) {
+            LOGGER.log(Level.DEBUG, "Piece {0} complete", pieceIndex);
+
+            byte[] pieceBytes = new byte[torrent.getPieceSize(pieceIndex)];
+            buffer.position(pieceIndex * torrent.getPieceSize());
+            buffer.get(pieceBytes);
+
+            Sha1Hash expected = torrent.getPieceHashes().get(pieceIndex);
+
+            if (Sha1Hash.of(pieceBytes).equals(expected)) {
+                LOGGER.log(Level.INFO, "Piece {0} verified", pieceIndex);
+                torrent.setPieceVerified(pieceIndex);
+            } else {
+                LOGGER.log(Level.WARNING, "Piece {0} verification failed", pieceIndex);
+                torrent.unsetDataReceived(pieceIndex, from, to);
+                Block newBlock = new Block(pieceIndex, 0, torrent.getPieceSize(pieceIndex));
+                addBlockToWorkQueue(newBlock);
+                remainingBlocks.add(newBlock);
+            }
+        }
 
         torrent.incrementDownloaded(piece.getBlock().length);
 

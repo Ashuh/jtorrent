@@ -4,11 +4,12 @@ import static java.util.Objects.requireNonNull;
 
 import java.net.URI;
 import java.time.LocalDateTime;
-import java.util.HashSet;
+import java.util.BitSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.IntStream;
 
 public class Torrent {
 
@@ -21,8 +22,7 @@ public class Torrent {
     private final String name;
     private final List<File> files;
     private final Sha1Hash infoHash;
-
-    private final Set<Integer> verifiedPieces = new HashSet<>();
+    private final PieceTracker pieceTracker = new PieceTracker();
     private final AtomicInteger downloaded = new AtomicInteger(0);
     private final AtomicInteger uploaded = new AtomicInteger(0);
 
@@ -98,17 +98,13 @@ public class Torrent {
     }
 
     private int getVerifiedBytes() {
-        return verifiedPieces.stream()
-                .mapToInt(this::getPieceSize)
+        return pieceTracker.getVerifiedPieces()
+                .map(this::getPieceSize)
                 .sum();
     }
 
     public int getNumPieces() {
         return pieceHashes.size();
-    }
-
-    public void setPieceVerified(int pieceIndex) {
-        verifiedPieces.add(pieceIndex);
     }
 
     public int getUploaded() {
@@ -121,6 +117,22 @@ public class Torrent {
 
     public void incrementUploaded(int amount) {
         uploaded.addAndGet(amount);
+    }
+
+    public void setDataReceived(int pieceIndex, int from, int to) {
+        pieceTracker.setDataReceived(pieceIndex, from, to);
+    }
+
+    public void unsetDataReceived(int pieceIndex, int from, int to) {
+        pieceTracker.unsetDataReceived(pieceIndex, from, to);
+    }
+
+    public void setPieceVerified(int pieceIndex) {
+        pieceTracker.setPieceVerified(pieceIndex);
+    }
+
+    public boolean isPieceComplete(int pieceIndex) {
+        return pieceTracker.isPieceComplete(pieceIndex);
     }
 
     @Override
@@ -161,5 +173,56 @@ public class Torrent {
                 + ", files=" + files
                 + ", infoHash=" + infoHash
                 + '}';
+    }
+
+    private class PieceTracker {
+
+        private final HashMap<Integer, BitSet> pieceIndexToAvailableBytes = new HashMap<>();
+
+        private final BitSet availablePieces = new BitSet();
+
+        private final BitSet verifiedPieces = new BitSet();
+
+        public void setDataReceived(int pieceIndex, int from, int to) {
+            if (isPieceComplete(pieceIndex)) {
+                return;
+            }
+
+            BitSet availableBytes = pieceIndexToAvailableBytes.computeIfAbsent(pieceIndex, k -> new BitSet());
+            availableBytes.set(from, to);
+
+            if (availableBytes.cardinality() == getPieceSize(pieceIndex)) {
+                availablePieces.set(pieceIndex);
+                pieceIndexToAvailableBytes.remove(pieceIndex);
+            }
+        }
+
+        public void unsetDataReceived(int pieceIndex, int from, int to) {
+            BitSet availableBytes = pieceIndexToAvailableBytes.computeIfAbsent(pieceIndex, k -> new BitSet());
+
+            if (availablePieces.get(pieceIndex)) {
+                availablePieces.clear(pieceIndex);
+                assert availableBytes.isEmpty();
+                availableBytes.set(0, getPieceSize(pieceIndex));
+            }
+
+            availableBytes.clear(from, to);
+        }
+
+        public void setPieceVerified(int pieceIndex) {
+            verifiedPieces.set(pieceIndex);
+        }
+
+        public boolean isPieceComplete(int pieceIndex) {
+            return availablePieces.get(pieceIndex);
+        }
+
+        public IntStream getAvailablePieces() {
+            return availablePieces.stream();
+        }
+
+        public IntStream getVerifiedPieces() {
+            return verifiedPieces.stream();
+        }
     }
 }
