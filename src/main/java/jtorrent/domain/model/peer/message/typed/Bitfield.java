@@ -5,6 +5,7 @@ import static java.util.Objects.requireNonNull;
 import java.nio.ByteBuffer;
 import java.util.BitSet;
 import java.util.Objects;
+import java.util.stream.IntStream;
 
 public class Bitfield extends TypedPeerMessage {
 
@@ -35,6 +36,10 @@ public class Bitfield extends TypedPeerMessage {
             b >>= 1;
         }
         return result;
+    }
+
+    public IntStream getBits() {
+        return bitSet.stream();
     }
 
     @Override

@@ -72,6 +72,7 @@ public class PeerHandler implements Runnable, Peer.Listener {
                 peer.receiveMessage();
             }
         } catch (IOException e) {
+            LOGGER.log(Level.ERROR, "Error while communicating with peer {0}", peer);
             // TODO: handle exceptions
             e.printStackTrace();
         }
@@ -142,6 +143,11 @@ public class PeerHandler implements Runnable, Peer.Listener {
     @Override
     public void onBitfield(Bitfield bitfield) {
         LOGGER.log(Level.DEBUG, "Handling Bitfield: {0}", bitfield);
+        bitfield.getBits()
+                .forEach(i -> {
+                    availablePieces.add(i);
+                    listeners.forEach(listener -> listener.onPieceAvailable(this, i));
+                });
     }
 
     @Override
