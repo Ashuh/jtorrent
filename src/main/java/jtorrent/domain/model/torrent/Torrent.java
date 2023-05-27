@@ -9,7 +9,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+
+import jtorrent.domain.util.RangeList;
 
 public class Torrent {
 
@@ -22,6 +25,7 @@ public class Torrent {
     private final String name;
     private final List<File> files;
     private final Sha1Hash infoHash;
+    private final RangeList fileByteRanges;
     private final PieceTracker pieceTracker = new PieceTracker();
     private final AtomicInteger downloaded = new AtomicInteger(0);
     private final AtomicInteger uploaded = new AtomicInteger(0);
@@ -37,6 +41,9 @@ public class Torrent {
         this.name = requireNonNull(name);
         this.files = requireNonNull(files);
         this.infoHash = requireNonNull(infoHash);
+        this.fileByteRanges = RangeList.fromRangeSizes(0, files.stream()
+                .map(File::getSize)
+                .collect(Collectors.toList()));
     }
 
     public List<URI> getTrackers() {
@@ -109,6 +116,14 @@ public class Torrent {
 
     public int getUploaded() {
         return uploaded.get();
+    }
+
+    public RangeList getFileByteRanges() {
+        return fileByteRanges;
+    }
+
+    public int getPieceOffset(int index) {
+        return getPieceSize() * index;
     }
 
     public void incrementDownloaded(int amount) {

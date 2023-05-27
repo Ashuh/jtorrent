@@ -5,6 +5,7 @@ import static java.util.Objects.requireNonNull;
 import java.nio.ByteBuffer;
 import java.util.BitSet;
 import java.util.Objects;
+import java.util.stream.IntStream;
 
 public class Bitfield extends TypedPeerMessage {
 
@@ -18,8 +19,27 @@ public class Bitfield extends TypedPeerMessage {
         ByteBuffer buffer = ByteBuffer.wrap(payload);
         byte[] block = new byte[buffer.remaining()];
         buffer.get(block);
+
+        for (int i = 0; i < block.length; i++) {
+            block[i] = reverseBits(block[i]);
+        }
+
         BitSet bitSet = BitSet.valueOf(block);
         return new Bitfield(bitSet);
+    }
+
+    private static byte reverseBits(byte b) {
+        byte result = 0;
+        for (int i = 0; i < Byte.SIZE; i++) {
+            result <<= 1;
+            result |= (b & 1);
+            b >>= 1;
+        }
+        return result;
+    }
+
+    public IntStream getBits() {
+        return bitSet.stream();
     }
 
     @Override

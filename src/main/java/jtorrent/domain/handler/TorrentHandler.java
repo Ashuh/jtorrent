@@ -7,7 +7,6 @@ import static java.util.Objects.requireNonNull;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -19,12 +18,14 @@ import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.stream.Collectors;
 
+import jtorrent.data.repository.FilePieceRepository;
 import jtorrent.domain.model.peer.message.typed.Piece;
 import jtorrent.domain.model.torrent.Block;
 import jtorrent.domain.model.torrent.Sha1Hash;
 import jtorrent.domain.model.torrent.Torrent;
 import jtorrent.domain.model.tracker.udp.UdpTracker;
 import jtorrent.domain.model.tracker.udp.message.PeerResponse;
+import jtorrent.domain.repository.PieceRepository;
 
 public class TorrentHandler implements UdpTrackerHandler.Listener, PeerHandler.Listener {
 
@@ -36,12 +37,10 @@ public class TorrentHandler implements UdpTrackerHandler.Listener, PeerHandler.L
     private final Set<Block> remainingBlocks = new HashSet<>();
     private final LinkedBlockingQueue<Block> workQueue = new LinkedBlockingQueue<>();
     private final Map<Integer, Set<PeerHandler>> pieceIndexToAvailablePeerHandlers = new HashMap<>();
-
-    private final ByteBuffer buffer;
+    private final PieceRepository repository = new FilePieceRepository();
 
     public TorrentHandler(Torrent torrent) {
         this.torrent = requireNonNull(torrent);
-        buffer = ByteBuffer.allocate(torrent.getTotalSize());
 
         for (int i = 0; i < torrent.getNumPieces(); i++) {
             this.remainingBlocks.add(new Block(i, 0, torrent.getPieceSize(i)));
@@ -94,12 +93,7 @@ public class TorrentHandler implements UdpTrackerHandler.Listener, PeerHandler.L
         remainingBlocks.remove(block);
 
         int pieceIndex = piece.getIndex();
-        byte[] data = piece.getBlock();
-        int offset = pieceIndex * torrent.getPieceSize() + piece.getBegin();
-
-        LOGGER.log(Level.TRACE, "Writing {0} bytes at offset {1}", data.length, offset);
-        buffer.position(offset);
-        buffer.put(data);
+        repository.storeBlock(torrent, pieceIndex, piece.getBegin(), piece.getBlock());
 
         int from = piece.getBegin();
         int to = from + piece.getBlock().length;
@@ -109,9 +103,6 @@ public class TorrentHandler implements UdpTrackerHandler.Listener, PeerHandler.L
             LOGGER.log(Level.DEBUG, "Piece {0} complete", pieceIndex);
 
             byte[] pieceBytes = new byte[torrent.getPieceSize(pieceIndex)];
-            buffer.position(pieceIndex * torrent.getPieceSize());
-            buffer.get(pieceBytes);
-
             Sha1Hash expected = torrent.getPieceHashes().get(pieceIndex);
 
             if (Sha1Hash.of(pieceBytes).equals(expected)) {
