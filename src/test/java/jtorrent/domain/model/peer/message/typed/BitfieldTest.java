@@ -35,19 +35,23 @@ class BitfieldTest {
 
     @Test
     void unpack() {
-        BitSet bitSet = new BitSet(8);
+        BitSet bitSet = new BitSet();
         bitSet.set(0);
         bitSet.set(2);
         bitSet.set(4);
         bitSet.set(6);
         bitSet.set(7);
+        bitSet.set(8);
 
         Bitfield expected = new Bitfield(bitSet);
 
-        byte[] payload = ByteBuffer.allocate(9)
-                .order(ByteOrder.BIG_ENDIAN)
-                .put(bitSet.toByteArray())
-                .array();
+        byte[] payload = new byte[2];
+
+        bitSet.stream().forEach(i -> {
+            int byteIndex = i / Byte.SIZE;
+            payload[byteIndex] |= 1 << (7 - i % Byte.SIZE);
+        });
+
         Bitfield actual = Bitfield.unpack(payload);
 
         assertEquals(expected, actual);
