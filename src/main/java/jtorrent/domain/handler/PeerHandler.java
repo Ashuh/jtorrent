@@ -75,7 +75,7 @@ public class PeerHandler implements Runnable, Peer.Listener {
         } catch (IOException e) {
             LOGGER.log(Level.ERROR, "Error while communicating with peer {0}", peer);
             // TODO: handle exceptions
-            e.printStackTrace();
+            listeners.forEach(listener -> listener.onPeerDisconnected(this));
         }
     }
 
@@ -232,5 +232,7 @@ public class PeerHandler implements Runnable, Peer.Listener {
         void onPieceReceived(Piece piece);
 
         void onPieceAvailable(PeerHandler peerHandler, int index);
+
+        void onPeerDisconnected(PeerHandler peerHandler);
     }
 }

@@ -151,6 +151,11 @@ public class TorrentHandler implements UdpTrackerHandler.Listener, PeerHandler.L
         workQueue.add(new Block(index, 0, pieceSize));
     }
 
+    @Override
+    public void onPeerDisconnected(PeerHandler peerHandler) {
+        peerHandlers.remove(peerHandler);
+    }
+
     private int getPieceAvailability(int pieceIndex) {
         return pieceIndexToAvailablePeerHandlers.get(pieceIndex).size();
     }
