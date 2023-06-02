@@ -34,6 +34,8 @@ public class Peer {
     private final DurationWindow durationWindow = new DurationWindow(Duration.ofSeconds(20));
     private final List<Listener> listeners = new ArrayList<>();
 
+    private boolean isLocalChoked = true;
+    private boolean isRemoteChoked = true;
     private Socket socket;
     private OutputStream outputStream;
     private InputStream inputStream;
@@ -144,6 +146,22 @@ public class Peer {
 
     public int getPort() {
         return port;
+    }
+
+    public boolean isLocalChoked() {
+        return isLocalChoked;
+    }
+
+    public void setLocalChoked(boolean localChoked) {
+        isLocalChoked = localChoked;
+    }
+
+    public boolean isRemoteChoked() {
+        return isRemoteChoked;
+    }
+
+    public void setRemoteChoked(boolean remoteChoked) {
+        isRemoteChoked = remoteChoked;
     }
 
     public double getDownloadRate() {
