@@ -241,6 +241,7 @@ public class TorrentHandler implements UdpTrackerHandler.Listener, PeerHandler.L
         @Override
         public void run() {
             Set<PeerHandler> toUnchoke = peerHandlers.stream()
+                    .filter(PeerHandler::isConnected)
                     .sorted(Comparator.comparingDouble(PeerHandler::getDownloadRate).reversed())
                     .limit(MAX_UNCHOKED_PEERS)
                     .collect(Collectors.toSet());
@@ -271,6 +272,7 @@ public class TorrentHandler implements UdpTrackerHandler.Listener, PeerHandler.L
             List<PeerHandler> peerHandlersCopy = new ArrayList<>(this.peerHandlers);
             Collections.shuffle(peerHandlersCopy);
             peerHandlersCopy.stream()
+                    .filter(PeerHandler::isConnected)
                     .filter(PeerHandler::isRemoteChoked)
                     .findFirst()
                     .ifPresent(this::setOptimisticUnchokedPeerHandler);

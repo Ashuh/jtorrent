@@ -208,6 +208,10 @@ public class PeerHandler implements Runnable, Peer.Listener {
         listeners.forEach(listener -> listener.onReady(this));
     }
 
+    public boolean isConnected() {
+        return isConnected;
+    }
+
     public boolean isReady() {
         return isConnected && !peer.isLocalChoked() && !isBusy;
     }
