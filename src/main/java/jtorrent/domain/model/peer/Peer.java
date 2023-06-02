@@ -10,6 +10,7 @@ import java.lang.System.Logger.Level;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.nio.ByteBuffer;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -23,12 +24,14 @@ import jtorrent.domain.model.peer.message.typed.Have;
 import jtorrent.domain.model.peer.message.typed.MessageType;
 import jtorrent.domain.model.peer.message.typed.Piece;
 import jtorrent.domain.model.peer.message.typed.Request;
+import jtorrent.domain.util.DurationWindow;
 
 public class Peer {
 
     private static final Logger LOGGER = System.getLogger(Peer.class.getName());
     private final InetAddress address;
     private final int port; // unsigned short
+    private final DurationWindow durationWindow = new DurationWindow(Duration.ofSeconds(20));
     private final List<Listener> listeners = new ArrayList<>();
 
     private Socket socket;
@@ -123,6 +126,7 @@ public class Peer {
             break;
         case PIECE:
             Piece piece = Piece.unpack(payload);
+            durationWindow.add(piece.getBlock().length);
             listeners.forEach(listener -> listener.onPiece(piece));
             break;
         case CANCEL:
@@ -140,6 +144,10 @@ public class Peer {
 
     public int getPort() {
         return port;
+    }
+
+    public double getDownloadRate() {
+        return durationWindow.getWindowAverageRate();
     }
 
     @Override
