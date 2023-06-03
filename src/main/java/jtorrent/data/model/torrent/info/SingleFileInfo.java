@@ -12,9 +12,9 @@ import java.util.Objects;
 
 public class SingleFileInfo extends BencodedInfo {
 
-    private final int length;
+    private final long length;
 
-    public SingleFileInfo(int pieceLength, byte[] pieces, String name, int length) {
+    public SingleFileInfo(int pieceLength, byte[] pieces, String name, long length) {
         super(pieceLength, pieces, name);
         this.length = length;
     }
@@ -23,7 +23,7 @@ public class SingleFileInfo extends BencodedInfo {
         int pieceLength = getValueAsLong(map, KEY_PIECE_LENGTH).orElseThrow().intValue();
         byte[] pieces = getValueAsByteArray(map, KEY_PIECES).orElseThrow();
         String name = getValueAsString(map, KEY_NAME).orElseThrow();
-        int length = getValueAsLong(map, KEY_LENGTH).orElseThrow().intValue();
+        long length = getValueAsLong(map, KEY_LENGTH).orElseThrow();
 
         return new SingleFileInfo(pieceLength, pieces, name, length);
     }
@@ -53,7 +53,7 @@ public class SingleFileInfo extends BencodedInfo {
         return length == that.length;
     }
 
-    public int getLength() {
+    public long getLength() {
         return length;
     }
 

@@ -68,7 +68,7 @@ public class Torrent {
 
     public int getPieceSize(int pieceIndex) {
         if (pieceIndex == getNumPieces() - 1) {
-            return getTotalSize() % pieceSize;
+            return (int) (getTotalSize() % pieceSize);
         }
         return pieceSize;
     }
@@ -89,18 +89,18 @@ public class Torrent {
         return infoHash;
     }
 
-    public int getDownloaded() {
+    public long getDownloaded() {
         return downloaded.get();
     }
 
-    public int getLeft() {
+    public long getLeft() {
         return getTotalSize() - getVerifiedBytes();
     }
 
-    public int getTotalSize() {
+    public long getTotalSize() {
         return files.stream()
                 .map(File::getSize)
-                .mapToInt(Integer::intValue)
+                .mapToLong(Long::longValue)
                 .sum();
     }
 
