@@ -44,7 +44,10 @@ public class BencodedFile extends BencodedObject {
     }
 
     public File toDomain() {
-        return new File(length, Path.of(String.join("/", path)));
+        List<String> sanitizedPath = path.stream()
+                .map(part -> part.replaceAll("[\\\\/:*?\"<>|]", "_"))
+                .collect(Collectors.toList());
+        return new File(length, Path.of(String.join("/", sanitizedPath)));
     }
 
     @Override
