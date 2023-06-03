@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import jtorrent.domain.model.exception.UnpackException;
 
-class AnnounceResponseTest {
+class UdpAnnounceResponseTest {
 
     @Test
     void unpack() {
@@ -25,12 +25,12 @@ class AnnounceResponseTest {
                 .putInt(20);
         putPeerResponse(payload, 100, (short) 100);
         putPeerResponse(payload, 200, (short) 200);
-        AnnounceResponse actual = AnnounceResponse.unpack(payload.array());
+        UdpAnnounceResponse actual = UdpAnnounceResponse.unpack(payload.array());
 
-        List<PeerResponse> peerResponses = new ArrayList<>();
-        peerResponses.add(new PeerResponse(100, 100));
-        peerResponses.add(new PeerResponse(200, 200));
-        AnnounceResponse expected = new AnnounceResponse(9999, 100, 10, 20, peerResponses);
+        List<UdpPeerResponse> udpPeerRespons = new ArrayList<>();
+        udpPeerRespons.add(new UdpPeerResponse(100, 100));
+        udpPeerRespons.add(new UdpPeerResponse(200, 200));
+        UdpAnnounceResponse expected = new UdpAnnounceResponse(9999, 100, 10, 20, udpPeerRespons);
 
         assertEquals(expected, actual);
     }
@@ -43,13 +43,13 @@ class AnnounceResponseTest {
     void unpack_lessThanMinimumExpectedBytes_throwsUnpackException() {
         ByteBuffer payload = ByteBuffer.allocate(15);
         byte[] payloadBytes = payload.array();
-        assertThrows(UnpackException.class, () -> AnnounceResponse.unpack(payloadBytes));
+        assertThrows(UnpackException.class, () -> UdpAnnounceResponse.unpack(payloadBytes));
     }
 
     @Test
     void unpack_equalToMinimumExpectedBytes_doesNotThrow() {
         ByteBuffer payload = ByteBuffer.allocate(16);
         byte[] payloadBytes = payload.array();
-        assertDoesNotThrow(() -> AnnounceResponse.unpack(payloadBytes));
+        assertDoesNotThrow(() -> UdpAnnounceResponse.unpack(payloadBytes));
     }
 }

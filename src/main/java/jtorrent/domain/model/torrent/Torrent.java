@@ -2,7 +2,6 @@ package jtorrent.domain.model.torrent;
 
 import static java.util.Objects.requireNonNull;
 
-import java.net.URI;
 import java.time.LocalDateTime;
 import java.util.BitSet;
 import java.util.HashMap;
@@ -12,11 +11,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import jtorrent.domain.model.tracker.Tracker;
 import jtorrent.domain.util.RangeList;
 
 public class Torrent {
 
-    private final List<URI> trackers;
+    private final List<Tracker> trackers;
     private final LocalDateTime creationDate;
     private final String comment;
     private final String createdBy;
@@ -30,8 +30,8 @@ public class Torrent {
     private final AtomicInteger downloaded = new AtomicInteger(0);
     private final AtomicInteger uploaded = new AtomicInteger(0);
 
-    public Torrent(List<URI> trackers, LocalDateTime creationDate, String comment, String createdBy, int pieceSize,
-            List<Sha1Hash> pieceHashes, String name, List<File> files, Sha1Hash infoHash) {
+    public Torrent(List<Tracker> trackers, LocalDateTime creationDate, String comment, String createdBy,
+            int pieceSize, List<Sha1Hash> pieceHashes, String name, List<File> files, Sha1Hash infoHash) {
         this.trackers = requireNonNull(trackers);
         this.creationDate = requireNonNull(creationDate);
         this.comment = requireNonNull(comment);
@@ -46,7 +46,7 @@ public class Torrent {
                 .collect(Collectors.toList()));
     }
 
-    public List<URI> getTrackers() {
+    public List<Tracker> getTrackers() {
         return trackers;
     }
 

@@ -8,6 +8,7 @@ import java.nio.ByteOrder;
 import org.junit.jupiter.api.Test;
 
 import jtorrent.domain.model.torrent.Sha1Hash;
+import jtorrent.domain.model.tracker.Event;
 
 class AnnounceRequestTest {
 

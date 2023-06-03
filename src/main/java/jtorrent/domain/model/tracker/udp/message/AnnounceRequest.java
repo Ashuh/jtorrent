@@ -7,6 +7,7 @@ import java.nio.ByteOrder;
 import java.util.Arrays;
 
 import jtorrent.domain.model.torrent.Sha1Hash;
+import jtorrent.domain.model.tracker.Event;
 
 /**
  * Represents an announce request.

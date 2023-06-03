@@ -6,7 +6,6 @@ import static java.lang.System.getLogger;
 import static java.util.Objects.requireNonNull;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -23,16 +22,15 @@ import jtorrent.domain.model.peer.message.typed.Piece;
 import jtorrent.domain.model.torrent.Block;
 import jtorrent.domain.model.torrent.Sha1Hash;
 import jtorrent.domain.model.torrent.Torrent;
-import jtorrent.domain.model.tracker.udp.UdpTracker;
-import jtorrent.domain.model.tracker.udp.message.PeerResponse;
+import jtorrent.domain.model.tracker.PeerResponse;
 import jtorrent.domain.repository.PieceRepository;
 
-public class TorrentHandler implements UdpTrackerHandler.Listener, PeerHandler.Listener {
+public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Listener {
 
     private static final Logger LOGGER = getLogger(TorrentHandler.class.getName());
 
     private final Torrent torrent;
-    private final Set<UdpTrackerHandler> trackerHandlers;
+    private final Set<TrackerHandler> trackerHandlers;
     private final Set<PeerHandler> peerHandlers = new HashSet<>();
     private final Set<Block> remainingBlocks = new HashSet<>();
     private final LinkedBlockingQueue<Block> workQueue = new LinkedBlockingQueue<>();
@@ -47,9 +45,7 @@ public class TorrentHandler implements UdpTrackerHandler.Listener, PeerHandler.L
         }
 
         this.trackerHandlers = torrent.getTrackers().stream()
-                .map(x -> new InetSocketAddress(x.getHost(), x.getPort()))
-                .map(UdpTracker::new)
-                .map(x -> new UdpTrackerHandler(x, torrent))
+                .map(tracker -> TrackerHandler.create(torrent, tracker))
                 .collect(Collectors.toSet());
 
         WorkDispatcher dispatcher = new WorkDispatcher();
@@ -59,7 +55,7 @@ public class TorrentHandler implements UdpTrackerHandler.Listener, PeerHandler.L
 
     public void start() {
         trackerHandlers.forEach(trackerHandler -> trackerHandler.addListener(this));
-        trackerHandlers.forEach(UdpTrackerHandler::start);
+        trackerHandlers.forEach(TrackerHandler::start);
     }
 
     private void addBlockToWorkQueue(Block block) {
@@ -121,7 +117,7 @@ public class TorrentHandler implements UdpTrackerHandler.Listener, PeerHandler.L
 
         if (remainingBlocks.isEmpty()) {
             LOGGER.log(Level.DEBUG, "All pieces received");
-            trackerHandlers.forEach(UdpTrackerHandler::stop);
+            trackerHandlers.forEach(TrackerHandler::stop);
         }
     }
 
