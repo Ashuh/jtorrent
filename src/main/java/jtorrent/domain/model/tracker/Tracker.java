@@ -2,9 +2,10 @@ package jtorrent.domain.model.tracker;
 
 import java.io.IOException;
 
-import jtorrent.domain.model.torrent.Torrent;
+import jtorrent.domain.model.torrent.Sha1Hash;
 
 public interface Tracker {
 
-    AnnounceResponse announce(Torrent torrent, Event event) throws IOException;
+    AnnounceResponse announce(Sha1Hash infoHash, long downloaded, long left, long uploaded, Event event)
+            throws IOException;
 }

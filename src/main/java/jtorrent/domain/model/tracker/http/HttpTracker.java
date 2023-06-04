@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 import com.dampcake.bencode.BencodeInputStream;
 
 import jtorrent.domain.Constants;
-import jtorrent.domain.model.torrent.Torrent;
+import jtorrent.domain.model.torrent.Sha1Hash;
 import jtorrent.domain.model.tracker.AnnounceResponse;
 import jtorrent.domain.model.tracker.Event;
 import jtorrent.domain.model.tracker.Tracker;
@@ -33,14 +33,15 @@ public class HttpTracker implements Tracker {
     }
 
     @Override
-    public AnnounceResponse announce(Torrent torrent, Event event) throws IOException {
+    public AnnounceResponse announce(Sha1Hash infoHash, long downloaded, long left, long uploaded, Event event)
+            throws IOException {
         HttpAnnounceRequest request = new HttpAnnounceRequest.Builder()
-                .setInfohash(torrent.getInfoHash())
+                .setInfohash(infoHash)
                 .setPeerId(Constants.PEER_ID)
                 .setPort(Constants.PORT)
-                .setUploaded(torrent.getUploaded())
-                .setDownloaded(torrent.getDownloaded())
-                .setLeft(torrent.getLeft())
+                .setUploaded(uploaded)
+                .setDownloaded(downloaded)
+                .setLeft(left)
                 .setEvent(event)
                 .build();
 

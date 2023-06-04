@@ -12,7 +12,7 @@ import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.time.LocalDateTime;
 
-import jtorrent.domain.model.torrent.Torrent;
+import jtorrent.domain.model.torrent.Sha1Hash;
 import jtorrent.domain.model.tracker.Event;
 import jtorrent.domain.model.tracker.Tracker;
 import jtorrent.domain.model.tracker.udp.message.Action;
@@ -44,14 +44,15 @@ public class UdpTracker implements Tracker {
     }
 
     @Override
-    public UdpAnnounceResponse announce(Torrent torrent, Event event) throws IOException {
+    public UdpAnnounceResponse announce(Sha1Hash infoHash, long downloaded, long left, long uploaded, Event event)
+            throws IOException {
         // TODO: what to set for ipv4, key, numWant?
         UdpAnnounceRequest announceRequest = new UdpAnnounceRequest(connectionId,
-                torrent.getInfoHash(),
+                infoHash,
                 PEER_ID.getBytes(),
-                torrent.getDownloaded(),
-                torrent.getLeft(),
-                torrent.getUploaded(),
+                downloaded,
+                left,
+                uploaded,
                 event,
                 0,
                 0,

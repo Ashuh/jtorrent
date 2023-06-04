@@ -2,6 +2,7 @@ package jtorrent.domain.handler;
 
 import static java.util.Objects.requireNonNull;
 
+import jtorrent.domain.model.torrent.Sha1Hash;
 import jtorrent.domain.model.torrent.Torrent;
 import jtorrent.domain.model.tracker.AnnounceResponse;
 import jtorrent.domain.model.tracker.Event;
@@ -31,7 +32,11 @@ public class HttpTrackerHandler extends TrackerHandler {
 
         @Override
         public AnnounceResponse call() throws Exception {
-            return tracker.announce(torrent, event);
+            Sha1Hash infoHash = torrent.getInfoHash();
+            long downloaded = torrent.getDownloaded();
+            long left = torrent.getLeft();
+            long uploaded = torrent.getUploaded();
+            return tracker.announce(infoHash, downloaded, left, uploaded, event);
         }
     }
 }
