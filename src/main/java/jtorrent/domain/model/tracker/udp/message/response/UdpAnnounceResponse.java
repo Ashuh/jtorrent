@@ -1,4 +1,4 @@
-package jtorrent.domain.model.tracker.udp.message;
+package jtorrent.domain.model.tracker.udp.message.response;
 
 import static java.util.Objects.requireNonNull;
 
@@ -10,6 +10,7 @@ import java.util.Objects;
 import jtorrent.domain.model.exception.UnpackException;
 import jtorrent.domain.model.tracker.AnnounceResponse;
 import jtorrent.domain.model.tracker.PeerResponse;
+import jtorrent.domain.model.tracker.udp.message.UdpMessage;
 
 /**
  * Represents an announce response.

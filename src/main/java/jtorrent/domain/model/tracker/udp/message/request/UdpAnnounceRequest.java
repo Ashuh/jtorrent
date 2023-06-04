@@ -1,4 +1,4 @@
-package jtorrent.domain.model.tracker.udp.message;
+package jtorrent.domain.model.tracker.udp.message.request;
 
 import static java.util.Objects.requireNonNull;
 
@@ -8,6 +8,7 @@ import java.util.Arrays;
 
 import jtorrent.domain.model.torrent.Sha1Hash;
 import jtorrent.domain.model.tracker.Event;
+import jtorrent.domain.model.tracker.udp.message.Action;
 
 /**
  * Represents an announce request.

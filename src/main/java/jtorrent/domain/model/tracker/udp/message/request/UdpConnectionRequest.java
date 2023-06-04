@@ -1,7 +1,9 @@
-package jtorrent.domain.model.tracker.udp.message;
+package jtorrent.domain.model.tracker.udp.message.request;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+
+import jtorrent.domain.model.tracker.udp.message.Action;
 
 /**
  * Represents a connection request.

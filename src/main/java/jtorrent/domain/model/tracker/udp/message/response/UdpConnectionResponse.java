@@ -1,9 +1,10 @@
-package jtorrent.domain.model.tracker.udp.message;
+package jtorrent.domain.model.tracker.udp.message.response;
 
 import java.nio.ByteBuffer;
 import java.util.Objects;
 
 import jtorrent.domain.model.exception.UnpackException;
+import jtorrent.domain.model.tracker.udp.message.UdpMessage;
 
 /**
  * Represents a connection response.

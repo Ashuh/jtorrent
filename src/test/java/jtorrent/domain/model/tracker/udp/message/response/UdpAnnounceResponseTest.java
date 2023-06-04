@@ -1,4 +1,4 @@
-package jtorrent.domain.model.tracker.udp.message;
+package jtorrent.domain.model.tracker.udp.message.response;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -11,6 +11,8 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 import jtorrent.domain.model.exception.UnpackException;
+import jtorrent.domain.model.tracker.udp.message.response.UdpAnnounceResponse;
+import jtorrent.domain.model.tracker.udp.message.response.UdpPeerResponse;
 
 class UdpAnnounceResponseTest {
 

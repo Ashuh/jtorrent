@@ -1,4 +1,6 @@
-package jtorrent.domain.model.tracker.udp.message;
+package jtorrent.domain.model.tracker.udp.message.request;
+
+import jtorrent.domain.model.tracker.udp.message.UdpMessage;
 
 public abstract class UdpRequest extends UdpMessage {
 

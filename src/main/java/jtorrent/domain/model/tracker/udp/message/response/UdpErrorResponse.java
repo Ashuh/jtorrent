@@ -1,4 +1,4 @@
-package jtorrent.domain.model.tracker.udp.message;
+package jtorrent.domain.model.tracker.udp.message.response;
 
 import java.nio.ByteBuffer;
 

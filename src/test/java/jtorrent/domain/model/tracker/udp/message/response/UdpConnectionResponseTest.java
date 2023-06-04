@@ -1,4 +1,4 @@
-package jtorrent.domain.model.tracker.udp.message;
+package jtorrent.domain.model.tracker.udp.message.response;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -8,6 +8,7 @@ import java.nio.ByteBuffer;
 import org.junit.jupiter.api.Test;
 
 import jtorrent.domain.model.exception.UnpackException;
+import jtorrent.domain.model.tracker.udp.message.response.UdpConnectionResponse;
 
 class UdpConnectionResponseTest {
 

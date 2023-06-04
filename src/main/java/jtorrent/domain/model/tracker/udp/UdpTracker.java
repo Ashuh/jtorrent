@@ -16,12 +16,12 @@ import jtorrent.domain.model.torrent.Torrent;
 import jtorrent.domain.model.tracker.Event;
 import jtorrent.domain.model.tracker.Tracker;
 import jtorrent.domain.model.tracker.udp.message.Action;
-import jtorrent.domain.model.tracker.udp.message.UdpAnnounceRequest;
-import jtorrent.domain.model.tracker.udp.message.UdpConnectionRequest;
-import jtorrent.domain.model.tracker.udp.message.UdpConnectionResponse;
-import jtorrent.domain.model.tracker.udp.message.UdpErrorResponse;
-import jtorrent.domain.model.tracker.udp.message.UdpRequest;
-import jtorrent.domain.model.tracker.udp.message.UdpAnnounceResponse;
+import jtorrent.domain.model.tracker.udp.message.request.UdpAnnounceRequest;
+import jtorrent.domain.model.tracker.udp.message.request.UdpConnectionRequest;
+import jtorrent.domain.model.tracker.udp.message.response.UdpConnectionResponse;
+import jtorrent.domain.model.tracker.udp.message.response.UdpErrorResponse;
+import jtorrent.domain.model.tracker.udp.message.request.UdpRequest;
+import jtorrent.domain.model.tracker.udp.message.response.UdpAnnounceResponse;
 
 public class UdpTracker extends Tracker {
 

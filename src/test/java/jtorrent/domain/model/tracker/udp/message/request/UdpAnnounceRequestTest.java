@@ -1,4 +1,4 @@
-package jtorrent.domain.model.tracker.udp.message;
+package jtorrent.domain.model.tracker.udp.message.request;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
@@ -9,6 +9,8 @@ import org.junit.jupiter.api.Test;
 
 import jtorrent.domain.model.torrent.Sha1Hash;
 import jtorrent.domain.model.tracker.Event;
+import jtorrent.domain.model.tracker.udp.message.Action;
+import jtorrent.domain.model.tracker.udp.message.request.UdpAnnounceRequest;
 
 class UdpAnnounceRequestTest {
 

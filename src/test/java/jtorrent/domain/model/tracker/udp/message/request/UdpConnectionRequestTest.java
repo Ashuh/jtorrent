@@ -1,4 +1,4 @@
-package jtorrent.domain.model.tracker.udp.message;
+package jtorrent.domain.model.tracker.udp.message.request;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
@@ -6,6 +6,9 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 import org.junit.jupiter.api.Test;
+
+import jtorrent.domain.model.tracker.udp.message.Action;
+import jtorrent.domain.model.tracker.udp.message.request.UdpConnectionRequest;
 
 class UdpConnectionRequestTest {
 

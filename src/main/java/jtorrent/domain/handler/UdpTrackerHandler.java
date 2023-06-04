@@ -11,7 +11,7 @@ import jtorrent.domain.handler.exception.ExceededMaxTriesException;
 import jtorrent.domain.model.torrent.Torrent;
 import jtorrent.domain.model.tracker.Event;
 import jtorrent.domain.model.tracker.udp.UdpTracker;
-import jtorrent.domain.model.tracker.udp.message.UdpAnnounceResponse;
+import jtorrent.domain.model.tracker.udp.message.response.UdpAnnounceResponse;
 
 public class UdpTrackerHandler extends TrackerHandler {
 
