@@ -1,8 +1,8 @@
 package jtorrent.domain.model.tracker.udp.message;
 
-public abstract class Request extends UdpMessage {
+public abstract class UdpRequest extends UdpMessage {
 
-    protected Request() {
+    protected UdpRequest() {
         super(generateTransactionId());
     }
 

@@ -10,13 +10,13 @@ import org.junit.jupiter.api.Test;
 import jtorrent.domain.model.torrent.Sha1Hash;
 import jtorrent.domain.model.tracker.Event;
 
-class AnnounceRequestTest {
+class UdpAnnounceRequestTest {
 
     @Test
     void pack() {
         Sha1Hash infoHash = new Sha1Hash(new byte[20]);
         byte[] peerId = "01234567890123456789".getBytes();
-        AnnounceRequest announceRequest = new AnnounceRequest(
+        UdpAnnounceRequest announceRequest = new UdpAnnounceRequest(
                 9999,
                 infoHash,
                 peerId,

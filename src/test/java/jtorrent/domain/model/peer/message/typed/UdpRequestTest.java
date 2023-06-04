@@ -8,7 +8,7 @@ import java.nio.ByteOrder;
 
 import org.junit.jupiter.api.Test;
 
-class RequestTest {
+class UdpRequestTest {
 
     @Test
     void pack() {

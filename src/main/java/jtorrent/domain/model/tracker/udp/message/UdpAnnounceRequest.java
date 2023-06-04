@@ -14,7 +14,7 @@ import jtorrent.domain.model.tracker.Event;
  *
  * @see <a href="https://www.bittorrent.org/beps/bep_0015.html">UDP Tracker Protocol for BitTorrent</a>
  */
-public class AnnounceRequest extends Request {
+public class UdpAnnounceRequest extends UdpRequest {
 
     private static final int BYTES = 98;
 
@@ -30,7 +30,7 @@ public class AnnounceRequest extends Request {
     private final int numWant;
     private final int port; // unsigned short
 
-    public AnnounceRequest(long connectionId, Sha1Hash infoHash, byte[] peerId, long downloaded,
+    public UdpAnnounceRequest(long connectionId, Sha1Hash infoHash, byte[] peerId, long downloaded,
             long left, long uploaded, Event event, int ipv4, int key, int numWant, int port) {
 
         if (peerId.length != 20) {

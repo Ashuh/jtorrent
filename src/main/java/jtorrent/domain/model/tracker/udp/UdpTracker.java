@@ -16,11 +16,11 @@ import jtorrent.domain.model.torrent.Torrent;
 import jtorrent.domain.model.tracker.Event;
 import jtorrent.domain.model.tracker.Tracker;
 import jtorrent.domain.model.tracker.udp.message.Action;
-import jtorrent.domain.model.tracker.udp.message.AnnounceRequest;
-import jtorrent.domain.model.tracker.udp.message.ConnectionRequest;
-import jtorrent.domain.model.tracker.udp.message.ConnectionResponse;
-import jtorrent.domain.model.tracker.udp.message.ErrorResponse;
-import jtorrent.domain.model.tracker.udp.message.Request;
+import jtorrent.domain.model.tracker.udp.message.UdpAnnounceRequest;
+import jtorrent.domain.model.tracker.udp.message.UdpConnectionRequest;
+import jtorrent.domain.model.tracker.udp.message.UdpConnectionResponse;
+import jtorrent.domain.model.tracker.udp.message.UdpErrorResponse;
+import jtorrent.domain.model.tracker.udp.message.UdpRequest;
 import jtorrent.domain.model.tracker.udp.message.UdpAnnounceResponse;
 
 public class UdpTracker extends Tracker {
@@ -47,7 +47,7 @@ public class UdpTracker extends Tracker {
     @Override
     public UdpAnnounceResponse announce(Torrent torrent, Event event) throws IOException {
         // TODO: what to set for ipv4, key, numWant?
-        AnnounceRequest announceRequest = new AnnounceRequest(connectionId,
+        UdpAnnounceRequest announceRequest = new UdpAnnounceRequest(connectionId,
                 torrent.getInfoHash(),
                 PEER_ID.getBytes(),
                 torrent.getDownloaded(),
@@ -73,9 +73,9 @@ public class UdpTracker extends Tracker {
 
     public void connect() throws IOException {
         LOGGER.log(Level.TRACE, "Getting connection ID");
-        ConnectionRequest connectionRequest = new ConnectionRequest();
+        UdpConnectionRequest connectionRequest = new UdpConnectionRequest();
         sendRequest(connectionRequest);
-        ConnectionResponse connectionResponse = receiveConnectionResponse();
+        UdpConnectionResponse connectionResponse = receiveConnectionResponse();
         if (!connectionResponse.hasMatchingTransactionId(connectionRequest)) {
             throw new IOException("Transaction ID mismatch");
         }
@@ -96,19 +96,19 @@ public class UdpTracker extends Tracker {
         return LocalDateTime.now().isBefore(connectionIdExpiration);
     }
 
-    public void sendRequest(Request request) throws IOException {
+    public void sendRequest(UdpRequest request) throws IOException {
         LOGGER.log(Level.DEBUG, "Sending request: {}", request);
         byte[] requestBytes = request.pack();
         DatagramPacket requestPacket = new DatagramPacket(requestBytes, requestBytes.length);
         socket.send(requestPacket);
     }
 
-    public ConnectionResponse receiveConnectionResponse() throws IOException {
+    public UdpConnectionResponse receiveConnectionResponse() throws IOException {
         LOGGER.log(Level.TRACE, "Waiting for connection response");
         DatagramPacket packet = new DatagramPacket(new byte[UDP_MAX_PACKET_SIZE], UDP_MAX_PACKET_SIZE);
         socket.receive(packet);
 
-        if (packet.getLength() != ConnectionResponse.MESSAGE_BYTES) {
+        if (packet.getLength() != UdpConnectionResponse.MESSAGE_BYTES) {
             throw new IOException("Invalid response length");
         }
 
@@ -119,14 +119,14 @@ public class UdpTracker extends Tracker {
 
         if (action != Action.CONNECT) {
             if (action == Action.ERROR) {
-                ErrorResponse errorResponse = ErrorResponse.unpack(payload);
+                UdpErrorResponse errorResponse = UdpErrorResponse.unpack(payload);
                 throw new IOException(errorResponse.getMessage());
             }
             throw new IOException("Invalid action");
         }
 
         LOGGER.log(Level.TRACE, "Received connection response");
-        return ConnectionResponse.unpack(payload);
+        return UdpConnectionResponse.unpack(payload);
     }
 
     public UdpAnnounceResponse receiveAnnounceResponse() throws IOException {
@@ -145,7 +145,7 @@ public class UdpTracker extends Tracker {
 
         if (action != Action.ANNOUNCE) {
             if (action == Action.ERROR) {
-                ErrorResponse errorResponse = ErrorResponse.unpack(payload);
+                UdpErrorResponse errorResponse = UdpErrorResponse.unpack(payload);
                 throw new IOException(errorResponse.getMessage());
             }
             throw new IOException("Invalid action");

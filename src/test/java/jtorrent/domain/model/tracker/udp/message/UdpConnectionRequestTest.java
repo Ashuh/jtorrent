@@ -7,11 +7,11 @@ import java.nio.ByteOrder;
 
 import org.junit.jupiter.api.Test;
 
-class ConnectionRequestTest {
+class UdpConnectionRequestTest {
 
     @Test
     void pack() {
-        ConnectionRequest connectionRequest = new ConnectionRequest();
+        UdpConnectionRequest connectionRequest = new UdpConnectionRequest();
         byte[] actual = connectionRequest.pack();
 
         byte[] expected = ByteBuffer.allocate(16)
