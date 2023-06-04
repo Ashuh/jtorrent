@@ -29,7 +29,7 @@ import jtorrent.data.model.torrent.info.BencodedInfoFactory;
 import jtorrent.domain.model.torrent.File;
 import jtorrent.domain.model.torrent.Torrent;
 import jtorrent.domain.model.tracker.Tracker;
-import jtorrent.domain.model.tracker.TrackerFactory;
+import jtorrent.domain.model.tracker.factory.TrackerFactory;
 import jtorrent.domain.util.Sha1Hash;
 
 public class BencodedTorrent extends BencodedObject {

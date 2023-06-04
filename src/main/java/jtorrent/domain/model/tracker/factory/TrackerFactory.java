@@ -1,8 +1,9 @@
-package jtorrent.domain.model.tracker;
+package jtorrent.domain.model.tracker.factory;
 
 import java.net.InetSocketAddress;
 import java.net.URI;
 
+import jtorrent.domain.model.tracker.Tracker;
 import jtorrent.domain.model.tracker.http.HttpTracker;
 import jtorrent.domain.model.tracker.udp.UdpTracker;
 
