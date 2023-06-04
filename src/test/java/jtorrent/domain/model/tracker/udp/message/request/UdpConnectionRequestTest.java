@@ -8,7 +8,6 @@ import java.nio.ByteOrder;
 import org.junit.jupiter.api.Test;
 
 import jtorrent.domain.model.tracker.udp.message.Action;
-import jtorrent.domain.model.tracker.udp.message.request.UdpConnectionRequest;
 
 class UdpConnectionRequestTest {
 
@@ -21,7 +20,7 @@ class UdpConnectionRequestTest {
                 .order(ByteOrder.BIG_ENDIAN)
                 .putLong(0x41727101980L)
                 .putInt(Action.CONNECT.getValue())
-                .putInt(connectionRequest.transactionId)
+                .putInt(connectionRequest.getTransactionId())
                 .array();
 
         assertArrayEquals(expected, actual);

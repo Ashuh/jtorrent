@@ -10,7 +10,6 @@ import org.junit.jupiter.api.Test;
 import jtorrent.domain.model.torrent.Sha1Hash;
 import jtorrent.domain.model.tracker.Event;
 import jtorrent.domain.model.tracker.udp.message.Action;
-import jtorrent.domain.model.tracker.udp.message.request.UdpAnnounceRequest;
 
 class UdpAnnounceRequestTest {
 
@@ -36,7 +35,7 @@ class UdpAnnounceRequestTest {
                 .order(ByteOrder.BIG_ENDIAN)
                 .putLong(9999)
                 .putInt(Action.ANNOUNCE.getValue())
-                .putInt(announceRequest.transactionId)
+                .putInt(announceRequest.getTransactionId())
                 .put(infoHash.getBytes())
                 .put(peerId)
                 .putLong(1)
