@@ -45,7 +45,7 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.List
         }
 
         this.trackerHandlers = torrent.getTrackers().stream()
-                .map(tracker -> TrackerHandler.create(torrent, tracker))
+                .map(tracker -> TrackerHandlerFactory.create(torrent, tracker))
                 .collect(Collectors.toSet());
 
         WorkDispatcher dispatcher = new WorkDispatcher();
