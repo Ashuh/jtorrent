@@ -20,10 +20,10 @@ import java.util.stream.Collectors;
 import jtorrent.data.repository.FilePieceRepository;
 import jtorrent.domain.model.peer.message.typed.Piece;
 import jtorrent.domain.model.torrent.Block;
-import jtorrent.domain.model.torrent.Sha1Hash;
 import jtorrent.domain.model.torrent.Torrent;
 import jtorrent.domain.model.tracker.PeerResponse;
 import jtorrent.domain.repository.PieceRepository;
+import jtorrent.domain.util.Sha1Hash;
 
 public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Listener {
 

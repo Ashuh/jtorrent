@@ -1,10 +1,10 @@
-package jtorrent.domain.model.torrent;
+package jtorrent.domain.util;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 
-import jtorrent.domain.model.torrent.exception.Sha1AlgorithmUnavailableException;
+import jtorrent.domain.util.exception.Sha1AlgorithmUnavailableException;
 
 public class Sha1Hash {
 

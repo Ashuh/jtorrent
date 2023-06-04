@@ -2,7 +2,7 @@ package jtorrent.domain.model.tracker;
 
 import java.io.IOException;
 
-import jtorrent.domain.model.torrent.Sha1Hash;
+import jtorrent.domain.util.Sha1Hash;
 
 public interface Tracker {
 

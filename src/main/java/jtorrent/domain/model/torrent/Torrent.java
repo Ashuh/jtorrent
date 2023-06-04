@@ -13,6 +13,7 @@ import java.util.stream.IntStream;
 
 import jtorrent.domain.model.tracker.Tracker;
 import jtorrent.domain.util.RangeList;
+import jtorrent.domain.util.Sha1Hash;
 
 public class Torrent {
 

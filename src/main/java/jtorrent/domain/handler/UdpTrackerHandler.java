@@ -8,11 +8,11 @@ import java.lang.System.Logger.Level;
 import java.net.SocketException;
 
 import jtorrent.domain.handler.exception.ExceededMaxTriesException;
-import jtorrent.domain.model.torrent.Sha1Hash;
 import jtorrent.domain.model.torrent.Torrent;
 import jtorrent.domain.model.tracker.Event;
 import jtorrent.domain.model.tracker.udp.UdpTracker;
 import jtorrent.domain.model.tracker.udp.message.response.UdpAnnounceResponse;
+import jtorrent.domain.util.Sha1Hash;
 
 public class UdpTrackerHandler extends TrackerHandler {
 

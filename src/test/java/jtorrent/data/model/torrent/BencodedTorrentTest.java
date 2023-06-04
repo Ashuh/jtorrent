@@ -25,10 +25,10 @@ import jtorrent.data.model.torrent.info.BencodedInfo;
 import jtorrent.data.model.torrent.info.MultiFileInfo;
 import jtorrent.data.model.torrent.info.SingleFileInfo;
 import jtorrent.domain.model.torrent.File;
-import jtorrent.domain.model.torrent.Sha1Hash;
 import jtorrent.domain.model.torrent.Torrent;
 import jtorrent.domain.model.tracker.Tracker;
 import jtorrent.domain.model.tracker.udp.UdpTracker;
+import jtorrent.domain.util.Sha1Hash;
 
 class BencodedTorrentTest {
 

@@ -2,11 +2,11 @@ package jtorrent.domain.handler;
 
 import static java.util.Objects.requireNonNull;
 
-import jtorrent.domain.model.torrent.Sha1Hash;
 import jtorrent.domain.model.torrent.Torrent;
 import jtorrent.domain.model.tracker.AnnounceResponse;
 import jtorrent.domain.model.tracker.Event;
 import jtorrent.domain.model.tracker.http.HttpTracker;
+import jtorrent.domain.util.Sha1Hash;
 
 public class HttpTrackerHandler extends TrackerHandler {
 

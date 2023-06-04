@@ -12,7 +12,6 @@ import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.time.LocalDateTime;
 
-import jtorrent.domain.model.torrent.Sha1Hash;
 import jtorrent.domain.model.tracker.Event;
 import jtorrent.domain.model.tracker.Tracker;
 import jtorrent.domain.model.tracker.udp.message.Action;
@@ -22,6 +21,7 @@ import jtorrent.domain.model.tracker.udp.message.request.UdpRequest;
 import jtorrent.domain.model.tracker.udp.message.response.UdpAnnounceResponse;
 import jtorrent.domain.model.tracker.udp.message.response.UdpConnectionResponse;
 import jtorrent.domain.model.tracker.udp.message.response.UdpErrorResponse;
+import jtorrent.domain.util.Sha1Hash;
 
 public class UdpTracker implements Tracker {
 

@@ -6,9 +6,9 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
 
-import jtorrent.domain.model.torrent.Sha1Hash;
 import jtorrent.domain.model.tracker.Event;
 import jtorrent.domain.model.tracker.udp.message.Action;
+import jtorrent.domain.util.Sha1Hash;
 
 /**
  * Represents an announce request.
