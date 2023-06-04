@@ -28,7 +28,6 @@ public class UdpTracker extends Tracker {
     private static final System.Logger LOGGER = System.getLogger(UdpTracker.class.getName());
     private static final int UDP_MAX_PACKET_SIZE = 65536;
     private static final int CONNECTION_ID_EXPIRATION_MINS = 1;
-    private static final String PROTOCOL = "udp";
 
     private final InetSocketAddress address;
     private DatagramSocket socket;
