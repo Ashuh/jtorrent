@@ -21,7 +21,7 @@ import jtorrent.domain.model.tracker.Tracker;
 import jtorrent.domain.model.tracker.http.request.HttpAnnounceRequest;
 import jtorrent.domain.model.tracker.http.response.HttpAnnounceResponse;
 
-public class HttpTracker extends Tracker {
+public class HttpTracker implements Tracker {
 
     private static final Logger LOGGER = System.getLogger(HttpTracker.class.getName());
     private static final String KEY_FAILURE_REASON = "failure reason";

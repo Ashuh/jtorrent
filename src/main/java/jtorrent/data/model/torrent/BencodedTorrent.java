@@ -30,6 +30,7 @@ import jtorrent.domain.model.torrent.File;
 import jtorrent.domain.model.torrent.Sha1Hash;
 import jtorrent.domain.model.torrent.Torrent;
 import jtorrent.domain.model.tracker.Tracker;
+import jtorrent.domain.model.tracker.TrackerFactory;
 
 public class BencodedTorrent extends BencodedObject {
 
@@ -111,7 +112,7 @@ public class BencodedTorrent extends BencodedObject {
         try {
             // ignore announceList for now
             List<Tracker> trackers = Stream.of(new URI(announce))
-                    .map(Tracker::fromUri)
+                    .map(TrackerFactory::fromUri)
                     .collect(Collectors.toList());
             LocalDateTime creationDateTime = LocalDateTime.ofEpochSecond(creationDate, 0, ZoneOffset.UTC);
             List<Sha1Hash> pieceHashes = mapPieces(info.getPieces());

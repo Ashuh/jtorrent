@@ -18,12 +18,12 @@ import jtorrent.domain.model.tracker.Tracker;
 import jtorrent.domain.model.tracker.udp.message.Action;
 import jtorrent.domain.model.tracker.udp.message.request.UdpAnnounceRequest;
 import jtorrent.domain.model.tracker.udp.message.request.UdpConnectionRequest;
-import jtorrent.domain.model.tracker.udp.message.response.UdpConnectionResponse;
-import jtorrent.domain.model.tracker.udp.message.response.UdpErrorResponse;
 import jtorrent.domain.model.tracker.udp.message.request.UdpRequest;
 import jtorrent.domain.model.tracker.udp.message.response.UdpAnnounceResponse;
+import jtorrent.domain.model.tracker.udp.message.response.UdpConnectionResponse;
+import jtorrent.domain.model.tracker.udp.message.response.UdpErrorResponse;
 
-public class UdpTracker extends Tracker {
+public class UdpTracker implements Tracker {
 
     private static final System.Logger LOGGER = System.getLogger(UdpTracker.class.getName());
     private static final int UDP_MAX_PACKET_SIZE = 65536;
