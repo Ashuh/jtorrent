@@ -1,4 +1,4 @@
-package jtorrent.domain.handler;
+package jtorrent.domain.handler.peer;
 
 import static jtorrent.domain.Constants.PEER_ID;
 

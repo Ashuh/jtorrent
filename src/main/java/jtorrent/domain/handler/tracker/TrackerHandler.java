@@ -1,4 +1,4 @@
-package jtorrent.domain.handler;
+package jtorrent.domain.handler.tracker;
 
 import static java.util.Objects.requireNonNull;
 

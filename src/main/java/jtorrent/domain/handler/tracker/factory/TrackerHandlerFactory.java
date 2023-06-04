@@ -1,5 +1,8 @@
-package jtorrent.domain.handler;
+package jtorrent.domain.handler.tracker.factory;
 
+import jtorrent.domain.handler.tracker.HttpTrackerHandler;
+import jtorrent.domain.handler.tracker.TrackerHandler;
+import jtorrent.domain.handler.tracker.UdpTrackerHandler;
 import jtorrent.domain.model.torrent.Torrent;
 import jtorrent.domain.model.tracker.Tracker;
 import jtorrent.domain.model.tracker.http.HttpTracker;

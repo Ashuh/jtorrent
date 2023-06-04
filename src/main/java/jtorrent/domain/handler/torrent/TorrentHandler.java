@@ -1,4 +1,4 @@
-package jtorrent.domain.handler;
+package jtorrent.domain.handler.torrent;
 
 import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level;
@@ -18,6 +18,9 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.stream.Collectors;
 
 import jtorrent.data.repository.FilePieceRepository;
+import jtorrent.domain.handler.peer.PeerHandler;
+import jtorrent.domain.handler.tracker.TrackerHandler;
+import jtorrent.domain.handler.tracker.factory.TrackerHandlerFactory;
 import jtorrent.domain.model.peer.message.typed.Piece;
 import jtorrent.domain.model.torrent.Block;
 import jtorrent.domain.model.torrent.Torrent;
