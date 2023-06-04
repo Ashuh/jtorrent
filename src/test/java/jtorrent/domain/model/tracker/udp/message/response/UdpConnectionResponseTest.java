@@ -8,7 +8,6 @@ import java.nio.ByteBuffer;
 import org.junit.jupiter.api.Test;
 
 import jtorrent.domain.model.exception.UnpackException;
-import jtorrent.domain.model.tracker.udp.message.response.UdpConnectionResponse;
 
 class UdpConnectionResponseTest {
 
