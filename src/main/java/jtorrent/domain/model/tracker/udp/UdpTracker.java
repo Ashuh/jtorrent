@@ -11,6 +11,7 @@ import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 import jtorrent.domain.model.tracker.Event;
 import jtorrent.domain.model.tracker.Tracker;
@@ -153,5 +154,22 @@ public class UdpTracker implements Tracker {
 
         LOGGER.log(Level.TRACE, "Received announce response");
         return UdpAnnounceResponse.unpack(payload);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        UdpTracker that = (UdpTracker) o;
+        return Objects.equals(address, that.address);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(address);
     }
 }
