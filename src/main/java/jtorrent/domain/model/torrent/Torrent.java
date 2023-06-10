@@ -123,8 +123,8 @@ public class Torrent {
         return fileByteRanges;
     }
 
-    public int getPieceOffset(int index) {
-        return getPieceSize() * index;
+    public long getPieceOffset(int index) {
+        return (long) getPieceSize() * index;
     }
 
     public void incrementDownloaded(int amount) {

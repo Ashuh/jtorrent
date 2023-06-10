@@ -21,9 +21,9 @@ public class FilePieceRepository implements PieceRepository {
     @Override
     public byte[] getPiece(Torrent torrent, int index) {
         LOGGER.log(Level.DEBUG, "Getting piece {0} for torrent {1}", index, torrent.getName());
-        int start = torrent.getPieceOffset(index);
+        long start = torrent.getPieceOffset(index);
         int length = torrent.getPieceSize(index);
-        int end = start + length; // exclusive
+        long end = start + length; // exclusive
 
         RangeList fileOffsetList = torrent.getFileByteRanges();
         int startIndex = fileOffsetList.getRangeIndex(start);
@@ -53,9 +53,9 @@ public class FilePieceRepository implements PieceRepository {
     public void storeBlock(Torrent torrent, int index, int offset, byte[] data) {
         LOGGER.log(Level.DEBUG, "Storing block at index {0}, offset {1}, length {2} for torrent {3}",
                 index, offset, data.length, torrent.getName());
-        int start = torrent.getPieceOffset(index) + offset;
+        long start = torrent.getPieceOffset(index) + offset;
         int length = data.length;
-        int end = start + length; // exclusive
+        long end = start + length; // exclusive
 
         RangeList fileOffsetList = torrent.getFileByteRanges();
         int startIndex = fileOffsetList.getRangeIndex(start);
