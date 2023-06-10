@@ -101,7 +101,7 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.List
         if (torrent.isPieceComplete(pieceIndex)) {
             LOGGER.log(Level.DEBUG, "Piece {0} complete", pieceIndex);
 
-            byte[] pieceBytes = new byte[torrent.getPieceSize(pieceIndex)];
+            byte[] pieceBytes = repository.getPiece(torrent, pieceIndex);
             Sha1Hash expected = torrent.getPieceHashes().get(pieceIndex);
 
             if (Sha1Hash.of(pieceBytes).equals(expected)) {
