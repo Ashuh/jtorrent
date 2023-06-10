@@ -1,4 +1,4 @@
-package jtorrent.domain.model.torrent.exception;
+package jtorrent.domain.util.exception;
 
 public class Sha1AlgorithmUnavailableException extends RuntimeException {
 

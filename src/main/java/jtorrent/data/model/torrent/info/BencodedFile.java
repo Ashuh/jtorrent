@@ -18,10 +18,10 @@ public class BencodedFile extends BencodedObject {
     public static final String KEY_LENGTH = "length";
     public static final String KEY_PATH = "path";
 
-    private final int length;
+    private final long length;
     private final List<String> path;
 
-    public BencodedFile(int length, List<String> path) {
+    public BencodedFile(long length, List<String> path) {
         this.length = length;
         this.path = path;
     }
@@ -35,7 +35,7 @@ public class BencodedFile extends BencodedObject {
         return new BencodedFile(length, path);
     }
 
-    public int getLength() {
+    public long getLength() {
         return length;
     }
 
@@ -44,7 +44,10 @@ public class BencodedFile extends BencodedObject {
     }
 
     public File toDomain() {
-        return new File(length, Path.of(String.join("/", path)));
+        List<String> sanitizedPath = path.stream()
+                .map(part -> part.replaceAll("[\\\\/:*?\"<>|]", "_"))
+                .collect(Collectors.toList());
+        return new File(length, Path.of(String.join("/", sanitizedPath)));
     }
 
     @Override

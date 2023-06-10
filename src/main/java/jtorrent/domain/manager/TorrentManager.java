@@ -3,9 +3,9 @@ package jtorrent.domain.manager;
 import java.util.HashMap;
 import java.util.Map;
 
-import jtorrent.domain.handler.TorrentHandler;
-import jtorrent.domain.model.torrent.Sha1Hash;
+import jtorrent.domain.handler.torrent.TorrentHandler;
 import jtorrent.domain.model.torrent.Torrent;
+import jtorrent.domain.util.Sha1Hash;
 
 public class TorrentManager {
 

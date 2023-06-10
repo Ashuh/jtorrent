@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.dampcake.bencode.BencodeInputStream;
 
@@ -26,8 +27,10 @@ import jtorrent.data.model.torrent.info.BencodedFile;
 import jtorrent.data.model.torrent.info.BencodedInfo;
 import jtorrent.data.model.torrent.info.BencodedInfoFactory;
 import jtorrent.domain.model.torrent.File;
-import jtorrent.domain.model.torrent.Sha1Hash;
 import jtorrent.domain.model.torrent.Torrent;
+import jtorrent.domain.model.tracker.Tracker;
+import jtorrent.domain.model.tracker.factory.TrackerFactory;
+import jtorrent.domain.util.Sha1Hash;
 
 public class BencodedTorrent extends BencodedObject {
 
@@ -108,7 +111,9 @@ public class BencodedTorrent extends BencodedObject {
     public Torrent toDomain() {
         try {
             // ignore announceList for now
-            List<URI> trackers = List.of(new URI(announce));
+            List<Tracker> trackers = Stream.of(new URI(announce))
+                    .map(TrackerFactory::fromUri)
+                    .collect(Collectors.toList());
             LocalDateTime creationDateTime = LocalDateTime.ofEpochSecond(creationDate, 0, ZoneOffset.UTC);
             List<Sha1Hash> pieceHashes = mapPieces(info.getPieces());
             int pieceLength = info.getPieceLength();

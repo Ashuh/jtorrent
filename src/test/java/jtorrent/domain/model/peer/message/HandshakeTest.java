@@ -8,7 +8,7 @@ import java.nio.ByteOrder;
 
 import org.junit.jupiter.api.Test;
 
-import jtorrent.domain.model.torrent.Sha1Hash;
+import jtorrent.domain.util.Sha1Hash;
 
 class HandshakeTest {
 

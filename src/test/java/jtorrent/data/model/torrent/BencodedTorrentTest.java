@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.net.URI;
+import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.security.NoSuchAlgorithmException;
@@ -25,8 +25,10 @@ import jtorrent.data.model.torrent.info.BencodedInfo;
 import jtorrent.data.model.torrent.info.MultiFileInfo;
 import jtorrent.data.model.torrent.info.SingleFileInfo;
 import jtorrent.domain.model.torrent.File;
-import jtorrent.domain.model.torrent.Sha1Hash;
 import jtorrent.domain.model.torrent.Torrent;
+import jtorrent.domain.model.tracker.Tracker;
+import jtorrent.domain.model.tracker.udp.UdpTracker;
+import jtorrent.domain.util.Sha1Hash;
 
 class BencodedTorrentTest {
 
@@ -228,7 +230,7 @@ class BencodedTorrentTest {
                 .setPieces(new byte[20])
                 .build();
         BencodedTorrent bencodedTorrent = new BencodedTorrentBuilder()
-                .setAnnounce("announce")
+                .setAnnounce("udp://tracker.example.com:80/announce")
                 .setAnnounceList(Collections.emptyList())
                 .setCreationDate(123456789L)
                 .setComment("comment")
@@ -238,7 +240,7 @@ class BencodedTorrentTest {
         Torrent actual = bencodedTorrent.toDomain();
 
         Torrent expected = new TorrentBuilder()
-                .setTrackers(List.of(URI.create("announce")))
+                .setTrackers(List.of(new UdpTracker(InetSocketAddress.createUnresolved("tracker.example.com", 80))))
                 .setCreationDate(LocalDateTime.ofEpochSecond(123456789L, 0, ZoneOffset.UTC))
                 .setComment("comment")
                 .setCreatedBy("created by")
@@ -275,7 +277,7 @@ class BencodedTorrentTest {
                 ))
                 .build();
         BencodedTorrent bencodedTorrent = new BencodedTorrentBuilder()
-                .setAnnounce("announce")
+                .setAnnounce("udp://tracker.example.com:80/announce")
                 .setAnnounceList(Collections.emptyList())
                 .setCreationDate(123456789L)
                 .setComment("comment")
@@ -285,7 +287,7 @@ class BencodedTorrentTest {
         Torrent actual = bencodedTorrent.toDomain();
 
         Torrent expected = new TorrentBuilder()
-                .setTrackers(List.of(URI.create("announce")))
+                .setTrackers(List.of(new UdpTracker(InetSocketAddress.createUnresolved("tracker.example.com", 80))))
                 .setCreationDate(LocalDateTime.ofEpochSecond(123456789L, 0, ZoneOffset.UTC))
                 .setComment("comment")
                 .setCreatedBy("created by")
@@ -438,7 +440,7 @@ class BencodedTorrentTest {
 
     private static class TorrentBuilder {
 
-        private List<URI> trackers = Collections.emptyList();
+        private List<Tracker> trackers = Collections.emptyList();
         private LocalDateTime creationDate = LocalDateTime.ofEpochSecond(0, 0, ZoneOffset.UTC);
         private String comment = "";
         private String createdBy = "";
@@ -448,7 +450,7 @@ class BencodedTorrentTest {
         private List<File> files = Collections.emptyList();
         private Sha1Hash infoHash = new Sha1Hash(new byte[20]);
 
-        public TorrentBuilder setTrackers(List<URI> trackers) {
+        public TorrentBuilder setTrackers(List<Tracker> trackers) {
             this.trackers = trackers;
             return this;
         }

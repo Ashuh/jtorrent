@@ -45,6 +45,7 @@ public class Peer {
         this.socket = new Socket(address, port);
         this.outputStream = socket.getOutputStream();
         this.inputStream = socket.getInputStream();
+        LOGGER.log(Level.DEBUG, "Connected to peer: {0}:{1}", address, port);
     }
 
     public void addListener(Listener listener) {

@@ -1,4 +1,4 @@
-package jtorrent.domain.model.tracker.udp.message;
+package jtorrent.domain.model.tracker.udp.message.response;
 
 import static java.util.Objects.requireNonNull;
 
@@ -8,13 +8,16 @@ import java.util.List;
 import java.util.Objects;
 
 import jtorrent.domain.model.exception.UnpackException;
+import jtorrent.domain.model.tracker.AnnounceResponse;
+import jtorrent.domain.model.tracker.PeerResponse;
+import jtorrent.domain.model.tracker.udp.message.UdpMessage;
 
 /**
  * Represents an announce response.
  *
  * @see <a href="https://www.bittorrent.org/beps/bep_0015.html">UDP Tracker Protocol for BitTorrent</a>
  */
-public class AnnounceResponse extends UdpMessage {
+public class UdpAnnounceResponse extends UdpMessage implements AnnounceResponse {
 
     public static final int MESSAGE_MIN_BYTES = 20;
     public static final int PAYLOAD_MIN_BYTES = 16;
@@ -22,9 +25,10 @@ public class AnnounceResponse extends UdpMessage {
     private final int interval;
     private final int leechers;
     private final int seeders;
-    private final List<PeerResponse> peers;
+    private final List<UdpPeerResponse> peers;
 
-    public AnnounceResponse(int transactionId, int interval, int leechers, int seeders, List<PeerResponse> peers) {
+    public UdpAnnounceResponse(int transactionId, int interval, int leechers, int seeders,
+            List<UdpPeerResponse> peers) {
         super(transactionId);
         this.interval = interval;
         this.leechers = leechers;
@@ -32,7 +36,7 @@ public class AnnounceResponse extends UdpMessage {
         this.peers = requireNonNull(peers);
     }
 
-    public static AnnounceResponse unpack(byte[] payload) {
+    public static UdpAnnounceResponse unpack(byte[] payload) {
         if (payload.length < PAYLOAD_MIN_BYTES) {
             throw new UnpackException(
                     "Expected at least " + PAYLOAD_MIN_BYTES + " bytes but got " + payload.length + " bytes.");
@@ -42,16 +46,16 @@ public class AnnounceResponse extends UdpMessage {
         int interval = buffer.getInt();
         int leechers = buffer.getInt();
         int seeders = buffer.getInt();
-        List<PeerResponse> peers = new ArrayList<>();
+        List<UdpPeerResponse> peers = new ArrayList<>();
 
         while (buffer.hasRemaining()) {
-            byte[] peerBytes = new byte[PeerResponse.BYTES];
+            byte[] peerBytes = new byte[UdpPeerResponse.BYTES];
             buffer.get(peerBytes);
-            PeerResponse peerResponse = PeerResponse.unpack(peerBytes);
-            peers.add(peerResponse);
+            UdpPeerResponse udpPeerResponse = UdpPeerResponse.unpack(peerBytes);
+            peers.add(udpPeerResponse);
         }
 
-        return new AnnounceResponse(transactionId, interval, leechers, seeders, peers);
+        return new UdpAnnounceResponse(transactionId, interval, leechers, seeders, peers);
     }
 
     public int getInterval() {
@@ -67,7 +71,7 @@ public class AnnounceResponse extends UdpMessage {
     }
 
     public List<PeerResponse> getPeers() {
-        return peers;
+        return new ArrayList<>(peers);
     }
 
     @Override
@@ -83,7 +87,7 @@ public class AnnounceResponse extends UdpMessage {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        AnnounceResponse that = (AnnounceResponse) o;
+        UdpAnnounceResponse that = (UdpAnnounceResponse) o;
         return interval == that.interval
                 && leechers == that.leechers
                 && seeders == that.seeders
@@ -92,7 +96,7 @@ public class AnnounceResponse extends UdpMessage {
 
     @Override
     public String toString() {
-        return "AnnounceResponse{"
+        return "UdpAnnounceResponse{"
                 + "interval=" + interval
                 + ", leechers=" + leechers
                 + ", seeders=" + seeders
