@@ -39,11 +39,13 @@ public class RangeList {
 
     public int getRangeIndex(long value) {
         if (value < boundaries.get(0)) {
-            throw new IllegalArgumentException("Value is smaller than the first boundary");
+            throw new IllegalArgumentException(String.format("Value (%d) is smaller than the first boundary (%d)",
+                    value, boundaries.get(0)));
         }
 
         if (value >= boundaries.get(boundaries.size() - 1)) {
-            throw new IllegalArgumentException("Value is larger than the last boundary");
+            throw new IllegalArgumentException(String.format("Value (%d) is larger than the last boundary (%d)",
+                    value, boundaries.get(boundaries.size() - 1)));
         }
 
         int low = 0;
