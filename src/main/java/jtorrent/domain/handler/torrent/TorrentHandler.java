@@ -16,6 +16,7 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import jtorrent.data.repository.FilePieceRepository;
 import jtorrent.domain.handler.peer.PeerHandler;
@@ -31,28 +32,30 @@ import jtorrent.domain.util.Sha1Hash;
 public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Listener {
 
     private static final Logger LOGGER = getLogger(TorrentHandler.class.getName());
+    private static final int MAX_BLOCK_SIZE = 16384;
 
     private final Torrent torrent;
     private final Set<TrackerHandler> trackerHandlers;
     private final Set<PeerHandler> peerHandlers = new HashSet<>();
     private final Set<Block> remainingBlocks = new HashSet<>();
-    private final LinkedBlockingQueue<Block> workQueue = new LinkedBlockingQueue<>();
+
     private final Map<Integer, Set<PeerHandler>> pieceIndexToAvailablePeerHandlers = new HashMap<>();
+    private final WorkDispatcher workDispatcher;
     private final PieceRepository repository = new FilePieceRepository();
 
     public TorrentHandler(Torrent torrent) {
         this.torrent = requireNonNull(torrent);
 
-        for (int i = 0; i < torrent.getNumPieces(); i++) {
-            this.remainingBlocks.add(new Block(i, 0, torrent.getPieceSize(i)));
-        }
+        IntStream.range(0, torrent.getNumPieces())
+                .mapToObj(this::createBlocks)
+                .forEach(remainingBlocks::addAll);
 
         this.trackerHandlers = torrent.getTrackers().stream()
                 .map(tracker -> TrackerHandlerFactory.create(torrent, tracker))
                 .collect(Collectors.toSet());
 
-        WorkDispatcher dispatcher = new WorkDispatcher();
-        Thread dispatcherThread = new Thread(dispatcher);
+        workDispatcher = new WorkDispatcher();
+        Thread dispatcherThread = new Thread(workDispatcher);
         dispatcherThread.start();
     }
 
@@ -63,9 +66,8 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.List
 
     private void addBlockToWorkQueue(Block block) {
         if (remainingBlocks.contains(block)
-                && !workQueue.contains(block)
                 && !pieceIndexToAvailablePeerHandlers.get(block.getIndex()).isEmpty()) {
-            workQueue.add(block);
+            workDispatcher.addBlockIfNotQueued(block);
         }
     }
 
@@ -79,9 +81,10 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.List
 
         peerHandler.getAvailablePieces()
                 .stream()
-                .map(index -> new Block(index, 0, torrent.getPieceSize(index)))
+                .map(this::createBlocks)
+                .flatMap(List::stream)
                 .filter(remainingBlocks::contains) // only add blocks that are missing
-                .forEach(workQueue::add);
+                .forEach(workDispatcher::addBlock);
     }
 
     @Override
@@ -110,9 +113,11 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.List
             } else {
                 LOGGER.log(Level.WARNING, "Piece {0} verification failed", pieceIndex);
                 torrent.unsetDataReceived(pieceIndex, from, to);
-                Block newBlock = new Block(pieceIndex, 0, torrent.getPieceSize(pieceIndex));
-                addBlockToWorkQueue(newBlock);
-                remainingBlocks.add(newBlock);
+
+                createBlocks(pieceIndex).forEach(b -> {
+                    remainingBlocks.add(b);
+                    addBlockToWorkQueue(b);
+                });
             }
         }
 
@@ -130,14 +135,10 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.List
                 .computeIfAbsent(index, key -> new HashSet<>())
                 .add(peerHandler);
 
-        int pieceSize = torrent.getPieceSize(index);
-        Block block = new Block(index, 0, pieceSize);
 
-        if (workQueue.contains(block)) {
-            return;
-        }
-
-        workQueue.add(new Block(index, 0, pieceSize));
+        createBlocks(index).stream()
+                .filter(remainingBlocks::contains)
+                .forEach(this::addBlockToWorkQueue);
     }
 
     private int getPieceAvailability(int pieceIndex) {
@@ -157,8 +158,25 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.List
                 });
     }
 
+    private List<Block> createBlocks(int pieceIndex) {
+        int pieceSize = torrent.getPieceSize(pieceIndex);
+        int numBlocks = (int) Math.ceil(pieceSize / (double) MAX_BLOCK_SIZE);
+
+        return IntStream.range(0, numBlocks)
+                .mapToObj(i -> createBlock(pieceIndex, i))
+                .collect(Collectors.toList());
+    }
+
+    private Block createBlock(int pieceIndex, int blockIndex) {
+        int pieceSize = torrent.getPieceSize(pieceIndex);
+        int begin = blockIndex * MAX_BLOCK_SIZE;
+        int length = Math.min(MAX_BLOCK_SIZE, pieceSize - begin);
+        return new Block(pieceIndex, begin, length);
+    }
+
     private class WorkDispatcher implements Runnable {
 
+        private final LinkedBlockingQueue<Block> workQueue = new LinkedBlockingQueue<>();
         private boolean isRunning = true;
 
         @Override
@@ -171,6 +189,20 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.List
                     Thread.currentThread().interrupt();
                 }
             }
+        }
+
+        public void addBlock(Block block) {
+            workQueue.add(block);
+        }
+
+        public void addBlockIfNotQueued(Block block) {
+            if (!isBlockQueued(block)) {
+                addBlock(block);
+            }
+        }
+
+        public boolean isBlockQueued(Block block) {
+            return workQueue.contains(block);
         }
 
         private List<Block> drainAtLeastOne() throws InterruptedException {
