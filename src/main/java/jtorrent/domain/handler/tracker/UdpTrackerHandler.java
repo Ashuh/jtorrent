@@ -77,7 +77,7 @@ public class UdpTrackerHandler extends TrackerHandler {
 
             Sha1Hash infoHash = torrent.getInfoHash();
             long downloaded = torrent.getDownloaded();
-            long left = torrent.getLeft();
+            long left = torrent.getRemainingBytes();
             long uploaded = torrent.getUploaded();
             return tracker.announce(infoHash, downloaded, left, uploaded, event);
         }

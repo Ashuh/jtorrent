@@ -6,17 +6,15 @@ import static java.lang.System.getLogger;
 import static java.util.Objects.requireNonNull;
 
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import jtorrent.data.repository.FilePieceRepository;
 import jtorrent.domain.handler.peer.PeerHandler;
@@ -32,12 +30,10 @@ import jtorrent.domain.util.Sha1Hash;
 public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Listener {
 
     private static final Logger LOGGER = getLogger(TorrentHandler.class.getName());
-    private static final int MAX_BLOCK_SIZE = 16384;
 
     private final Torrent torrent;
     private final Set<TrackerHandler> trackerHandlers;
     private final Set<PeerHandler> peerHandlers = new HashSet<>();
-    private final Set<Block> remainingBlocks = new HashSet<>();
 
     private final Map<Integer, Set<PeerHandler>> pieceIndexToAvailablePeerHandlers = new HashMap<>();
     private final WorkDispatcher workDispatcher;
@@ -45,10 +41,6 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.List
 
     public TorrentHandler(Torrent torrent) {
         this.torrent = requireNonNull(torrent);
-
-        IntStream.range(0, torrent.getNumPieces())
-                .mapToObj(this::createBlocks)
-                .forEach(remainingBlocks::addAll);
 
         this.trackerHandlers = torrent.getTrackers().stream()
                 .map(tracker -> TrackerHandlerFactory.create(torrent, tracker))
@@ -64,42 +56,40 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.List
         trackerHandlers.forEach(TrackerHandler::start);
     }
 
-    private void addBlockToWorkQueue(Block block) {
-        if (remainingBlocks.contains(block)
-                && !pieceIndexToAvailablePeerHandlers.get(block.getIndex()).isEmpty()) {
-            workDispatcher.addBlockIfNotQueued(block);
-        }
+    @Override
+    public void onUnchokeRecevied(PeerHandler peerHandler) {
+        LOGGER.log(Level.DEBUG, "Unchoked received: {0}", peerHandler);
+
+        peerHandler.getAvailablePieces().stream()
+                .map(pieceIndexToAvailablePeerHandlers::get)
+                .forEach(availablePeerHandlers -> availablePeerHandlers.add(peerHandler));
+    }
+
+    @Override
+    public void onChokeReceived(PeerHandler peerHandler) {
+        LOGGER.log(Level.DEBUG, "Choke received: {0}", peerHandler);
+
+        peerHandler.getAvailablePieces().stream()
+                .map(pieceIndexToAvailablePeerHandlers::get)
+                .forEach(availablePeerHandlers -> availablePeerHandlers.remove(peerHandler));
     }
 
     @Override
     public void onReady(PeerHandler peerHandler) {
         LOGGER.log(Level.DEBUG, "PeerHandler ready: {0}", peerHandler);
-
-        peerHandler.getAvailablePieces().stream()
-                .map(pieceIndexToAvailablePeerHandlers::get)
-                .forEach(availablePeerHandlers -> availablePeerHandlers.add(peerHandler));
-
-        peerHandler.getAvailablePieces()
-                .stream()
-                .map(this::createBlocks)
-                .flatMap(List::stream)
-                .filter(remainingBlocks::contains) // only add blocks that are missing
-                .forEach(workDispatcher::addBlock);
+        workDispatcher.addPeerHandler(peerHandler);
     }
 
     @Override
     public void onPieceReceived(Piece piece) {
         LOGGER.log(Level.DEBUG, "Piece received: {0}", piece);
 
-        Block block = new Block(piece.getIndex(), piece.getBegin(), piece.getBlock().length);
-        remainingBlocks.remove(block);
-
         int pieceIndex = piece.getIndex();
+        int blockIndex = piece.getBegin() / torrent.getBlockSize();
+
         repository.storeBlock(torrent, pieceIndex, piece.getBegin(), piece.getBlock());
 
-        int from = piece.getBegin();
-        int to = from + piece.getBlock().length;
-        torrent.setDataReceived(pieceIndex, from, to);
+        torrent.setBlockReceived(pieceIndex, blockIndex);
 
         if (torrent.isPieceComplete(pieceIndex)) {
             LOGGER.log(Level.DEBUG, "Piece {0} complete", pieceIndex);
@@ -112,18 +102,13 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.List
                 torrent.setPieceVerified(pieceIndex);
             } else {
                 LOGGER.log(Level.WARNING, "Piece {0} verification failed", pieceIndex);
-                torrent.unsetDataReceived(pieceIndex, from, to);
-
-                createBlocks(pieceIndex).forEach(b -> {
-                    remainingBlocks.add(b);
-                    addBlockToWorkQueue(b);
-                });
+                torrent.setPieceMissing(pieceIndex);
             }
         }
 
         torrent.incrementDownloaded(piece.getBlock().length);
 
-        if (remainingBlocks.isEmpty()) {
+        if (torrent.isAllPiecesVerified()) {
             LOGGER.log(Level.DEBUG, "All pieces received");
             trackerHandlers.forEach(TrackerHandler::stop);
         }
@@ -135,14 +120,9 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.List
                 .computeIfAbsent(index, key -> new HashSet<>())
                 .add(peerHandler);
 
-
-        createBlocks(index).stream()
-                .filter(remainingBlocks::contains)
-                .forEach(this::addBlockToWorkQueue);
-    }
-
-    private int getPieceAvailability(int pieceIndex) {
-        return pieceIndexToAvailablePeerHandlers.get(pieceIndex).size();
+        if (peerHandler.isReady()) {
+            workDispatcher.addPeerHandler(peerHandler);
+        }
     }
 
     @Override
@@ -158,87 +138,80 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.List
                 });
     }
 
-    private List<Block> createBlocks(int pieceIndex) {
-        int pieceSize = torrent.getPieceSize(pieceIndex);
-        int numBlocks = (int) Math.ceil(pieceSize / (double) MAX_BLOCK_SIZE);
-
-        return IntStream.range(0, numBlocks)
-                .mapToObj(i -> createBlock(pieceIndex, i))
-                .collect(Collectors.toList());
-    }
-
-    private Block createBlock(int pieceIndex, int blockIndex) {
-        int pieceSize = torrent.getPieceSize(pieceIndex);
-        int begin = blockIndex * MAX_BLOCK_SIZE;
-        int length = Math.min(MAX_BLOCK_SIZE, pieceSize - begin);
-        return new Block(pieceIndex, begin, length);
-    }
-
     private class WorkDispatcher implements Runnable {
 
-        private final LinkedBlockingQueue<Block> workQueue = new LinkedBlockingQueue<>();
+        private final LinkedBlockingQueue<PeerHandler> peerHandlersQueue = new LinkedBlockingQueue<>();
+
         private boolean isRunning = true;
 
         @Override
         public void run() {
             while (isRunning) {
                 try {
-                    List<Block> blocks = drainAtLeastOne();
-                    blocks.forEach(this::assignWork);
+                    PeerHandler peerHandler = peerHandlersQueue.take();
+                    assignBlock(peerHandler);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
                 }
             }
         }
 
-        public void addBlock(Block block) {
-            workQueue.add(block);
-        }
-
-        public void addBlockIfNotQueued(Block block) {
-            if (!isBlockQueued(block)) {
-                addBlock(block);
-            }
-        }
-
-        public boolean isBlockQueued(Block block) {
-            return workQueue.contains(block);
-        }
-
-        private List<Block> drainAtLeastOne() throws InterruptedException {
-            List<Block> blocks = new ArrayList<>();
-            blocks.add(workQueue.take());
-            workQueue.drainTo(blocks);
-            return blocks;
-        }
-
-        private void assignWork(Block block) {
-            LOGGER.log(Level.DEBUG, "Assigning block: {0}", block);
-
-            Set<PeerHandler> availablePeerHandlers = pieceIndexToAvailablePeerHandlers.get(block.getIndex());
-            Queue<PeerHandler> peerHandlerQueue = new LinkedList<>(availablePeerHandlers);
-            int size = availablePeerHandlers.size();
-
-            for (int i = 0; i < size; i++) {
-                PeerHandler peerHandler = peerHandlerQueue.poll();
-                assert peerHandler != null;
-
-                if (!peerHandler.isReady()) {
-                    LOGGER.log(Level.DEBUG, "PeerHandler not ready: {0}", peerHandler);
-                    continue;
-                }
-
+        private void assignBlock(PeerHandler peerHandler) throws IOException {
+            getPieceIndexToAssign(peerHandler).ifPresentOrElse(pieceIndex -> {
+                int blockIndex = torrent.getmissingBlockIndices(pieceIndex).iterator().next();
+                Block block = createBlock(pieceIndex, blockIndex);
                 try {
                     peerHandler.assignBlock(block);
-                    LOGGER.log(Level.DEBUG, "Block assigned: {0}", block);
-                    return;
+                    torrent.setBlockRequested(pieceIndex, blockIndex);
                 } catch (IOException e) {
-                    // assume peer is no longer available
-                    pieceIndexToAvailablePeerHandlers.get(block.getIndex()).remove(peerHandler);
+                    //TODO: handle this properly
+                    throw new RuntimeException(e);
                 }
+            }, () -> LOGGER.log(Level.DEBUG, "No block to assign to {0}", peerHandler));
+        }
+
+        public Optional<Integer> getPieceIndexToAssign(PeerHandler peerHandler) {
+            Optional<Integer> rarestPartiallyMissingPieceIndex =
+                    getRarestPartiallyMissingPieceIndexFromPeer(peerHandler);
+
+            if (rarestPartiallyMissingPieceIndex.isPresent()) {
+                return rarestPartiallyMissingPieceIndex;
             }
 
-            LOGGER.log(Level.DEBUG, "Block not assigned: {0}", block);
+            return getRarestCompletelyMissingPieceIndexFromPeer(peerHandler);
+        }
+
+        private Block createBlock(int pieceIndex, int blockIndex) {
+            int blockOffset = blockIndex * torrent.getBlockSize();
+            int blockSize = torrent.getBlockSize(pieceIndex, blockIndex);
+            return new Block(pieceIndex, blockOffset, blockSize);
+        }
+
+        private Optional<Integer> getRarestPartiallyMissingPieceIndexFromPeer(PeerHandler peerHandler) {
+            Set<Integer> availablePieces = peerHandler.getAvailablePieces();
+            return torrent.getPartiallyMissingPieceIndices().stream()
+                    .filter(availablePieces::contains)
+                    .min(Comparator.comparingInt(this::getPieceAvailability));
+        }
+
+        private Optional<Integer> getRarestCompletelyMissingPieceIndexFromPeer(PeerHandler peerHandler) {
+            Set<Integer> availablePieces = peerHandler.getAvailablePieces();
+            return torrent.getCompletelyMissingPieceIndices().stream()
+                    .filter(availablePieces::contains)
+                    .min(Comparator.comparingInt(this::getPieceAvailability));
+        }
+
+        public void addPeerHandler(PeerHandler peerHandler) {
+            if (peerHandlersQueue.contains(peerHandler)) {
+                return;
+            }
+            peerHandlersQueue.add(peerHandler);
+        }
+
+        private int getPieceAvailability(int pieceIndex) {
+            return pieceIndexToAvailablePeerHandlers.get(pieceIndex).size();
         }
     }
 }

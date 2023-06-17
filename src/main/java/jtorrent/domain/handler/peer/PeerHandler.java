@@ -47,8 +47,9 @@ public class PeerHandler implements Runnable, Peer.Listener {
     }
 
     public void assignBlock(Block block) throws IOException {
-        LOGGER.log(Level.DEBUG, "Assign Block: {0}", block);
+        LOGGER.log(Level.DEBUG, "Peer {0} assigned block {1}", peer, block);
 
+        isBusy = true;
         int index = block.getIndex();
         int offset = block.getOffset();
         int length = block.getLength();
@@ -58,7 +59,6 @@ public class PeerHandler implements Runnable, Peer.Listener {
     private void sendRequest(int index, int begin, int length) throws IOException {
         Request request = new Request(index, begin, length);
         peer.sendMessage(request);
-        isBusy = true;
     }
 
     @Override
@@ -113,12 +113,14 @@ public class PeerHandler implements Runnable, Peer.Listener {
     @Override
     public void onChoke() {
         LOGGER.log(Level.DEBUG, "Handling Choke");
+        listeners.forEach(listener -> listener.onChokeReceived(this));
     }
 
     @Override
     public void onUnchoke() {
         LOGGER.log(Level.DEBUG, "Handling Unchoke");
         isChoked = false;
+        listeners.forEach(listener -> listener.onUnchokeRecevied(this));
         notifyIfReady();
     }
 
@@ -181,6 +183,10 @@ public class PeerHandler implements Runnable, Peer.Listener {
     }
 
     public interface Listener {
+
+        void onUnchokeRecevied(PeerHandler peerHandler);
+
+        void onChokeReceived(PeerHandler peerHandler);
 
         void onReady(PeerHandler peerHandler);
 
