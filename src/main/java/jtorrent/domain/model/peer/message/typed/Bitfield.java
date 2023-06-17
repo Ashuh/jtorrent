@@ -67,7 +67,7 @@ public class Bitfield extends TypedPeerMessage {
     }
 
     @Override
-    protected MessageType getMessageType() {
+    public MessageType getMessageType() {
         return MessageType.BITFIELD;
     }
 

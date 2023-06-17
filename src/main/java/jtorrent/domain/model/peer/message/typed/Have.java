@@ -21,7 +21,7 @@ public class Have extends TypedPeerMessage {
     }
 
     @Override
-    protected MessageType getMessageType() {
+    public MessageType getMessageType() {
         return MessageType.HAVE;
     }
 

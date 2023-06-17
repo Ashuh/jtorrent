@@ -17,7 +17,7 @@ public class Cancel extends BlockMessage {
     }
 
     @Override
-    protected MessageType getMessageType() {
+    public MessageType getMessageType() {
         return MessageType.CANCEL;
     }
 

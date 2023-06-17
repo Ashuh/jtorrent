@@ -10,26 +10,28 @@ import java.lang.System.Logger.Level;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 
 import jtorrent.domain.model.peer.exception.IncompleteReadException;
 import jtorrent.domain.model.peer.message.Handshake;
+import jtorrent.domain.model.peer.message.KeepAlive;
 import jtorrent.domain.model.peer.message.PeerMessage;
 import jtorrent.domain.model.peer.message.typed.Bitfield;
 import jtorrent.domain.model.peer.message.typed.Cancel;
+import jtorrent.domain.model.peer.message.typed.Choke;
 import jtorrent.domain.model.peer.message.typed.Have;
+import jtorrent.domain.model.peer.message.typed.Interested;
 import jtorrent.domain.model.peer.message.typed.MessageType;
+import jtorrent.domain.model.peer.message.typed.NotInterested;
 import jtorrent.domain.model.peer.message.typed.Piece;
 import jtorrent.domain.model.peer.message.typed.Request;
+import jtorrent.domain.model.peer.message.typed.Unchoke;
 
 public class Peer {
 
     private static final Logger LOGGER = System.getLogger(Peer.class.getName());
     private final InetAddress address;
     private final int port; // unsigned short
-    private final List<Listener> listeners = new ArrayList<>();
 
     private Socket socket;
     private OutputStream outputStream;
@@ -48,10 +50,6 @@ public class Peer {
         LOGGER.log(Level.DEBUG, "Connected to peer: {0}:{1}", address, port);
     }
 
-    public void addListener(Listener listener) {
-        listeners.add(listener);
-    }
-
     public void sendMessage(PeerMessage message) throws IOException {
         LOGGER.log(Level.DEBUG, "Sending message: {0}", message);
         outputStream.write(message.pack());
@@ -67,7 +65,7 @@ public class Peer {
         return Handshake.unpack(buffer);
     }
 
-    public void receiveMessage() throws IOException {
+    public PeerMessage receiveMessage() throws IOException {
         LOGGER.log(Level.DEBUG, "Waiting for message");
         byte[] lengthPrefix = inputStream.readNBytes(Integer.BYTES);
 
@@ -79,8 +77,7 @@ public class Peer {
 
         if (length == 0) {
             LOGGER.log(Level.DEBUG, "Received KeepAlive message");
-            listeners.forEach(Listener::onKeepAlive);
-            return;
+            return new KeepAlive();
         }
 
         byte id = (byte) inputStream.read();
@@ -90,46 +87,32 @@ public class Peer {
             throw new IncompleteReadException(length - 1, payload.length);
         }
 
-        handleTypedMessage(id, payload);
+        return unpackMessagePayload(id, payload);
     }
 
-    private void handleTypedMessage(byte id, byte[] payload) {
+    private PeerMessage unpackMessagePayload(byte id, byte[] payload) {
         MessageType messageType = MessageType.fromValue(id);
         LOGGER.log(Level.DEBUG, "Received message of type: {0}", messageType);
 
         switch (messageType) {
         case CHOKE:
-            listeners.forEach(Listener::onChoke);
-            break;
+            return new Choke();
         case UNCHOKE:
-            listeners.forEach(Listener::onUnchoke);
-            break;
+            return new Unchoke();
         case INTERESTED:
-            listeners.forEach(Listener::onInterested);
-            break;
+            return new Interested();
         case NOT_INTERESTED:
-            listeners.forEach(Listener::onNotInterested);
-            break;
+            return new NotInterested();
         case HAVE:
-            Have have = Have.unpack(payload);
-            listeners.forEach(listener -> listener.onHave(have));
-            break;
+            return Have.unpack(payload);
         case BITFIELD:
-            Bitfield bitfield = Bitfield.unpack(payload);
-            listeners.forEach(listener -> listener.onBitfield(bitfield));
-            break;
+            return Bitfield.unpack(payload);
         case REQUEST:
-            Request request = Request.unpack(payload);
-            listeners.forEach(listener -> listener.onRequest(request));
-            break;
+            return Request.unpack(payload);
         case PIECE:
-            Piece piece = Piece.unpack(payload);
-            listeners.forEach(listener -> listener.onPiece(piece));
-            break;
+            return Piece.unpack(payload);
         case CANCEL:
-            Cancel cancel = Cancel.unpack(payload);
-            listeners.forEach(listener -> listener.onCancel(cancel));
-            break;
+            return Cancel.unpack(payload);
         default:
             throw new IllegalArgumentException("Unsupported message type: " + messageType);
         }
@@ -166,28 +149,5 @@ public class Peer {
                 + "address=" + address
                 + ", port=" + port
                 + '}';
-    }
-
-    public interface Listener {
-
-        void onKeepAlive();
-
-        void onChoke();
-
-        void onUnchoke();
-
-        void onInterested();
-
-        void onNotInterested();
-
-        void onHave(Have have);
-
-        void onBitfield(Bitfield bitfield);
-
-        void onRequest(Request request);
-
-        void onPiece(Piece piece);
-
-        void onCancel(Cancel cancel);
     }
 }

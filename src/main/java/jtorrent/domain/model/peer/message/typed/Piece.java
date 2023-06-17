@@ -51,7 +51,7 @@ public class Piece extends TypedPeerMessage {
     }
 
     @Override
-    protected MessageType getMessageType() {
+    public MessageType getMessageType() {
         return MessageType.PIECE;
     }
 
