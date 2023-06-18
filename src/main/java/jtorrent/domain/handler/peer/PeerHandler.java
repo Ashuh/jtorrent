@@ -12,17 +12,20 @@ import java.util.Set;
 import jtorrent.domain.model.peer.Peer;
 import jtorrent.domain.model.peer.exception.InfoHashMismatchException;
 import jtorrent.domain.model.peer.message.Handshake;
+import jtorrent.domain.model.peer.message.KeepAlive;
+import jtorrent.domain.model.peer.message.PeerMessage;
 import jtorrent.domain.model.peer.message.typed.Bitfield;
 import jtorrent.domain.model.peer.message.typed.Cancel;
 import jtorrent.domain.model.peer.message.typed.Have;
 import jtorrent.domain.model.peer.message.typed.Interested;
 import jtorrent.domain.model.peer.message.typed.Piece;
 import jtorrent.domain.model.peer.message.typed.Request;
+import jtorrent.domain.model.peer.message.typed.TypedPeerMessage;
 import jtorrent.domain.model.torrent.Block;
 import jtorrent.domain.model.torrent.Torrent;
 import jtorrent.domain.util.Sha1Hash;
 
-public class PeerHandler implements Runnable, Peer.Listener {
+public class PeerHandler implements Runnable {
 
     private static final System.Logger LOGGER = System.getLogger(PeerHandler.class.getName());
 
@@ -39,7 +42,6 @@ public class PeerHandler implements Runnable, Peer.Listener {
     public PeerHandler(Peer peer, Torrent torrent) {
         this.peer = peer;
         this.torrent = torrent;
-        this.peer.addListener(this);
     }
 
     public void addListener(Listener listener) {
@@ -47,8 +49,9 @@ public class PeerHandler implements Runnable, Peer.Listener {
     }
 
     public void assignBlock(Block block) throws IOException {
-        LOGGER.log(Level.DEBUG, "Assign Block: {0}", block);
+        LOGGER.log(Level.DEBUG, "Peer {0} assigned block {1}", peer, block);
 
+        isBusy = true;
         int index = block.getIndex();
         int offset = block.getOffset();
         int length = block.getLength();
@@ -58,7 +61,6 @@ public class PeerHandler implements Runnable, Peer.Listener {
     private void sendRequest(int index, int begin, int length) throws IOException {
         Request request = new Request(index, begin, length);
         peer.sendMessage(request);
-        isBusy = true;
     }
 
     @Override
@@ -67,14 +69,18 @@ public class PeerHandler implements Runnable, Peer.Listener {
             peer.init();
             handshake();
             sendInterested();
-
-            while (isActive) {
-                peer.receiveMessage();
-            }
         } catch (IOException e) {
-            LOGGER.log(Level.ERROR, "Error while communicating with peer {0}", peer);
-            // TODO: handle exceptions
-            e.printStackTrace();
+            return;
+        }
+
+        while (isActive) {
+            try {
+                PeerMessage message = peer.receiveMessage();
+                handleMessage(message);
+            } catch (IOException e) {
+                LOGGER.log(Level.ERROR, "Error while communicating with peer {0}", peer);
+                isActive = false;
+            }
         }
     }
 
@@ -105,43 +111,80 @@ public class PeerHandler implements Runnable, Peer.Listener {
         return availablePieces;
     }
 
-    @Override
-    public void onKeepAlive() {
+    private void handleMessage(PeerMessage message) {
+        if (message instanceof KeepAlive) {
+            handleKeepAlive();
+            return;
+        }
+
+        assert message instanceof TypedPeerMessage;
+        TypedPeerMessage typedMessage = (TypedPeerMessage) message;
+
+        switch (typedMessage.getMessageType()) {
+        case CHOKE:
+            handleChoke();
+            break;
+        case UNCHOKE:
+            handleUnchoke();
+            break;
+        case INTERESTED:
+            handleInterested();
+            break;
+        case NOT_INTERESTED:
+            handleNotInterested();
+            break;
+        case HAVE:
+            handleHave((Have) typedMessage);
+            break;
+        case BITFIELD:
+            handleBitfield((Bitfield) typedMessage);
+            break;
+        case REQUEST:
+            handleRequest((Request) typedMessage);
+            break;
+        case PIECE:
+            handlePiece((Piece) typedMessage);
+            break;
+        case CANCEL:
+            handleCancel((Cancel) typedMessage);
+            break;
+        default:
+            LOGGER.log(Level.ERROR, "Unknown message type: {0}", typedMessage.getMessageType());
+        }
+    }
+
+    public void handleKeepAlive() {
         LOGGER.log(Level.DEBUG, "Handling KeepAlive");
     }
 
-    @Override
-    public void onChoke() {
+    public void handleChoke() {
         LOGGER.log(Level.DEBUG, "Handling Choke");
+        listeners.forEach(listener -> listener.onChokeReceived(this));
     }
 
-    @Override
-    public void onUnchoke() {
+    public void handleUnchoke() {
         LOGGER.log(Level.DEBUG, "Handling Unchoke");
         isChoked = false;
+        listeners.forEach(listener -> listener.onUnchokeRecevied(this));
         notifyIfReady();
     }
 
-    @Override
-    public void onInterested() {
+    public void handleInterested() {
         LOGGER.log(Level.DEBUG, "Handling Interested");
     }
 
-    @Override
-    public void onNotInterested() {
+    public void handleNotInterested() {
         LOGGER.log(Level.DEBUG, "Handling NotInterested");
     }
 
-    @Override
-    public void onHave(Have have) {
+    public void handleHave(Have have) {
         LOGGER.log(Level.DEBUG, "Handling Have: {0}", have);
         int pieceIndex = have.getPieceIndex();
         availablePieces.add(pieceIndex);
         listeners.forEach(listener -> listener.onPieceAvailable(this, pieceIndex));
     }
 
-    @Override
-    public void onBitfield(Bitfield bitfield) {
+    public void handleBitfield(Bitfield bitfield) {
         LOGGER.log(Level.DEBUG, "Handling Bitfield: {0}", bitfield);
         bitfield.getBits()
                 .forEach(i -> {
@@ -150,21 +193,18 @@ public class PeerHandler implements Runnable, Peer.Listener {
                 });
     }
 
-    @Override
-    public void onRequest(Request request) {
+    public void handleRequest(Request request) {
         LOGGER.log(Level.DEBUG, "Handling Request: {0}", request);
     }
 
-    @Override
-    public void onPiece(Piece piece) {
+    public void handlePiece(Piece piece) {
         LOGGER.log(Level.DEBUG, "Handling piece: {0}", piece);
         isBusy = false;
         listeners.forEach(listener -> listener.onPieceReceived(piece));
         notifyIfReady();
     }
 
-    @Override
-    public void onCancel(Cancel cancel) {
+    public void handleCancel(Cancel cancel) {
         LOGGER.log(Level.DEBUG, "Handling Cancel: {0}", cancel);
     }
 
@@ -181,6 +221,10 @@ public class PeerHandler implements Runnable, Peer.Listener {
     }
 
     public interface Listener {
+
+        void onUnchokeRecevied(PeerHandler peerHandler);
+
+        void onChokeReceived(PeerHandler peerHandler);
 
         void onReady(PeerHandler peerHandler);
 

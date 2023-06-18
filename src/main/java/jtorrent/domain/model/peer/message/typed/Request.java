@@ -17,7 +17,7 @@ public class Request extends BlockMessage {
     }
 
     @Override
-    protected MessageType getMessageType() {
+    public MessageType getMessageType() {
         return MessageType.REQUEST;
     }
 
