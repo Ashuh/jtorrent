@@ -12,7 +12,7 @@ import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.util.Objects;
 
-import jtorrent.domain.model.peer.exception.IncompleteReadException;
+import jtorrent.domain.model.peer.exception.UnexpectedEndOfStreamException;
 import jtorrent.domain.model.peer.message.Handshake;
 import jtorrent.domain.model.peer.message.KeepAlive;
 import jtorrent.domain.model.peer.message.PeerMessage;
@@ -59,7 +59,7 @@ public class Peer {
         LOGGER.log(Level.DEBUG, "Waiting for handshake");
         byte[] buffer = inputStream.readNBytes(Handshake.BYTES);
         if (buffer.length != Handshake.BYTES) {
-            throw new IncompleteReadException(Handshake.BYTES, buffer.length);
+            throw new UnexpectedEndOfStreamException();
         }
         LOGGER.log(Level.DEBUG, "Received handshake");
         return Handshake.unpack(buffer);
@@ -70,7 +70,7 @@ public class Peer {
         byte[] lengthPrefix = inputStream.readNBytes(Integer.BYTES);
 
         if (lengthPrefix.length != Integer.BYTES) {
-            throw new IncompleteReadException(Integer.BYTES, lengthPrefix.length);
+            throw new UnexpectedEndOfStreamException();
         }
 
         int length = ByteBuffer.wrap(lengthPrefix).getInt();
@@ -81,10 +81,14 @@ public class Peer {
         }
 
         byte id = (byte) inputStream.read();
+        if (id == -1) {
+            throw new UnexpectedEndOfStreamException();
+        }
+
         byte[] payload = inputStream.readNBytes(length - 1);
 
         if (payload.length != length - 1) {
-            throw new IncompleteReadException(length - 1, payload.length);
+            throw new UnexpectedEndOfStreamException();
         }
 
         return unpackMessagePayload(id, payload);

@@ -69,15 +69,18 @@ public class PeerHandler implements Runnable {
             peer.init();
             handshake();
             sendInterested();
+        } catch (IOException e) {
+            return;
+        }
 
-            while (isActive) {
+        while (isActive) {
+            try {
                 PeerMessage message = peer.receiveMessage();
                 handleMessage(message);
+            } catch (IOException e) {
+                LOGGER.log(Level.ERROR, "Error while communicating with peer {0}", peer);
+                isActive = false;
             }
-        } catch (IOException e) {
-            LOGGER.log(Level.ERROR, "Error while communicating with peer {0}", peer);
-            // TODO: handle exceptions
-            e.printStackTrace();
         }
     }
 
