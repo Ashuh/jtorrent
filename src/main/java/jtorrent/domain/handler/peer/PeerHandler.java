@@ -1,7 +1,5 @@
 package jtorrent.domain.handler.peer;
 
-import static jtorrent.domain.Constants.PEER_ID;
-
 import java.io.IOException;
 import java.lang.System.Logger.Level;
 import java.util.ArrayList;
@@ -10,8 +8,6 @@ import java.util.List;
 import java.util.Set;
 
 import jtorrent.domain.model.peer.Peer;
-import jtorrent.domain.model.peer.exception.InfoHashMismatchException;
-import jtorrent.domain.model.peer.message.Handshake;
 import jtorrent.domain.model.peer.message.KeepAlive;
 import jtorrent.domain.model.peer.message.PeerMessage;
 import jtorrent.domain.model.peer.message.typed.Bitfield;
@@ -23,7 +19,6 @@ import jtorrent.domain.model.peer.message.typed.Request;
 import jtorrent.domain.model.peer.message.typed.TypedPeerMessage;
 import jtorrent.domain.model.torrent.Block;
 import jtorrent.domain.model.torrent.Torrent;
-import jtorrent.domain.util.Sha1Hash;
 
 public class PeerHandler implements Runnable {
 
