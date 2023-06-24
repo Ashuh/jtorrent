@@ -3,8 +3,6 @@ package jtorrent.domain.model.peer;
 import static java.util.Objects.requireNonNull;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
 import java.net.InetAddress;
@@ -26,38 +24,37 @@ import jtorrent.domain.model.peer.message.typed.NotInterested;
 import jtorrent.domain.model.peer.message.typed.Piece;
 import jtorrent.domain.model.peer.message.typed.Request;
 import jtorrent.domain.model.peer.message.typed.Unchoke;
+import jtorrent.domain.util.Sha1Hash;
 
-public class Peer {
+public abstract class Peer {
 
     private static final Logger LOGGER = System.getLogger(Peer.class.getName());
-    private final InetAddress address;
-    private final int port; // unsigned short
 
-    private Socket socket;
-    private OutputStream outputStream;
-    private InputStream inputStream;
+    protected final InetAddress address;
+    protected final int port; // unsigned short
+    protected Socket socket;
 
-    public Peer(InetAddress address, int port) {
+    protected Peer(InetAddress address, int port) {
         this.address = requireNonNull(address);
         this.port = port;
     }
 
-    public void init() throws IOException {
-        LOGGER.log(Level.DEBUG, "Connecting to peer: {0}:{1}", address, port);
-        this.socket = new Socket(address, port);
-        this.outputStream = socket.getOutputStream();
-        this.inputStream = socket.getInputStream();
-        LOGGER.log(Level.DEBUG, "Connected to peer: {0}:{1}", address, port);
+    protected Peer(Socket socket) {
+        this.socket = requireNonNull(socket);
+        this.address = socket.getInetAddress();
+        this.port = socket.getPort();
     }
+
+    public abstract void connect(Sha1Hash infoHash) throws IOException;
 
     public void sendMessage(PeerMessage message) throws IOException {
         LOGGER.log(Level.DEBUG, "Sending message: {0}", message);
-        outputStream.write(message.pack());
+        socket.getOutputStream().write(message.pack());
     }
 
     public Handshake receiveHandshake() throws IOException {
         LOGGER.log(Level.DEBUG, "Waiting for handshake");
-        byte[] buffer = inputStream.readNBytes(Handshake.BYTES);
+        byte[] buffer = socket.getInputStream().readNBytes(Handshake.BYTES);
         if (buffer.length != Handshake.BYTES) {
             throw new UnexpectedEndOfStreamException();
         }
@@ -67,7 +64,7 @@ public class Peer {
 
     public PeerMessage receiveMessage() throws IOException {
         LOGGER.log(Level.DEBUG, "Waiting for message");
-        byte[] lengthPrefix = inputStream.readNBytes(Integer.BYTES);
+        byte[] lengthPrefix = socket.getInputStream().readNBytes(Integer.BYTES);
 
         if (lengthPrefix.length != Integer.BYTES) {
             throw new UnexpectedEndOfStreamException();
@@ -80,12 +77,12 @@ public class Peer {
             return new KeepAlive();
         }
 
-        byte id = (byte) inputStream.read();
+        byte id = (byte) socket.getInputStream().read();
         if (id == -1) {
             throw new UnexpectedEndOfStreamException();
         }
 
-        byte[] payload = inputStream.readNBytes(length - 1);
+        byte[] payload = socket.getInputStream().readNBytes(length - 1);
 
         if (payload.length != length - 1) {
             throw new UnexpectedEndOfStreamException();

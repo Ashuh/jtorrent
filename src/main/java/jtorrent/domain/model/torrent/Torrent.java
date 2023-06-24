@@ -5,14 +5,17 @@ import static java.util.Objects.requireNonNull;
 import java.time.LocalDateTime;
 import java.util.BitSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import jtorrent.domain.model.peer.Peer;
 import jtorrent.domain.model.tracker.Tracker;
 import jtorrent.domain.util.RangeList;
 import jtorrent.domain.util.Sha1Hash;
@@ -21,7 +24,7 @@ public class Torrent {
 
     private static final int BLOCK_SIZE = 16384;
 
-    private final List<Tracker> trackers;
+    private final Set<Tracker> trackers;
     private final LocalDateTime creationDate;
     private final String comment;
     private final String createdBy;
@@ -34,8 +37,9 @@ public class Torrent {
     private final PieceTracker pieceTracker;
     private final AtomicInteger downloaded = new AtomicInteger(0);
     private final AtomicInteger uploaded = new AtomicInteger(0);
+    private final Set<Peer> peers = new HashSet<>();
 
-    public Torrent(List<Tracker> trackers, LocalDateTime creationDate, String comment, String createdBy,
+    public Torrent(Set<Tracker> trackers, LocalDateTime creationDate, String comment, String createdBy,
             int pieceSize, List<Sha1Hash> pieceHashes, String name, List<File> files, Sha1Hash infoHash) {
         this.trackers = requireNonNull(trackers);
         this.creationDate = requireNonNull(creationDate);
@@ -52,7 +56,7 @@ public class Torrent {
         this.pieceTracker = new PieceTracker();
     }
 
-    public List<Tracker> getTrackers() {
+    public Set<Tracker> getTrackers() {
         return trackers;
     }
 
@@ -196,6 +200,14 @@ public class Torrent {
 
     private int getNumBlocks(int pieceIndex) {
         return (int) Math.ceil((double) getPieceSize(pieceIndex) / BLOCK_SIZE);
+    }
+
+    public void addPeer(Peer peer) {
+        peers.add(peer);
+    }
+
+    public boolean hasPeer(Peer peer) {
+        return peers.contains(peer);
     }
 
     @Override

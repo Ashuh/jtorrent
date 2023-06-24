@@ -7,7 +7,6 @@ import java.util.Objects;
 import java.util.Optional;
 
 import jtorrent.domain.model.exception.UnpackException;
-import jtorrent.domain.model.peer.Peer;
 import jtorrent.domain.model.tracker.PeerResponse;
 
 public class UdpPeerResponse implements PeerResponse {
@@ -30,20 +29,6 @@ public class UdpPeerResponse implements PeerResponse {
         int ipv4 = buffer.getInt();
         int port = buffer.getShort();
         return new UdpPeerResponse(ipv4, port);
-    }
-
-    public Peer toPeer() {
-        byte[] ipv4Bytes = ByteBuffer.allocate(Integer.BYTES)
-                .putInt(ipv4)
-                .array();
-        InetAddress address = null;
-        try {
-            address = InetAddress.getByAddress(ipv4Bytes);
-        } catch (UnknownHostException ignored) {
-            // this should never happen
-        }
-
-        return new Peer(address, port);
     }
 
     public int getIpv4() {

@@ -66,8 +66,8 @@ public class PeerHandler implements Runnable {
     @Override
     public void run() {
         try {
-            peer.init();
-            handshake();
+            peer.connect(torrent.getInfoHash());
+            isConnected = true;
             sendInterested();
         } catch (IOException e) {
             return;
@@ -84,27 +84,10 @@ public class PeerHandler implements Runnable {
         }
     }
 
-    public void handshake() throws IOException {
-        LOGGER.log(Level.DEBUG, "Initiating handshake");
-        sendHandshake(torrent.getInfoHash(), PEER_ID.getBytes());
-        Handshake inHandshake = peer.receiveHandshake();
-
-        if (!inHandshake.getInfoHash().equals(torrent.getInfoHash())) {
-            throw new InfoHashMismatchException(torrent.getInfoHash(), inHandshake.getInfoHash());
-        }
-
-        LOGGER.log(Level.DEBUG, "Handshake successful");
-        isConnected = true;
-    }
 
     private void sendInterested() throws IOException {
         Interested interested = new Interested();
         peer.sendMessage(interested);
-    }
-
-    private void sendHandshake(Sha1Hash infoHash, byte[] peerId) throws IOException {
-        Handshake handshake = new Handshake(infoHash, peerId);
-        peer.sendMessage(handshake);
     }
 
     public Set<Integer> getAvailablePieces() {
