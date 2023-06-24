@@ -14,12 +14,14 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import jtorrent.data.repository.FilePieceRepository;
 import jtorrent.domain.handler.peer.PeerHandler;
 import jtorrent.domain.handler.tracker.TrackerHandler;
 import jtorrent.domain.handler.tracker.factory.TrackerHandlerFactory;
+import jtorrent.domain.model.peer.Peer;
 import jtorrent.domain.model.peer.message.typed.Piece;
 import jtorrent.domain.model.torrent.Block;
 import jtorrent.domain.model.torrent.Torrent;
@@ -54,6 +56,15 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.List
     public void start() {
         trackerHandlers.forEach(trackerHandler -> trackerHandler.addListener(this));
         trackerHandlers.forEach(TrackerHandler::start);
+    }
+
+    public void addPeer(Peer peer) {
+        torrent.addPeer(peer);
+        PeerHandler peerHandler = new PeerHandler(peer, torrent);
+        peerHandler.addListener(this);
+        peerHandlers.add(peerHandler);
+        Thread thread = new Thread(peerHandler);
+        thread.start();
     }
 
     @Override
@@ -127,15 +138,10 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.List
 
     @Override
     public void onAnnounceResponse(List<PeerResponse> peerResponses) {
-        peerResponses.parallelStream()
+        peerResponses.stream()
                 .map(PeerResponse::toPeer)
-                .map(peer -> new PeerHandler(peer, torrent))
-                .filter(peerHandlers::add)
-                .forEach(peerHandler -> {
-                    peerHandler.addListener(this);
-                    Thread thread = new Thread(peerHandler);
-                    thread.start();
-                });
+                .filter(Predicate.not(torrent::hasPeer))
+                .forEach(this::addPeer);
     }
 
     private class WorkDispatcher implements Runnable {

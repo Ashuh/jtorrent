@@ -13,11 +13,12 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import com.dampcake.bencode.BencodeInputStream;
 
@@ -110,10 +111,14 @@ public class BencodedTorrent extends BencodedObject {
 
     public Torrent toDomain() {
         try {
-            // ignore announceList for now
-            List<Tracker> trackers = Stream.of(new URI(announce))
+            Set<Tracker> trackers = new HashSet<>();
+            trackers.add(TrackerFactory.fromUri(URI.create(announce)));
+            announceList.stream()
+                    .flatMap(List::stream)
+                    .map(URI::create)
                     .map(TrackerFactory::fromUri)
-                    .collect(Collectors.toList());
+                    .collect(Collectors.toCollection(() -> trackers));
+
             LocalDateTime creationDateTime = LocalDateTime.ofEpochSecond(creationDate, 0, ZoneOffset.UTC);
             List<Sha1Hash> pieceHashes = mapPieces(info.getPieces());
             int pieceLength = info.getPieceLength();

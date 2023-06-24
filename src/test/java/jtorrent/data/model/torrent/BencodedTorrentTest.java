@@ -15,6 +15,7 @@ import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
@@ -240,7 +241,7 @@ class BencodedTorrentTest {
         Torrent actual = bencodedTorrent.toDomain();
 
         Torrent expected = new TorrentBuilder()
-                .setTrackers(List.of(new UdpTracker(InetSocketAddress.createUnresolved("tracker.example.com", 80))))
+                .setTrackers(Set.of(new UdpTracker(InetSocketAddress.createUnresolved("tracker.example.com", 80))))
                 .setCreationDate(LocalDateTime.ofEpochSecond(123456789L, 0, ZoneOffset.UTC))
                 .setComment("comment")
                 .setCreatedBy("created by")
@@ -287,7 +288,7 @@ class BencodedTorrentTest {
         Torrent actual = bencodedTorrent.toDomain();
 
         Torrent expected = new TorrentBuilder()
-                .setTrackers(List.of(new UdpTracker(InetSocketAddress.createUnresolved("tracker.example.com", 80))))
+                .setTrackers(Set.of(new UdpTracker(InetSocketAddress.createUnresolved("tracker.example.com", 80))))
                 .setCreationDate(LocalDateTime.ofEpochSecond(123456789L, 0, ZoneOffset.UTC))
                 .setComment("comment")
                 .setCreatedBy("created by")
@@ -440,7 +441,7 @@ class BencodedTorrentTest {
 
     private static class TorrentBuilder {
 
-        private List<Tracker> trackers = Collections.emptyList();
+        private Set<Tracker> trackers = Collections.emptySet();
         private LocalDateTime creationDate = LocalDateTime.ofEpochSecond(0, 0, ZoneOffset.UTC);
         private String comment = "";
         private String createdBy = "";
@@ -450,7 +451,7 @@ class BencodedTorrentTest {
         private List<File> files = Collections.emptyList();
         private Sha1Hash infoHash = new Sha1Hash(new byte[20]);
 
-        public TorrentBuilder setTrackers(List<Tracker> trackers) {
+        public TorrentBuilder setTrackers(Set<Tracker> trackers) {
             this.trackers = trackers;
             return this;
         }

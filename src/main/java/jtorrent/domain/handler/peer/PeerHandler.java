@@ -1,7 +1,5 @@
 package jtorrent.domain.handler.peer;
 
-import static jtorrent.domain.Constants.PEER_ID;
-
 import java.io.IOException;
 import java.lang.System.Logger.Level;
 import java.util.ArrayList;
@@ -10,8 +8,6 @@ import java.util.List;
 import java.util.Set;
 
 import jtorrent.domain.model.peer.Peer;
-import jtorrent.domain.model.peer.exception.InfoHashMismatchException;
-import jtorrent.domain.model.peer.message.Handshake;
 import jtorrent.domain.model.peer.message.KeepAlive;
 import jtorrent.domain.model.peer.message.PeerMessage;
 import jtorrent.domain.model.peer.message.typed.Bitfield;
@@ -23,7 +19,6 @@ import jtorrent.domain.model.peer.message.typed.Request;
 import jtorrent.domain.model.peer.message.typed.TypedPeerMessage;
 import jtorrent.domain.model.torrent.Block;
 import jtorrent.domain.model.torrent.Torrent;
-import jtorrent.domain.util.Sha1Hash;
 
 public class PeerHandler implements Runnable {
 
@@ -66,8 +61,8 @@ public class PeerHandler implements Runnable {
     @Override
     public void run() {
         try {
-            peer.init();
-            handshake();
+            peer.connect(torrent.getInfoHash());
+            isConnected = true;
             sendInterested();
         } catch (IOException e) {
             return;
@@ -84,27 +79,10 @@ public class PeerHandler implements Runnable {
         }
     }
 
-    public void handshake() throws IOException {
-        LOGGER.log(Level.DEBUG, "Initiating handshake");
-        sendHandshake(torrent.getInfoHash(), PEER_ID.getBytes());
-        Handshake inHandshake = peer.receiveHandshake();
-
-        if (!inHandshake.getInfoHash().equals(torrent.getInfoHash())) {
-            throw new InfoHashMismatchException(torrent.getInfoHash(), inHandshake.getInfoHash());
-        }
-
-        LOGGER.log(Level.DEBUG, "Handshake successful");
-        isConnected = true;
-    }
 
     private void sendInterested() throws IOException {
         Interested interested = new Interested();
         peer.sendMessage(interested);
-    }
-
-    private void sendHandshake(Sha1Hash infoHash, byte[] peerId) throws IOException {
-        Handshake handshake = new Handshake(infoHash, peerId);
-        peer.sendMessage(handshake);
     }
 
     public Set<Integer> getAvailablePieces() {
