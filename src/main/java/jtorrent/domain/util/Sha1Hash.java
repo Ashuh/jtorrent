@@ -41,6 +41,18 @@ public class Sha1Hash {
         return new Sha1Hash(hash);
     }
 
+    public static Sha1Hash fromHexString(String hexString) {
+        if (hexString.length() != HASH_SIZE * 2) {
+            throw new IllegalArgumentException("Invalid SHA1 hex string length");
+        }
+
+        byte[] hash = new byte[HASH_SIZE];
+        for (int i = 0; i < HASH_SIZE; i++) {
+            hash[i] = (byte) Integer.parseInt(hexString.substring(i * 2, i * 2 + 2), 16);
+        }
+        return new Sha1Hash(hash);
+    }
+
     public byte[] getBytes() {
         return bytes;
     }
