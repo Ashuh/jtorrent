@@ -4,8 +4,12 @@ import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level;
 import static java.lang.System.getLogger;
 import static java.util.Objects.requireNonNull;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -13,7 +17,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -40,6 +46,7 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.List
     private final Map<Integer, Set<PeerHandler>> pieceIndexToAvailablePeerHandlers = new HashMap<>();
     private final WorkDispatcher workDispatcher;
     private final PieceRepository repository = new FilePieceRepository();
+    private final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1);
 
     public TorrentHandler(Torrent torrent) {
         this.torrent = requireNonNull(torrent);
@@ -51,6 +58,8 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.List
         workDispatcher = new WorkDispatcher();
         Thread dispatcherThread = new Thread(workDispatcher);
         dispatcherThread.start();
+        executorService.scheduleAtFixedRate(new Unchoke(peerHandlers), 0, 10, SECONDS);
+        executorService.scheduleAtFixedRate(new OptimisticUnchoke(peerHandlers), 0, 30, SECONDS);
     }
 
     public void start() {
@@ -218,6 +227,68 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.List
 
         private int getPieceAvailability(int pieceIndex) {
             return pieceIndexToAvailablePeerHandlers.get(pieceIndex).size();
+        }
+    }
+
+    private static class Unchoke implements Runnable {
+
+        private static final int MAX_UNCHOKED_PEERS = 4;
+
+        private final Collection<PeerHandler> peerHandlers;
+
+        private Set<PeerHandler> unchokedPeerHandlers = new HashSet<>();
+
+        private Unchoke(Collection<PeerHandler> peerHandlers) {
+            this.peerHandlers = peerHandlers;
+        }
+
+        @Override
+        public void run() {
+            Set<PeerHandler> toUnchoke = peerHandlers.stream()
+                    .sorted(Comparator.comparingDouble(PeerHandler::getDownloadRate).reversed())
+                    .limit(MAX_UNCHOKED_PEERS)
+                    .collect(Collectors.toSet());
+
+            unchokedPeerHandlers.stream()
+                    .filter(Predicate.not(toUnchoke::contains))
+                    .forEach(PeerHandler::choke);
+
+            toUnchoke.stream()
+                    .filter(Predicate.not(unchokedPeerHandlers::contains))
+                    .forEach(PeerHandler::unchoke);
+
+            unchokedPeerHandlers = toUnchoke;
+        }
+    }
+
+    private static class OptimisticUnchoke implements Runnable {
+
+        private final Collection<PeerHandler> peerHandlers;
+        private PeerHandler optimisticUnchokedPeerHandler;
+
+        private OptimisticUnchoke(Collection<PeerHandler> peerHandlers) {
+            this.peerHandlers = peerHandlers;
+        }
+
+        @Override
+        public void run() {
+            List<PeerHandler> peerHandlersCopy = new ArrayList<>(this.peerHandlers);
+            Collections.shuffle(peerHandlersCopy);
+            peerHandlersCopy.stream()
+                    .filter(PeerHandler::isRemoteChoked)
+                    .findFirst()
+                    .ifPresent(this::setOptimisticUnchokedPeerHandler);
+        }
+
+        private void setOptimisticUnchokedPeerHandler(PeerHandler peerHandler) {
+            assert peerHandler != optimisticUnchokedPeerHandler;
+
+            if (optimisticUnchokedPeerHandler != null) {
+                optimisticUnchokedPeerHandler.choke();
+            }
+
+            optimisticUnchokedPeerHandler = peerHandler;
+            optimisticUnchokedPeerHandler.unchoke();
         }
     }
 }

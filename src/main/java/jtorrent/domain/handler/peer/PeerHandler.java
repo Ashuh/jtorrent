@@ -12,11 +12,13 @@ import jtorrent.domain.model.peer.message.KeepAlive;
 import jtorrent.domain.model.peer.message.PeerMessage;
 import jtorrent.domain.model.peer.message.typed.Bitfield;
 import jtorrent.domain.model.peer.message.typed.Cancel;
+import jtorrent.domain.model.peer.message.typed.Choke;
 import jtorrent.domain.model.peer.message.typed.Have;
 import jtorrent.domain.model.peer.message.typed.Interested;
 import jtorrent.domain.model.peer.message.typed.Piece;
 import jtorrent.domain.model.peer.message.typed.Request;
 import jtorrent.domain.model.peer.message.typed.TypedPeerMessage;
+import jtorrent.domain.model.peer.message.typed.Unchoke;
 import jtorrent.domain.model.torrent.Block;
 import jtorrent.domain.model.torrent.Torrent;
 
@@ -31,7 +33,6 @@ public class PeerHandler implements Runnable {
 
     private boolean isActive = true;
     private boolean isConnected = false;
-    private boolean isChoked = true;
     private boolean isBusy = false;
 
     public PeerHandler(Peer peer, Torrent torrent) {
@@ -79,6 +80,32 @@ public class PeerHandler implements Runnable {
         }
     }
 
+
+    public void choke() {
+        LOGGER.log(Level.DEBUG, "Choking peer");
+        Choke choke = new Choke();
+        try {
+            peer.sendMessage(choke);
+            peer.setRemoteChoked(true);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void unchoke() {
+        LOGGER.log(Level.DEBUG, "Unchoking peer");
+        Unchoke unchoke = new Unchoke();
+        try {
+            peer.sendMessage(unchoke);
+            peer.setRemoteChoked(false);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public double getDownloadRate() {
+        return peer.getDownloadRate();
+    }
 
     private void sendInterested() throws IOException {
         Interested interested = new Interested();
@@ -137,12 +164,13 @@ public class PeerHandler implements Runnable {
 
     public void handleChoke() {
         LOGGER.log(Level.DEBUG, "Handling Choke");
+        peer.setLocalChoked(true);
         listeners.forEach(listener -> listener.onChokeReceived(this));
     }
 
     public void handleUnchoke() {
         LOGGER.log(Level.DEBUG, "Handling Unchoke");
-        isChoked = false;
+        peer.setLocalChoked(false);
         listeners.forEach(listener -> listener.onUnchokeRecevied(this));
         notifyIfReady();
     }
@@ -194,8 +222,29 @@ public class PeerHandler implements Runnable {
         listeners.forEach(listener -> listener.onReady(this));
     }
 
+    public boolean isRemoteChoked() {
+        return peer.isRemoteChoked();
+    }
+
+    public boolean isConnected() {
+        return isConnected;
+    }
+
     public boolean isReady() {
-        return isConnected && !isChoked && !isBusy;
+        return isConnected && !peer.isLocalChoked() && !isBusy;
+    }
+
+    @Override
+    public String toString() {
+        return "PeerHandler{"
+                + "peer=" + peer
+                + ", torrent=" + torrent
+                + ", listeners=" + listeners
+                + ", availablePieces=" + availablePieces
+                + ", isActive=" + isActive
+                + ", isConnected=" + isConnected
+                + ", isBusy=" + isBusy
+                + '}';
     }
 
     public interface Listener {

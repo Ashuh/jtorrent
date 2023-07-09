@@ -8,6 +8,7 @@ import java.lang.System.Logger.Level;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.nio.ByteBuffer;
+import java.time.Duration;
 import java.util.Objects;
 
 import jtorrent.domain.model.peer.exception.UnexpectedEndOfStreamException;
@@ -24,6 +25,7 @@ import jtorrent.domain.model.peer.message.typed.NotInterested;
 import jtorrent.domain.model.peer.message.typed.Piece;
 import jtorrent.domain.model.peer.message.typed.Request;
 import jtorrent.domain.model.peer.message.typed.Unchoke;
+import jtorrent.domain.util.DurationWindow;
 import jtorrent.domain.util.Sha1Hash;
 
 public abstract class Peer {
@@ -33,6 +35,9 @@ public abstract class Peer {
     protected final InetAddress address;
     protected final int port; // unsigned short
     protected Socket socket;
+    protected final DurationWindow durationWindow = new DurationWindow(Duration.ofSeconds(20));
+    protected boolean isLocalChoked = true;
+    protected boolean isRemoteChoked = true;
 
     protected Peer(InetAddress address, int port) {
         this.address = requireNonNull(address);
@@ -111,7 +116,9 @@ public abstract class Peer {
         case REQUEST:
             return Request.unpack(payload);
         case PIECE:
-            return Piece.unpack(payload);
+            Piece piece = Piece.unpack(payload);
+            durationWindow.add(piece.getBlock().length);
+            return piece;
         case CANCEL:
             return Cancel.unpack(payload);
         default:
@@ -125,6 +132,26 @@ public abstract class Peer {
 
     public int getPort() {
         return port;
+    }
+
+    public boolean isLocalChoked() {
+        return isLocalChoked;
+    }
+
+    public void setLocalChoked(boolean localChoked) {
+        isLocalChoked = localChoked;
+    }
+
+    public boolean isRemoteChoked() {
+        return isRemoteChoked;
+    }
+
+    public void setRemoteChoked(boolean remoteChoked) {
+        isRemoteChoked = remoteChoked;
+    }
+
+    public double getDownloadRate() {
+        return durationWindow.getWindowAverageRate();
     }
 
     @Override
