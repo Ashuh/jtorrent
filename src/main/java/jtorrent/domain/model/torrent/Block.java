@@ -53,4 +53,10 @@ public class Block {
                 + ", length=" + length
                 + '}';
     }
+
+    public enum Status {
+        MISSING,
+        REQUESTED,
+        RECEIVED
+    }
 }

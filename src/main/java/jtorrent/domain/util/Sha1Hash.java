@@ -1,10 +1,10 @@
-package jtorrent.domain.model.torrent;
+package jtorrent.domain.util;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 
-import jtorrent.domain.model.torrent.exception.Sha1AlgorithmUnavailableException;
+import jtorrent.domain.util.exception.Sha1AlgorithmUnavailableException;
 
 public class Sha1Hash {
 
@@ -38,6 +38,18 @@ public class Sha1Hash {
     public static Sha1Hash of(byte[] bytes) {
         byte[] hash = MESSAGE_DIGEST.digest(bytes);
         MESSAGE_DIGEST.reset();
+        return new Sha1Hash(hash);
+    }
+
+    public static Sha1Hash fromHexString(String hexString) {
+        if (hexString.length() != HASH_SIZE * 2) {
+            throw new IllegalArgumentException("Invalid SHA1 hex string length");
+        }
+
+        byte[] hash = new byte[HASH_SIZE];
+        for (int i = 0; i < HASH_SIZE; i++) {
+            hash[i] = (byte) Integer.parseInt(hexString.substring(i * 2, i * 2 + 2), 16);
+        }
         return new Sha1Hash(hash);
     }
 

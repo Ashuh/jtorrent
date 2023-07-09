@@ -9,17 +9,17 @@ import org.junit.jupiter.api.Test;
 
 class RangeListTest {
 
-    private static final int RANGE_START = -10;
-    private static final int RANGE_SIZE_0 = 10;
-    private static final int RANGE_SIZE_1 = 20;
-    private static final int RANGE_SIZE_2 = 30;
+    private static final long RANGE_START = -10;
+    private static final long RANGE_SIZE_0 = 10;
+    private static final long RANGE_SIZE_1 = 20;
+    private static final long RANGE_SIZE_2 = 30;
 
-    public static final int RANGE_END_0 = RANGE_START + RANGE_SIZE_0;
-    public static final int RANGE_END_1 = RANGE_END_0 + RANGE_SIZE_1;
-    public static final int RANGE_END_2 = RANGE_END_1 + RANGE_SIZE_2;
+    public static final long RANGE_END_0 = RANGE_START + RANGE_SIZE_0;
+    public static final long RANGE_END_1 = RANGE_END_0 + RANGE_SIZE_1;
+    public static final long RANGE_END_2 = RANGE_END_1 + RANGE_SIZE_2;
 
-    private static final int RANGE_START_1 = RANGE_END_0;
-    private static final int RANGE_START_2 = RANGE_END_1;
+    private static final long RANGE_START_1 = RANGE_END_0;
+    private static final long RANGE_START_2 = RANGE_END_1;
 
     private static final RangeList RANGE_LIST = new RangeList(
             List.of(RANGE_START, RANGE_START_1, RANGE_START_2, RANGE_END_2));

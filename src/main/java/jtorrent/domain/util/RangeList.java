@@ -7,14 +7,14 @@ import java.util.Objects;
 
 public class RangeList {
 
-    private final List<Integer> boundaries;
+    private final List<Long> boundaries;
 
-    public RangeList(List<Integer> boundaries) {
+    public RangeList(List<Long> boundaries) {
         this.boundaries = Collections.unmodifiableList(boundaries);
     }
 
-    public static RangeList fromRangeSizes(int start, List<Integer> rangeSizes) {
-        Integer[] boundaries = new Integer[rangeSizes.size() + 1];
+    public static RangeList fromRangeSizes(long start, List<Long> rangeSizes) {
+        Long[] boundaries = new Long[rangeSizes.size() + 1];
         boundaries[0] = start;
         for (int i = 0; i < rangeSizes.size(); i++) {
             boundaries[i + 1] = boundaries[i] + rangeSizes.get(i);
@@ -23,27 +23,29 @@ public class RangeList {
         return new RangeList(Arrays.asList(boundaries));
     }
 
-    public int getRangeStart(int index) {
+    public long getRangeStart(int index) {
         if (index < 0 || index >= boundaries.size() - 1) {
             throw new IndexOutOfBoundsException(index);
         }
         return boundaries.get(index);
     }
 
-    public int getRangeEnd(int index) {
+    public long getRangeEnd(int index) {
         if (index < 0 || index >= boundaries.size() - 1) {
             throw new IndexOutOfBoundsException(index);
         }
         return boundaries.get(index + 1);
     }
 
-    public int getRangeIndex(int value) {
+    public int getRangeIndex(long value) {
         if (value < boundaries.get(0)) {
-            throw new IllegalArgumentException("Value is smaller than the first boundary");
+            throw new IllegalArgumentException(String.format("Value (%d) is smaller than the first boundary (%d)",
+                    value, boundaries.get(0)));
         }
 
         if (value >= boundaries.get(boundaries.size() - 1)) {
-            throw new IllegalArgumentException("Value is larger than the last boundary");
+            throw new IllegalArgumentException(String.format("Value (%d) is larger than the last boundary (%d)",
+                    value, boundaries.get(boundaries.size() - 1)));
         }
 
         int low = 0;
@@ -51,7 +53,7 @@ public class RangeList {
 
         while (low <= high) {
             int mid = low + (high - low) / 2;
-            int boundary = boundaries.get(mid);
+            long boundary = boundaries.get(mid);
 
             if (value == boundary) {
                 return mid;

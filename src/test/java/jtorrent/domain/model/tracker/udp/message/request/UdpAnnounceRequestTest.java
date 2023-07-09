@@ -1,4 +1,4 @@
-package jtorrent.domain.model.tracker.udp.message;
+package jtorrent.domain.model.tracker.udp.message.request;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
@@ -7,15 +7,17 @@ import java.nio.ByteOrder;
 
 import org.junit.jupiter.api.Test;
 
-import jtorrent.domain.model.torrent.Sha1Hash;
+import jtorrent.domain.model.tracker.Event;
+import jtorrent.domain.model.tracker.udp.message.Action;
+import jtorrent.domain.util.Sha1Hash;
 
-class AnnounceRequestTest {
+class UdpAnnounceRequestTest {
 
     @Test
     void pack() {
         Sha1Hash infoHash = new Sha1Hash(new byte[20]);
         byte[] peerId = "01234567890123456789".getBytes();
-        AnnounceRequest announceRequest = new AnnounceRequest(
+        UdpAnnounceRequest announceRequest = new UdpAnnounceRequest(
                 9999,
                 infoHash,
                 peerId,
@@ -33,7 +35,7 @@ class AnnounceRequestTest {
                 .order(ByteOrder.BIG_ENDIAN)
                 .putLong(9999)
                 .putInt(Action.ANNOUNCE.getValue())
-                .putInt(announceRequest.transactionId)
+                .putInt(announceRequest.getTransactionId())
                 .put(infoHash.getBytes())
                 .put(peerId)
                 .putLong(1)

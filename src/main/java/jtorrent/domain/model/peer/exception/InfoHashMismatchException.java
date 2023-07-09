@@ -1,6 +1,6 @@
 package jtorrent.domain.model.peer.exception;
 
-import jtorrent.domain.model.torrent.Sha1Hash;
+import jtorrent.domain.util.Sha1Hash;
 
 public class InfoHashMismatchException extends RuntimeException {
 

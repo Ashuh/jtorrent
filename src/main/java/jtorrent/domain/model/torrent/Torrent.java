@@ -2,21 +2,29 @@ package jtorrent.domain.model.torrent;
 
 import static java.util.Objects.requireNonNull;
 
-import java.net.URI;
 import java.time.LocalDateTime;
 import java.util.BitSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import jtorrent.domain.model.peer.Peer;
+import jtorrent.domain.model.tracker.Tracker;
 import jtorrent.domain.util.RangeList;
+import jtorrent.domain.util.Sha1Hash;
 
 public class Torrent {
 
-    private final List<URI> trackers;
+    private static final int BLOCK_SIZE = 16384;
+
+    private final Set<Tracker> trackers;
     private final LocalDateTime creationDate;
     private final String comment;
     private final String createdBy;
@@ -26,12 +34,13 @@ public class Torrent {
     private final List<File> files;
     private final Sha1Hash infoHash;
     private final RangeList fileByteRanges;
-    private final PieceTracker pieceTracker = new PieceTracker();
+    private final PieceTracker pieceTracker;
     private final AtomicInteger downloaded = new AtomicInteger(0);
     private final AtomicInteger uploaded = new AtomicInteger(0);
+    private final Set<Peer> peers = new HashSet<>();
 
-    public Torrent(List<URI> trackers, LocalDateTime creationDate, String comment, String createdBy, int pieceSize,
-            List<Sha1Hash> pieceHashes, String name, List<File> files, Sha1Hash infoHash) {
+    public Torrent(Set<Tracker> trackers, LocalDateTime creationDate, String comment, String createdBy,
+            int pieceSize, List<Sha1Hash> pieceHashes, String name, List<File> files, Sha1Hash infoHash) {
         this.trackers = requireNonNull(trackers);
         this.creationDate = requireNonNull(creationDate);
         this.comment = requireNonNull(comment);
@@ -44,9 +53,10 @@ public class Torrent {
         this.fileByteRanges = RangeList.fromRangeSizes(0, files.stream()
                 .map(File::getSize)
                 .collect(Collectors.toList()));
+        this.pieceTracker = new PieceTracker();
     }
 
-    public List<URI> getTrackers() {
+    public Set<Tracker> getTrackers() {
         return trackers;
     }
 
@@ -68,9 +78,22 @@ public class Torrent {
 
     public int getPieceSize(int pieceIndex) {
         if (pieceIndex == getNumPieces() - 1) {
-            return getTotalSize() % pieceSize;
+            int remainder = (int) (getTotalSize() % pieceSize);
+            return remainder == 0 ? pieceSize : remainder;
         }
         return pieceSize;
+    }
+
+    public int getBlockSize() {
+        return BLOCK_SIZE;
+    }
+
+    public int getBlockSize(int pieceIndex, int blockIndex) {
+        if (blockIndex == getNumBlocks(pieceIndex) - 1) {
+            int remainder = getPieceSize(pieceIndex) % BLOCK_SIZE;
+            return remainder == 0 ? BLOCK_SIZE : remainder;
+        }
+        return BLOCK_SIZE;
     }
 
     public List<Sha1Hash> getPieceHashes() {
@@ -89,25 +112,25 @@ public class Torrent {
         return infoHash;
     }
 
-    public int getDownloaded() {
+    public long getDownloaded() {
         return downloaded.get();
     }
 
-    public int getLeft() {
-        return getTotalSize() - getVerifiedBytes();
-    }
-
-    public int getTotalSize() {
+    public long getTotalSize() {
         return files.stream()
                 .map(File::getSize)
-                .mapToInt(Integer::intValue)
+                .mapToLong(Long::longValue)
                 .sum();
     }
 
     private int getVerifiedBytes() {
-        return pieceTracker.getVerifiedPieces()
+        return pieceTracker.getVerifiedPieceIndices()
                 .map(this::getPieceSize)
                 .sum();
+    }
+
+    public long getRemainingBytes() {
+        return getTotalSize() - getVerifiedBytes();
     }
 
     public int getNumPieces() {
@@ -122,8 +145,8 @@ public class Torrent {
         return fileByteRanges;
     }
 
-    public int getPieceOffset(int index) {
-        return getPieceSize() * index;
+    public long getPieceOffset(int index) {
+        return (long) getPieceSize() * index;
     }
 
     public void incrementDownloaded(int amount) {
@@ -134,12 +157,25 @@ public class Torrent {
         uploaded.addAndGet(amount);
     }
 
-    public void setDataReceived(int pieceIndex, int from, int to) {
-        pieceTracker.setDataReceived(pieceIndex, from, to);
+    public void setBlockReceived(int pieceIndex, int blockIndex) {
+        pieceTracker.setBlockReceived(pieceIndex, blockIndex);
     }
 
-    public void unsetDataReceived(int pieceIndex, int from, int to) {
-        pieceTracker.unsetDataReceived(pieceIndex, from, to);
+    public void setBlockMissing(int pieceIndex, int blockIndex) {
+        pieceTracker.setBlockMissing(pieceIndex, blockIndex);
+    }
+
+    public void setPieceMissing(int pieceIndex) {
+        IntStream.range(0, getNumBlocks(pieceIndex))
+                .forEach(i -> setBlockMissing(pieceIndex, i));
+    }
+
+    public List<Integer> getCompletelyMissingPieceIndices() {
+        return pieceTracker.getCompletelyMissingPieceIndices();
+    }
+
+    public List<Integer> getPartiallyMissingPieceIndices() {
+        return pieceTracker.getPartiallyMissingPieceIndices();
     }
 
     public void setPieceVerified(int pieceIndex) {
@@ -148,6 +184,30 @@ public class Torrent {
 
     public boolean isPieceComplete(int pieceIndex) {
         return pieceTracker.isPieceComplete(pieceIndex);
+    }
+
+    public boolean isAllPiecesVerified() {
+        return pieceTracker.isAllPiecesVerified();
+    }
+
+    public List<Integer> getmissingBlockIndices(int pieceIndex) {
+        return pieceTracker.getMissingBlockIndices(pieceIndex);
+    }
+
+    public void setBlockRequested(int pieceIndex, int blockIndex) {
+        pieceTracker.setBlockIndexRequested(pieceIndex, blockIndex);
+    }
+
+    private int getNumBlocks(int pieceIndex) {
+        return (int) Math.ceil((double) getPieceSize(pieceIndex) / BLOCK_SIZE);
+    }
+
+    public void addPeer(Peer peer) {
+        peers.add(peer);
+    }
+
+    public boolean hasPeer(Peer peer) {
+        return peers.contains(peer);
     }
 
     @Override
@@ -192,36 +252,53 @@ public class Torrent {
 
     private class PieceTracker {
 
-        private final HashMap<Integer, BitSet> pieceIndexToAvailableBytes = new HashMap<>();
+        private final HashMap<Integer, Map<Integer, Block.Status>> pieceIndexToBlockIndexToBlockStatus =
+                new HashMap<>();
 
-        private final BitSet availablePieces = new BitSet();
+        private final BitSet completePieces = new BitSet();
 
         private final BitSet verifiedPieces = new BitSet();
 
-        public void setDataReceived(int pieceIndex, int from, int to) {
+        public PieceTracker() {
+            IntStream.range(0, getNumPieces())
+                    .forEach(i -> pieceIndexToBlockIndexToBlockStatus.put(i, initializeBlockIndexToBlockStatus(i)));
+        }
+
+        private Map<Integer, Block.Status> initializeBlockIndexToBlockStatus(int pieceIndex) {
+            return IntStream.range(0, getNumBlocks(pieceIndex))
+                    .boxed()
+                    .collect(Collectors.toMap(Function.identity(), i -> Block.Status.MISSING, (a, b) -> b));
+        }
+
+        public void setBlockMissing(int pieceIndex, int blockIndex) {
+            if (isPieceComplete(pieceIndex)) {
+                completePieces.clear(pieceIndex);
+            }
+
+            Map<Integer, Block.Status> blockIndexToBlockStatus = pieceIndexToBlockIndexToBlockStatus.get(pieceIndex);
+            blockIndexToBlockStatus.put(blockIndex, Block.Status.MISSING);
+            completePieces.clear(pieceIndex);
+        }
+
+        public void setBlockIndexRequested(int pieceIndex, int blockIndex) {
+            Map<Integer, Block.Status> blockIndexToBlockStatus = pieceIndexToBlockIndexToBlockStatus.get(pieceIndex);
+            blockIndexToBlockStatus.put(blockIndex, Block.Status.REQUESTED);
+        }
+
+        public void setBlockReceived(int pieceIndex, int blockIndex) {
             if (isPieceComplete(pieceIndex)) {
                 return;
             }
 
-            BitSet availableBytes = pieceIndexToAvailableBytes.computeIfAbsent(pieceIndex, k -> new BitSet());
-            availableBytes.set(from, to);
+            Map<Integer, Block.Status> blockIndexToBlockStatus = pieceIndexToBlockIndexToBlockStatus.get(pieceIndex);
+            blockIndexToBlockStatus.put(blockIndex, Block.Status.RECEIVED);
 
-            if (availableBytes.cardinality() == getPieceSize(pieceIndex)) {
-                availablePieces.set(pieceIndex);
-                pieceIndexToAvailableBytes.remove(pieceIndex);
+            boolean isAllBlocksReceived = blockIndexToBlockStatus.values().stream()
+                    .allMatch(status -> status == Block.Status.RECEIVED);
+
+            if (isAllBlocksReceived) {
+                completePieces.set(pieceIndex);
             }
-        }
-
-        public void unsetDataReceived(int pieceIndex, int from, int to) {
-            BitSet availableBytes = pieceIndexToAvailableBytes.computeIfAbsent(pieceIndex, k -> new BitSet());
-
-            if (availablePieces.get(pieceIndex)) {
-                availablePieces.clear(pieceIndex);
-                assert availableBytes.isEmpty();
-                availableBytes.set(0, getPieceSize(pieceIndex));
-            }
-
-            availableBytes.clear(from, to);
         }
 
         public void setPieceVerified(int pieceIndex) {
@@ -229,15 +306,38 @@ public class Torrent {
         }
 
         public boolean isPieceComplete(int pieceIndex) {
-            return availablePieces.get(pieceIndex);
+            return completePieces.get(pieceIndex);
         }
 
-        public IntStream getAvailablePieces() {
-            return availablePieces.stream();
+        public boolean isAllPiecesVerified() {
+            return verifiedPieces.cardinality() == getNumPieces();
         }
 
-        public IntStream getVerifiedPieces() {
+        public IntStream getVerifiedPieceIndices() {
             return verifiedPieces.stream();
+        }
+
+        public List<Integer> getPartiallyMissingPieceIndices() {
+            return pieceIndexToBlockIndexToBlockStatus.entrySet().stream()
+                    .filter(entry -> entry.getValue().values().stream()
+                            .anyMatch(status -> status == Block.Status.MISSING))
+                    .map(Map.Entry::getKey)
+                    .collect(Collectors.toList());
+        }
+
+        public List<Integer> getCompletelyMissingPieceIndices() {
+            return pieceIndexToBlockIndexToBlockStatus.entrySet().stream()
+                    .filter(entry -> entry.getValue().values().stream()
+                            .allMatch(status -> status == Block.Status.MISSING))
+                    .map(Map.Entry::getKey)
+                    .collect(Collectors.toList());
+        }
+
+        public List<Integer> getMissingBlockIndices(int pieceIndex) {
+            return pieceIndexToBlockIndexToBlockStatus.get(pieceIndex).entrySet().stream()
+                    .filter(entry -> entry.getValue() == Block.Status.MISSING)
+                    .map(Map.Entry::getKey)
+                    .collect(Collectors.toList());
         }
     }
 }

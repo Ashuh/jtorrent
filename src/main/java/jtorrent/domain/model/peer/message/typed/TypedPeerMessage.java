@@ -26,7 +26,7 @@ public abstract class TypedPeerMessage implements PeerMessage {
         return getPayload().length + Byte.BYTES;
     }
 
-    protected abstract MessageType getMessageType();
+    public abstract MessageType getMessageType();
 
     protected abstract byte[] getPayload();
 }

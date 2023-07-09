@@ -5,15 +5,15 @@ import java.util.Objects;
 
 public class File {
 
-    private final int size;
+    private final long size;
     private final Path path;
 
-    public File(int size, Path path) {
+    public File(long size, Path path) {
         this.size = size;
         this.path = path;
     }
 
-    public int getSize() {
+    public long getSize() {
         return size;
     }
 

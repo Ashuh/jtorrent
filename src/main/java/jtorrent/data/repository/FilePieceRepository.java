@@ -21,9 +21,9 @@ public class FilePieceRepository implements PieceRepository {
     @Override
     public byte[] getPiece(Torrent torrent, int index) {
         LOGGER.log(Level.DEBUG, "Getting piece {0} for torrent {1}", index, torrent.getName());
-        int start = torrent.getPieceOffset(index);
+        long start = torrent.getPieceOffset(index);
         int length = torrent.getPieceSize(index);
-        int end = start + length; // exclusive
+        long end = start + length; // exclusive
 
         RangeList fileOffsetList = torrent.getFileByteRanges();
         int startIndex = fileOffsetList.getRangeIndex(start);
@@ -34,10 +34,10 @@ public class FilePieceRepository implements PieceRepository {
         IntStream.range(startIndex, endIndex + 1)
                 .forEach(i -> {
                     File file = torrent.getFiles().get(i);
-                    int fileStart = fileOffsetList.getRangeStart(i);
-                    int fileEnd = fileOffsetList.getRangeEnd(i); // exclusive
-                    int offsetInFile = Math.max(start - fileStart, 0);
-                    int lengthToRead = Math.min(fileEnd, end) - (fileStart + offsetInFile);
+                    long fileStart = fileOffsetList.getRangeStart(i);
+                    long fileEnd = fileOffsetList.getRangeEnd(i); // exclusive
+                    long offsetInFile = Math.max(start - fileStart, 0);
+                    int lengthToRead = (int) (Math.min(fileEnd, end) - (fileStart + offsetInFile));
 
                     try {
                         buffer.put(read(file.getPath(), offsetInFile, lengthToRead));
@@ -53,9 +53,9 @@ public class FilePieceRepository implements PieceRepository {
     public void storeBlock(Torrent torrent, int index, int offset, byte[] data) {
         LOGGER.log(Level.DEBUG, "Storing block at index {0}, offset {1}, length {2} for torrent {3}",
                 index, offset, data.length, torrent.getName());
-        int start = torrent.getPieceOffset(index) + offset;
+        long start = torrent.getPieceOffset(index) + offset;
         int length = data.length;
-        int end = start + length; // exclusive
+        long end = start + length; // exclusive
 
         RangeList fileOffsetList = torrent.getFileByteRanges();
         int startIndex = fileOffsetList.getRangeIndex(start);
@@ -66,10 +66,10 @@ public class FilePieceRepository implements PieceRepository {
         IntStream.range(startIndex, endIndex + 1)
                 .forEach(i -> {
                     File file = torrent.getFiles().get(i);
-                    int fileStart = fileOffsetList.getRangeStart(i);
-                    int fileEnd = fileOffsetList.getRangeEnd(i); // exclusive
-                    int offsetInFile = Math.max(start - fileStart, 0);
-                    int writeLength = Math.min(fileEnd, end) - (fileStart + offsetInFile);
+                    long fileStart = fileOffsetList.getRangeStart(i);
+                    long fileEnd = fileOffsetList.getRangeEnd(i); // exclusive
+                    long offsetInFile = Math.max(start - fileStart, 0);
+                    int writeLength = (int) (Math.min(fileEnd, end) - (fileStart + offsetInFile));
 
                     try {
                         byte[] fileData = new byte[writeLength];
