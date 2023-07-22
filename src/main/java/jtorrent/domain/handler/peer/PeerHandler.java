@@ -239,8 +239,6 @@ public class PeerHandler implements Runnable {
         return "PeerHandler{"
                 + "peer=" + peer
                 + ", torrent=" + torrent
-                + ", listeners=" + listeners
-                + ", availablePieces=" + availablePieces
                 + ", isActive=" + isActive
                 + ", isConnected=" + isConnected
                 + ", isBusy=" + isBusy
