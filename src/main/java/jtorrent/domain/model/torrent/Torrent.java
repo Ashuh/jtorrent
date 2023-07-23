@@ -4,6 +4,7 @@ import static java.util.Objects.requireNonNull;
 
 import java.time.LocalDateTime;
 import java.util.BitSet;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -15,8 +16,12 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.subjects.BehaviorSubject;
+import io.reactivex.rxjava3.subjects.Subject;
 import jtorrent.domain.model.peer.Peer;
 import jtorrent.domain.model.tracker.Tracker;
+import jtorrent.domain.util.CombinedDoubleSumObservable;
 import jtorrent.domain.util.RangeList;
 import jtorrent.domain.util.Sha1Hash;
 
@@ -38,6 +43,8 @@ public class Torrent {
     private final AtomicInteger downloaded = new AtomicInteger(0);
     private final AtomicInteger uploaded = new AtomicInteger(0);
     private final Set<Peer> peers = new HashSet<>();
+    private final Subject<Collection<Peer>> peersSubject = BehaviorSubject.create();
+    private final CombinedDoubleSumObservable downloadRateObservable = new CombinedDoubleSumObservable();
 
     public Torrent(Set<Tracker> trackers, LocalDateTime creationDate, String comment, String createdBy,
             int pieceSize, List<Sha1Hash> pieceHashes, String name, List<File> files, Sha1Hash infoHash) {
@@ -202,8 +209,24 @@ public class Torrent {
         return (int) Math.ceil((double) getPieceSize(pieceIndex) / BLOCK_SIZE);
     }
 
+    public Observable<Double> getDownloadRateObservable() {
+        return downloadRateObservable;
+    }
+
+    public Observable<Collection<Peer>> getPeersObservable() {
+        return peersSubject;
+    }
+
     public void addPeer(Peer peer) {
         peers.add(peer);
+        downloadRateObservable.addSource(peer.getDownloadRateObservable());
+        peersSubject.onNext(peers);
+    }
+
+    public void removePeer(Peer peer) {
+        peers.remove(peer);
+        downloadRateObservable.removeSource(peer.getDownloadRateObservable());
+        peersSubject.onNext(peers);
     }
 
     public boolean hasPeer(Peer peer) {
