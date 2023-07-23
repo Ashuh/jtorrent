@@ -11,6 +11,7 @@ import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.Objects;
 
+import io.reactivex.rxjava3.core.Observable;
 import jtorrent.domain.model.peer.exception.UnexpectedEndOfStreamException;
 import jtorrent.domain.model.peer.message.Handshake;
 import jtorrent.domain.model.peer.message.KeepAlive;
@@ -151,7 +152,11 @@ public abstract class Peer {
     }
 
     public double getDownloadRate() {
-        return durationWindow.getWindowAverageRate();
+        return durationWindow.getRate();
+    }
+
+    public Observable<Double> getDownloadRateObservable() {
+        return durationWindow.getRateObservable();
     }
 
     @Override
