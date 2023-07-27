@@ -1,11 +1,13 @@
 package jtorrent.domain.repository;
 
-import java.io.IOException;
-import java.nio.file.Path;
-
 import jtorrent.domain.model.torrent.Torrent;
+import jtorrent.domain.util.RxObservableList;
 
 public interface TorrentRepository {
 
-    Torrent getTorrent(Path path) throws IOException;
+    void addTorrent(Torrent torrent);
+
+    void removeTorrent(Torrent torrent);
+
+    RxObservableList<Torrent> getTorrents();
 }
