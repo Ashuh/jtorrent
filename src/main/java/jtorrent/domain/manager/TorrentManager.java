@@ -11,6 +11,8 @@ import jtorrent.domain.model.localservicediscovery.Announce;
 import jtorrent.domain.model.peer.OutgoingPeer;
 import jtorrent.domain.model.peer.Peer;
 import jtorrent.domain.model.torrent.Torrent;
+import jtorrent.domain.repository.TorrentRepository;
+import jtorrent.domain.util.RxObservableList;
 import jtorrent.domain.util.Sha1Hash;
 
 public class TorrentManager implements IncomingConnectionManager.Listener, LocalServiceDiscoveryManager.Listener {
@@ -20,17 +22,35 @@ public class TorrentManager implements IncomingConnectionManager.Listener, Local
     private final IncomingConnectionManager incomingConnectionManager;
     private final LocalServiceDiscoveryManager localServiceDiscoveryManager;
     private final Map<Sha1Hash, TorrentHandler> infoHashToTorrentHandler = new HashMap<>();
+    private final TorrentRepository torrentRepository;
 
-
-    public TorrentManager(IncomingConnectionManager incomingConnectionManager,
+    public TorrentManager(TorrentRepository torrentRepository, IncomingConnectionManager incomingConnectionManager,
             LocalServiceDiscoveryManager localServiceDiscoveryManager) {
+        this.torrentRepository = torrentRepository;
         this.incomingConnectionManager = incomingConnectionManager;
         this.incomingConnectionManager.addListener(this);
         this.localServiceDiscoveryManager = localServiceDiscoveryManager;
         this.localServiceDiscoveryManager.addListener(this);
+
+        torrentRepository.getTorrents().subscribe(event -> {
+            switch (event.getEventType()) {
+            case ADD:
+                registerTorrent(event.getItem());
+                break;
+            case REMOVE:
+                //TODO: handle remove
+                break;
+            default:
+                throw new AssertionError("Unknown event type: " + event.getEventType());
+            }
+        });
     }
 
     public void addTorrent(Torrent torrent) {
+        torrentRepository.addTorrent(torrent);
+    }
+
+    private void registerTorrent(Torrent torrent) {
         TorrentHandler torrentHandler = new TorrentHandler(torrent);
         infoHashToTorrentHandler.put(torrent.getInfoHash(), torrentHandler);
         torrentHandler.start();
@@ -46,6 +66,10 @@ public class TorrentManager implements IncomingConnectionManager.Listener, Local
 
         TorrentHandler torrentHandler = infoHashToTorrentHandler.get(infoHash);
         torrentHandler.addPeer(peer);
+    }
+
+    public RxObservableList<Torrent> getTorrents() {
+        return torrentRepository.getTorrents();
     }
 
     @Override
