@@ -41,7 +41,9 @@ public class Torrent {
     private final RangeList fileByteRanges;
     private final PieceTracker pieceTracker;
     private final AtomicInteger downloaded = new AtomicInteger(0);
+    private final BehaviorSubject<Integer> downloadedSubject = BehaviorSubject.createDefault(0);
     private final AtomicInteger uploaded = new AtomicInteger(0);
+    private final BehaviorSubject<Integer> uploadedSubject = BehaviorSubject.createDefault(0);
     private final Set<Peer> peers = new HashSet<>();
     private final Subject<Collection<Peer>> peersSubject = BehaviorSubject.create();
     private final CombinedDoubleSumObservable downloadRateObservable = new CombinedDoubleSumObservable();
@@ -157,11 +159,11 @@ public class Torrent {
     }
 
     public void incrementDownloaded(int amount) {
-        downloaded.addAndGet(amount);
+        downloadedSubject.onNext(downloaded.addAndGet(amount));
     }
 
     public void incrementUploaded(int amount) {
-        uploaded.addAndGet(amount);
+        uploadedSubject.onNext(uploaded.addAndGet(amount));
     }
 
     public void setBlockReceived(int pieceIndex, int blockIndex) {
@@ -211,6 +213,14 @@ public class Torrent {
 
     public Observable<Double> getDownloadRateObservable() {
         return downloadRateObservable;
+    }
+
+    public Observable<Integer> getDownloadedObservable() {
+        return downloadedSubject;
+    }
+
+    public Observable<Integer> getUploadedObservable() {
+        return uploadedSubject;
     }
 
     public Observable<Collection<Peer>> getPeersObservable() {
