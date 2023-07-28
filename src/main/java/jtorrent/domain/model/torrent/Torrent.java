@@ -276,7 +276,6 @@ public class Torrent {
                 + ", comment='" + comment + '\''
                 + ", createdBy='" + createdBy + '\''
                 + ", pieceSize=" + pieceSize
-                + ", pieceHashes=" + pieceHashes
                 + ", name='" + name + '\''
                 + ", files=" + files
                 + ", infoHash=" + infoHash
