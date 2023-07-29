@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.StackPane?>
+
+<fx:root type="StackPane" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1">
+    <TableView fx:id="tableView" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1">
+        <columns>
+            <TableColumn fx:id="name" minWidth="0.0" prefWidth="200.0" text="Name"/>
+            <TableColumn fx:id="size" minWidth="0.0" prefWidth="50.0" text="Size"/>
+            <TableColumn fx:id="status" minWidth="0.0" prefWidth="58.0" text="Status"/>
+            <TableColumn fx:id="downSpeed" minWidth="0.0" prefWidth="121.0" text="Down Speed"/>
+            <TableColumn fx:id="upSpeed" minWidth="0.0" prefWidth="121.0" text="Up Speed"/>
+            <TableColumn fx:id="eta" minWidth="0.0" prefWidth="121.0" text="ETA"/>
+        </columns>
+    </TableView>
+</fx:root>

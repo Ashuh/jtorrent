@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<fx:root type="StackPane" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1">
+    <TableView fx:id="tableView" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1">
+        <columns>
+            <TableColumn fx:id="ip" text="IP" />
+            <TableColumn fx:id="client" text="Client" />
+            <TableColumn fx:id="peerDownSpeed" text="Down Speed" />
+            <TableColumn fx:id="peerUpSpeed" text="Up Speed" />
+        </columns>
+    </TableView>
+</fx:root>
