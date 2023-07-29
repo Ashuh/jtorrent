@@ -159,6 +159,14 @@ public abstract class Peer {
         return durationWindow.getRateObservable();
     }
 
+    public double getUploadRate() {
+        return 0; // TODO: implement
+    }
+
+    public Observable<Double> getUploadRateObservable() {
+        return Observable.never(); // TODO: implement
+    }
+
     @Override
     public int hashCode() {
         return Objects.hash(address, port);
