@@ -1,24 +1,45 @@
 plugins {
     id 'java'
+    id 'application'
     id 'checkstyle'
+    id 'org.openjfx.javafxplugin' version '0.0.14'
+    id 'org.gradlex.extra-java-module-info' version '1.4.1'
+}
+
+group 'jtorrent'
+version '1.0-SNAPSHOT'
+
+sourceCompatibility = '11'
+targetCompatibility = '11'
+
+application.mainModule = 'jtorrent'
+mainClassName = "jtorrent.Main"
+
+repositories {
+    mavenCentral()
 }
 
 checkstyle {
     toolVersion = '10.3.4'
 }
 
-group 'org.example'
-version '1.0-SNAPSHOT'
-
-repositories {
-    mavenCentral()
+javafx {
+    version = '11'
+    modules = ['javafx.controls', 'javafx.fxml']
 }
 
 dependencies {
     implementation 'com.dampcake:bencode:1.4'
+    implementation 'io.reactivex.rxjava3:rxjava:3.1.6'
 
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.2'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.2'
+}
+
+extraJavaModuleInfo {
+    module('com.dampcake:bencode', 'com.dampcake.bencode', '1.4') {
+        exports('com.dampcake.bencode')
+    }
 }
 
 test {
