@@ -27,10 +27,14 @@ public class TorrentManager implements IncomingConnectionManager.Listener, Local
     public TorrentManager(TorrentRepository torrentRepository, IncomingConnectionManager incomingConnectionManager,
             LocalServiceDiscoveryManager localServiceDiscoveryManager) {
         this.torrentRepository = torrentRepository;
+
         this.incomingConnectionManager = incomingConnectionManager;
         this.incomingConnectionManager.addListener(this);
+        this.incomingConnectionManager.start();
+
         this.localServiceDiscoveryManager = localServiceDiscoveryManager;
         this.localServiceDiscoveryManager.addListener(this);
+        this.localServiceDiscoveryManager.start();
 
         torrentRepository.getTorrents().subscribe(event -> {
             switch (event.getEventType()) {
@@ -44,6 +48,12 @@ public class TorrentManager implements IncomingConnectionManager.Listener, Local
                 throw new AssertionError("Unknown event type: " + event.getEventType());
             }
         });
+    }
+
+    public void shutdown() {
+        incomingConnectionManager.stop();
+        localServiceDiscoveryManager.stop();
+        infoHashToTorrentHandler.values().forEach(TorrentHandler::stop);
     }
 
     public void addTorrent(Torrent torrent) {

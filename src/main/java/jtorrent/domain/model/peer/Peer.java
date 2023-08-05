@@ -51,7 +51,14 @@ public abstract class Peer {
         this.port = socket.getPort();
     }
 
-    public abstract void connect(Sha1Hash infoHash) throws IOException;
+    public abstract void connect(Sha1Hash infoHash) throws IOException; // TODO: refactor socket creation?
+
+    public void disconnect() throws IOException {
+        if (socket != null) {
+            socket.close();
+        }
+        durationWindow.close();
+    }
 
     public void sendMessage(PeerMessage message) throws IOException {
         LOGGER.log(Level.DEBUG, "Sending message: {0}", message);

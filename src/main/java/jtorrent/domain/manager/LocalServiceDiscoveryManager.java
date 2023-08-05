@@ -12,12 +12,13 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import jtorrent.domain.Constants;
 import jtorrent.domain.model.localservicediscovery.Announce;
+import jtorrent.domain.util.BackgroundTask;
 import jtorrent.domain.util.Sha1Hash;
 
 public class LocalServiceDiscoveryManager {
@@ -36,22 +37,29 @@ public class LocalServiceDiscoveryManager {
 
     private static final int PORT = 6771;
     private static final int TIME_TO_LIVE = 3;
-    private static final ScheduledExecutorService EXECUTOR_SERVICE = Executors.newScheduledThreadPool(2);
 
     private final MulticastSocket socket;
     private final List<Listener> listeners = new ArrayList<>();
-    private final LinkedBlockingDeque<Sha1Hash> infoHashQueue = new LinkedBlockingDeque<>();
-    private final Thread thread;
+    private final LinkedBlockingQueue<Sha1Hash> infoHashQueue = new LinkedBlockingQueue<>();
+    private final ListenForAnnouncementsTask listenForAnnouncementsTask = new ListenForAnnouncementsTask();
+    private final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(2);
 
     public LocalServiceDiscoveryManager() throws IOException {
         socket = new MulticastSocket(PORT);
         socket.setTimeToLive(TIME_TO_LIVE);
         socket.joinGroup(MULTICAST_GROUP);
+    }
 
-        thread = new Thread(new ReceiveTask());
-        thread.start();
+    public void start() {
+        LOGGER.log(Level.DEBUG, "Starting Local Service Discovery");
+        listenForAnnouncementsTask.start();
+        executorService.execute(new AnnounceTask());
+    }
 
-        EXECUTOR_SERVICE.execute(new AnnounceTask());
+    public void stop() {
+        LOGGER.log(Level.DEBUG, "Stopping Local Service Discovery");
+        listenForAnnouncementsTask.stop();
+        executorService.shutdownNow();
     }
 
     public void addInfoHash(Sha1Hash infoHash) {
@@ -76,7 +84,7 @@ public class LocalServiceDiscoveryManager {
                 announce(infoHash);
             } catch (InterruptedException e) {
                 LOGGER.log(Level.DEBUG, "Announce task interrupted", e);
-                EXECUTOR_SERVICE.execute(new AnnounceTask());
+                executorService.execute(new AnnounceTask());
                 Thread.currentThread().interrupt();
             }
         }
@@ -86,12 +94,12 @@ public class LocalServiceDiscoveryManager {
             Announce announce = new Announce(host, Constants.PORT, Set.of(infoHash), COOKIE);
             try {
                 sendAnnounce(announce);
-                EXECUTOR_SERVICE.schedule(new AnnounceTask(), 1, TimeUnit.MINUTES);
-                EXECUTOR_SERVICE.schedule(() -> infoHashQueue.add(infoHash), 5, TimeUnit.MINUTES);
+                executorService.schedule(new AnnounceTask(), 1, TimeUnit.MINUTES);
+                executorService.schedule(() -> infoHashQueue.add(infoHash), 5, TimeUnit.MINUTES);
             } catch (IOException e) {
                 LOGGER.log(Level.ERROR, "Failed to send Local Service Discovery announce", e);
-                EXECUTOR_SERVICE.execute(new AnnounceTask());
-                EXECUTOR_SERVICE.execute(() -> infoHashQueue.add(infoHash));
+                executorService.execute(new AnnounceTask());
+                executorService.execute(() -> infoHashQueue.add(infoHash));
             }
         }
 
@@ -103,43 +111,52 @@ public class LocalServiceDiscoveryManager {
         }
     }
 
-    private class ReceiveTask implements Runnable {
+    private class ListenForAnnouncementsTask extends BackgroundTask {
 
-        private boolean isRunning = true;
+        private final DatagramPacket packet;
+
+        public ListenForAnnouncementsTask() {
+            byte[] buffer = new byte[1024];
+            packet = new DatagramPacket(buffer, buffer.length);
+        }
 
         @Override
-        public void run() {
-            while (isRunning) {
-                byte[] buffer = new byte[1024];
-                DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-                try {
-                    socket.receive(packet);
-                    String receivedMessage = new String(packet.getData(), 0, packet.getLength());
-                    Announce announce = Announce.fromString(receivedMessage);
+        protected void execute() {
+            try {
+                socket.receive(packet);
+                String receivedMessage = new String(packet.getData(), 0, packet.getLength());
+                Announce announce = Announce.fromString(receivedMessage);
 
-                    LOGGER.log(Level.DEBUG, "Received Local Service Discovery announce: "
-                            + announce
-                            + "\n"
-                            + "from "
-                            + packet.getAddress()
-                            + ":"
-                            + packet.getPort());
+                LOGGER.log(Level.DEBUG, "Received Local Service Discovery announce: "
+                        + announce
+                        + "\n"
+                        + "from "
+                        + packet.getAddress()
+                        + ":"
+                        + packet.getPort());
 
-                    boolean isOwnAnnounce = announce.getCookie()
-                            .map(cookie -> cookie.equals(COOKIE))
-                            .orElse(false);
+                boolean isOwnAnnounce = announce.getCookie()
+                        .map(cookie -> cookie.equals(COOKIE))
+                        .orElse(false);
 
-                    if (isOwnAnnounce) {
-                        LOGGER.log(Level.DEBUG, "Ignoring own announce");
-                        continue;
-                    }
+                if (isOwnAnnounce) {
+                    LOGGER.log(Level.DEBUG, "Ignoring own announce");
+                    return;
+                }
 
-                    InetAddress address = packet.getAddress();
-                    listeners.forEach(listener -> listener.onAnnounceReceived(announce, address));
-                } catch (IOException e) {
+                InetAddress address = packet.getAddress();
+                listeners.forEach(listener -> listener.onAnnounceReceived(announce, address));
+            } catch (IOException e) {
+                if (isRunning()) {
                     LOGGER.log(Level.ERROR, "Error while receiving Local Service Discovery announce", e);
+                    ListenForAnnouncementsTask.this.stop();
                 }
             }
+        }
+
+        @Override
+        protected void doOnStop() {
+            socket.close();
         }
     }
 }

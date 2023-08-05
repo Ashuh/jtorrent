@@ -3,9 +3,11 @@ package jtorrent.domain.handler.tracker;
 import static java.util.Objects.requireNonNull;
 
 import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -16,15 +18,15 @@ import jtorrent.domain.model.torrent.Torrent;
 import jtorrent.domain.model.tracker.AnnounceResponse;
 import jtorrent.domain.model.tracker.Event;
 import jtorrent.domain.model.tracker.PeerResponse;
+import jtorrent.domain.util.BackgroundTask;
 
-public abstract class TrackerHandler implements Runnable {
+public abstract class TrackerHandler {
 
     private static final Logger LOGGER = System.getLogger(TrackerHandler.class.getName());
-    private static final ScheduledExecutorService EXECUTOR_SERVICE = Executors.newScheduledThreadPool(1);
 
     protected final Torrent torrent;
     private final List<Listener> listeners = new ArrayList<>();
-    private final Thread announceSchedulerThread = new Thread(this);
+    private final PeriodicAnnounceTask periodicAnnounceTask = new PeriodicAnnounceTask();
 
     protected TrackerHandler(Torrent torrent) {
         this.torrent = requireNonNull(torrent);
@@ -35,52 +37,88 @@ public abstract class TrackerHandler implements Runnable {
     }
 
     public void start() {
-        LOGGER.log(Logger.Level.DEBUG, "Starting tracker handler");
-        announceSchedulerThread.start();
+        LOGGER.log(Level.DEBUG, "Starting tracker handler");
+        periodicAnnounceTask.start();
     }
 
     public void stop() {
-        LOGGER.log(Logger.Level.DEBUG, "Stopping tracker handler");
-        announceSchedulerThread.interrupt();
-        try {
-            createAnnounceTask(Event.STOPPED).call();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @Override
-    public void run() {
-        ScheduledFuture<AnnounceResponse> scheduledFuture = scheduleAnnounce(Event.STARTED, 0);
-
-        while (!announceSchedulerThread.isInterrupted()) {
-            try {
-                LOGGER.log(Logger.Level.TRACE, "Waiting for announce to execute");
-                AnnounceResponse announceResponse = scheduledFuture.get();
-                LOGGER.log(Logger.Level.TRACE, "Received announce response {0}", announceResponse);
-                List<PeerResponse> peerResponses = new ArrayList<>(announceResponse.getPeers());
-                listeners.forEach(listener -> listener.onAnnounceResponse(peerResponses));
-                int interval = announceResponse.getInterval();
-                scheduledFuture = scheduleAnnounce(Event.NONE, interval);
-            } catch (InterruptedException e) {
-                LOGGER.log(Logger.Level.DEBUG, "Interrupted while waiting for announce to execute");
-                Thread.currentThread().interrupt();
-            } catch (ExecutionException e) {
-                LOGGER.log(Logger.Level.ERROR, "Announce failed: {0}", e.getMessage());
-                return;
-            }
-        }
-
-        scheduledFuture.cancel(true);
-        LOGGER.log(Logger.Level.DEBUG, "Announce scheduler thread stopped");
-    }
-
-    protected ScheduledFuture<AnnounceResponse> scheduleAnnounce(Event event, long delaySecs) {
-        LOGGER.log(Logger.Level.DEBUG, "Scheduled next announce request ({0}) in {1} seconds", event, delaySecs);
-        return EXECUTOR_SERVICE.schedule(createAnnounceTask(event), delaySecs, TimeUnit.SECONDS);
+        LOGGER.log(Level.DEBUG, "Stopping tracker handler");
+        periodicAnnounceTask.stop();
     }
 
     protected abstract AnnounceTask createAnnounceTask(Event event);
+
+    public interface Listener {
+
+        void onAnnounceResponse(List<PeerResponse> peerResponses);
+    }
+
+    private class PeriodicAnnounceTask extends BackgroundTask {
+
+        private final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1);
+
+        private ScheduledFuture<AnnounceResponse> scheduledFuture;
+
+        @Override
+        protected void doOnStarted() {
+            scheduleAnnounce(Event.STARTED, 0);
+        }
+
+        @Override
+        protected void execute() throws InterruptedException {
+            try {
+                AnnounceResponse announceResponse = waitForAnnounceResponse();
+                handleAnnounceResponse(announceResponse);
+                if (isRunning()) {
+                    scheduleAnnounce(Event.NONE, announceResponse.getInterval());
+                }
+            } catch (ExecutionException e) {
+                LOGGER.log(Level.ERROR, "Announce failed: {0}", e.getMessage());
+                TrackerHandler.this.stop();
+            } catch (CancellationException e) {
+                LOGGER.log(Level.DEBUG, "Announce cancelled");
+            }
+        }
+
+        @Override
+        protected void doOnStop() {
+            cancelAnnounce();
+            scheduleAnnounce(Event.STOPPED, 0);
+            executorService.shutdown();
+            try {
+                executorService.awaitTermination(1, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+
+        private void scheduleAnnounce(Event event, long delaySecs) {
+            scheduledFuture = executorService.schedule(createAnnounceTask(event), delaySecs, TimeUnit.SECONDS);
+            LOGGER.log(Level.DEBUG, "Scheduled next announce ({0}) in {1} seconds", event, delaySecs);
+        }
+
+        private AnnounceResponse waitForAnnounceResponse() throws InterruptedException, ExecutionException {
+            LOGGER.log(Level.DEBUG, "Waiting for announce response");
+            return scheduledFuture.get();
+        }
+
+        private void handleAnnounceResponse(AnnounceResponse announceResponse) {
+            LOGGER.log(Level.DEBUG, "Handling announce response {0}", announceResponse);
+            List<PeerResponse> peerResponses = announceResponse.getPeers();
+            listeners.forEach(listener -> listener.onAnnounceResponse(peerResponses));
+        }
+
+        /**
+         * Cancels the current announce task.
+         * <p>
+         * Note: This method should only be called when the task is being stopped, i.e., {@link #doOnStop()}.
+         * Otherwise, the thread will continuously try to get the result of the cancelled task.
+         */
+        private void cancelAnnounce() {
+            LOGGER.log(Level.DEBUG, "Cancelling announce");
+            scheduledFuture.cancel(true);
+        }
+    }
 
     protected abstract static class AnnounceTask implements Callable<AnnounceResponse> {
 
@@ -89,10 +127,5 @@ public abstract class TrackerHandler implements Runnable {
         protected AnnounceTask(Event event) {
             this.event = requireNonNull(event);
         }
-    }
-
-    public interface Listener {
-
-        void onAnnounceResponse(List<PeerResponse> peerResponses);
     }
 }

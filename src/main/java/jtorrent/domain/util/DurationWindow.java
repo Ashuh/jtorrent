@@ -45,4 +45,8 @@ public class DurationWindow {
     public Observable<Double> getRateObservable() {
         return rate;
     }
+
+    public void close() {
+        executor.shutdownNow();
+    }
 }

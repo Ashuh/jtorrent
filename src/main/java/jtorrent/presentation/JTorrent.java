@@ -38,5 +38,6 @@ public class JTorrent extends Application {
     @Override
     public void stop() {
         LOGGER.log(Level.INFO, "Stopping JTorrent");
+        torrentManager.shutdown();
     }
 }
