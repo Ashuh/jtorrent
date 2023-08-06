@@ -29,15 +29,15 @@ public abstract class BackgroundTask implements Runnable {
 
     public final void start() {
         LOGGER.log(Level.DEBUG, "Starting task: {0}", getClass().getName());
-        doOnStart();
         isRunning = true;
+        doOnStart();
         thread.start();
     }
 
     public final void stop() {
         LOGGER.log(Level.DEBUG, "Stopping task: {0}", getClass().getName());
-        doOnStop();
         isRunning = false;
+        doOnStop();
         thread.interrupt();
     }
 
