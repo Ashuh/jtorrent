@@ -67,7 +67,7 @@ public class IncomingConnectionManager {
                 final Future<?> handler = executorService.submit(new WaitForHandshakeTask(peer));
                 executorService.schedule(new TimeoutTask(handler), 10000, TimeUnit.MILLISECONDS);
             } catch (IOException e) {
-                if (isRunning()) {
+                if (!isStopping()) {
                     LOGGER.log(Level.ERROR, "Error accepting incoming connection", e);
                     AcceptIncomingConnectionsTask.this.stop();
                 }

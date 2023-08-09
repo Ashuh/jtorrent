@@ -146,7 +146,7 @@ public class PeerHandler {
                 PeerMessage message = peer.receiveMessage();
                 handleMessage(message);
             } catch (IOException e) {
-                if (isRunning()) {
+                if (!isStopping()) {
                     LOGGER.log(Level.ERROR, "Error while communicating with peer {0}", peer);
                     HandlePeerTask.this.stop();
                 }

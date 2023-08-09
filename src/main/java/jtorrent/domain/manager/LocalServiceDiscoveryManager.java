@@ -147,7 +147,7 @@ public class LocalServiceDiscoveryManager {
                 InetAddress address = packet.getAddress();
                 listeners.forEach(listener -> listener.onAnnounceReceived(announce, address));
             } catch (IOException e) {
-                if (isRunning()) {
+                if (!isStopping()) {
                     LOGGER.log(Level.ERROR, "Error while receiving Local Service Discovery announce", e);
                     ListenForAnnouncementsTask.this.stop();
                 }

@@ -9,6 +9,7 @@ public abstract class BackgroundTask implements Runnable {
 
     private final Thread thread = new Thread(this);
     private volatile boolean isRunning = false;
+    private volatile boolean isStopping = false;
 
     @Override
     public final void run() {
@@ -35,14 +36,14 @@ public abstract class BackgroundTask implements Runnable {
     }
 
     public final void stop() {
-        LOGGER.log(Level.DEBUG, "Stopping task: {0}", getClass().getName());
-        isRunning = false;
+        isStopping = true;
         doOnStop();
+        isRunning = false;
         thread.interrupt();
     }
 
-    public boolean isRunning() {
-        return isRunning;
+    public boolean isStopping() {
+        return isStopping;
     }
 
     protected void doOnStart() {

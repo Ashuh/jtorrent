@@ -69,7 +69,7 @@ public abstract class TrackerHandler {
             try {
                 AnnounceResponse announceResponse = waitForAnnounceResponse();
                 handleAnnounceResponse(announceResponse);
-                if (isRunning()) {
+                if (!isStopping()) {
                     scheduleAnnounce(Event.NONE, announceResponse.getInterval());
                 }
             } catch (ExecutionException e) {
