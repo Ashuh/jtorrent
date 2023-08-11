@@ -39,10 +39,10 @@ public class TorrentManager implements IncomingConnectionManager.Listener, Local
         torrentRepository.getTorrents().subscribe(event -> {
             switch (event.getEventType()) {
             case ADD:
-                registerTorrent(event.getItem());
+                startTorrent(event.getItem());
                 break;
             case REMOVE:
-                //TODO: handle remove
+                stopTorrent(event.getItem());
                 break;
             default:
                 throw new AssertionError("Unknown event type: " + event.getEventType());
@@ -60,11 +60,19 @@ public class TorrentManager implements IncomingConnectionManager.Listener, Local
         torrentRepository.addTorrent(torrent);
     }
 
-    private void registerTorrent(Torrent torrent) {
+    public void startTorrent(Torrent torrent) {
+        LOGGER.log(Level.INFO, "Starting torrent " + torrent.getName());
         TorrentHandler torrentHandler = new TorrentHandler(torrent);
         infoHashToTorrentHandler.put(torrent.getInfoHash(), torrentHandler);
         torrentHandler.start();
         localServiceDiscoveryManager.addInfoHash(torrent.getInfoHash());
+    }
+
+    public void stopTorrent(Torrent torrent) {
+        LOGGER.log(Level.INFO, "Stopping torrent " + torrent.getName());
+        TorrentHandler torrentHandler = infoHashToTorrentHandler.remove(torrent.getInfoHash());
+        torrentHandler.stop();
+        // TODO: remove from local service discovery
     }
 
     @Override

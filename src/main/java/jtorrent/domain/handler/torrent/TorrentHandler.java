@@ -69,6 +69,7 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.List
         trackerHandlers.forEach(TrackerHandler::stop);
         executorService.shutdownNow();
         peerHandlers.forEach(PeerHandler::stop);
+        torrent.clearPeers();
     }
 
     public void addPeer(Peer peer) {

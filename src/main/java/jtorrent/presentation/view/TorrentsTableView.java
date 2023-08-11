@@ -3,6 +3,7 @@ package jtorrent.presentation.view;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.SortedList;
 import javafx.fxml.FXML;
+import javafx.scene.control.Button;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.ProgressBarTableCell;
@@ -24,6 +25,18 @@ public class TorrentsTableView extends UiComponent {
     private TableColumn<UiTorrent, Double> upSpeed;
     @FXML
     private TableColumn<UiTorrent, Double> eta;
+    @FXML
+    private Button addButton;
+    @FXML
+    private Button addUrlButton;
+    @FXML
+    private Button createFileButton;
+    @FXML
+    private Button deleteButton;
+    @FXML
+    private Button startButton;
+    @FXML
+    private Button stopButton;
 
     public TorrentsTableView() {
         name.setCellValueFactory(cd -> cd.getValue().nameProperty());
@@ -43,5 +56,13 @@ public class TorrentsTableView extends UiComponent {
         SortedList<UiTorrent> sortedList = new SortedList<>(torrents);
         sortedList.comparatorProperty().bind(tableView.comparatorProperty());
         tableView.setItems(sortedList);
+    }
+
+    public void setOnStartButtonClickedCallback(Runnable callback) {
+        startButton.setOnMouseClicked(event -> callback.run());
+    }
+
+    public void setOnStopButtonClickedCallback(Runnable callback) {
+        stopButton.setOnMouseClicked(event -> callback.run());
     }
 }

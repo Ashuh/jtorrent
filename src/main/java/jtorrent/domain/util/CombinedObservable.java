@@ -37,6 +37,11 @@ public abstract class CombinedObservable<T, R> extends Observable<R> {
         sourcesSubject.onNext(sources);
     }
 
+    public void clearSources() {
+        sources.clear();
+        sourcesSubject.onNext(sources);
+    }
+
     @Override
     protected void subscribeActual(@NonNull Observer<? super R> observer) {
         combined.subscribe(observer);

@@ -24,6 +24,8 @@ public class ViewModel {
 
     private final Map<UiTorrent, Torrent> uiTorrentToTorrent = new HashMap<>();
 
+    private Torrent selectedTorrent;
+
     public ViewModel(TorrentManager torrentManager) {
         this.torrentManager = requireNonNull(torrentManager);
 
@@ -46,6 +48,7 @@ public class ViewModel {
 
     public void setTorrentSelected(UiTorrent uiTorrent) {
         Torrent torrent = uiTorrentToTorrent.get(uiTorrent);
+        selectedTorrent = torrent;
         uiPeers.clear();
 
         torrent.getPeersObservable().subscribe(peers -> {
@@ -60,5 +63,19 @@ public class ViewModel {
 
     public ObservableList<UiPeer> getPeers() {
         return FXCollections.unmodifiableObservableList(uiPeers);
+    }
+
+    public void startSelectedTorrent() {
+        if (selectedTorrent == null) {
+            return;
+        }
+        torrentManager.startTorrent(selectedTorrent);
+    }
+
+    public void stopSelectedTorrent() {
+        if (selectedTorrent == null) {
+            return;
+        }
+        torrentManager.stopTorrent(selectedTorrent);
     }
 }

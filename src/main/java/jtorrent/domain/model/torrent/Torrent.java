@@ -239,6 +239,12 @@ public class Torrent {
         peersSubject.onNext(peers);
     }
 
+    public void clearPeers() {
+        peers.clear();
+        downloadRateObservable.clearSources();
+        peersSubject.onNext(new ArrayList<>(peers));
+    }
+
     public boolean hasPeer(Peer peer) {
         return peers.contains(peer);
     }

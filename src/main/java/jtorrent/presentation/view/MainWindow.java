@@ -19,5 +19,7 @@ public class MainWindow extends UiComponent {
                 .selectedItemProperty()
                 .addListener((observable, oldValue, newValue) -> viewModel.setTorrentSelected(newValue));
         peersTableView.setItems(viewModel.getPeers());
+        torrentsTableView.setOnStartButtonClickedCallback(viewModel::startSelectedTorrent);
+        torrentsTableView.setOnStopButtonClickedCallback(viewModel::stopSelectedTorrent);
     }
 }
