@@ -20,6 +20,7 @@ import io.reactivex.rxjava3.subjects.BehaviorSubject;
 import jtorrent.domain.model.peer.Peer;
 import jtorrent.domain.model.tracker.Tracker;
 import jtorrent.domain.util.CombinedDoubleSumObservable;
+import jtorrent.domain.util.MutableRxObservableSet;
 import jtorrent.domain.util.RangeList;
 import jtorrent.domain.util.RxObservableSet;
 import jtorrent.domain.util.Sha1Hash;
@@ -43,7 +44,7 @@ public class Torrent {
     private final BehaviorSubject<Integer> downloadedSubject = BehaviorSubject.createDefault(0);
     private final AtomicInteger uploaded = new AtomicInteger(0);
     private final BehaviorSubject<Integer> uploadedSubject = BehaviorSubject.createDefault(0);
-    private final RxObservableSet<Peer> peers = new RxObservableSet<>(new HashSet<>());
+    private final MutableRxObservableSet<Peer> peers = new MutableRxObservableSet<>(new HashSet<>());
     private final CombinedDoubleSumObservable downloadRateObservable = new CombinedDoubleSumObservable();
 
     public Torrent(Set<Tracker> trackers, LocalDateTime creationDate, String comment, String createdBy,

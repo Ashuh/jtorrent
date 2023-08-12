@@ -25,19 +25,19 @@ public abstract class RxObservableCollectionBase<E, T extends Collection<E>, V> 
         this.collection = requireNonNull(collection);
     }
 
-    public void add(E item) {
+    protected void add(E item) {
         if (collection.add(item)) {
             notifyAdded(item);
         }
     }
 
-    public void remove(E item) {
+    protected void remove(E item) {
         if (collection.remove(item)) {
             notifyRemoved(item);
         }
     }
 
-    public void clear() {
+    protected void clear() {
         collection.clear();
         notifyCleared();
     }
