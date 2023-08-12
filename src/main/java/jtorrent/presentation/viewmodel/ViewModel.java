@@ -5,7 +5,6 @@ import static java.util.Objects.requireNonNull;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -17,12 +16,10 @@ import jtorrent.presentation.model.UiTorrent;
 public class ViewModel {
 
     private final TorrentManager torrentManager;
-
     private final ObservableList<UiTorrent> uiTorrents = FXCollections.observableList(new ArrayList<>());
-
     private final ObservableList<UiPeer> uiPeers = FXCollections.observableList(new ArrayList<>());
-
     private final Map<UiTorrent, Torrent> uiTorrentToTorrent = new HashMap<>();
+    private final Map<Peer, UiPeer> peerToUiPeer = new HashMap<>();
 
     private Torrent selectedTorrent;
 
@@ -51,9 +48,23 @@ public class ViewModel {
         selectedTorrent = torrent;
         uiPeers.clear();
 
-        torrent.getPeersObservable().subscribe(peers -> {
-            uiPeers.clear();
-            uiPeers.addAll(peers.stream().map(UiPeer::fromDomain).collect(Collectors.toList()));
+        torrent.getPeersObservable().subscribe(event -> {
+            switch (event.getType()) {
+            case ADD:
+                UiPeer uiPeer = UiPeer.fromDomain(event.getItem());
+                peerToUiPeer.put(event.getItem(), uiPeer);
+                uiPeers.add(uiPeer);
+                break;
+            case REMOVE:
+                UiPeer removed = peerToUiPeer.remove(event.getItem());
+                uiPeers.remove(removed);
+                break;
+            case CLEAR:
+                uiPeers.clear();
+                break;
+            default:
+                throw new AssertionError("Unknown event type: " + event.getType());
+            }
         });
     }
 

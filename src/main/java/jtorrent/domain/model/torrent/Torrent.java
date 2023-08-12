@@ -4,7 +4,6 @@ import static java.util.Objects.requireNonNull;
 
 import java.time.LocalDateTime;
 import java.util.BitSet;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -18,11 +17,11 @@ import java.util.stream.IntStream;
 
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.subjects.BehaviorSubject;
-import io.reactivex.rxjava3.subjects.Subject;
 import jtorrent.domain.model.peer.Peer;
 import jtorrent.domain.model.tracker.Tracker;
 import jtorrent.domain.util.CombinedDoubleSumObservable;
 import jtorrent.domain.util.RangeList;
+import jtorrent.domain.util.RxObservableSet;
 import jtorrent.domain.util.Sha1Hash;
 
 public class Torrent {
@@ -44,8 +43,7 @@ public class Torrent {
     private final BehaviorSubject<Integer> downloadedSubject = BehaviorSubject.createDefault(0);
     private final AtomicInteger uploaded = new AtomicInteger(0);
     private final BehaviorSubject<Integer> uploadedSubject = BehaviorSubject.createDefault(0);
-    private final Set<Peer> peers = new HashSet<>();
-    private final Subject<Collection<Peer>> peersSubject = BehaviorSubject.create();
+    private final RxObservableSet<Peer> peers = new RxObservableSet<>(new HashSet<>());
     private final CombinedDoubleSumObservable downloadRateObservable = new CombinedDoubleSumObservable();
 
     public Torrent(Set<Tracker> trackers, LocalDateTime creationDate, String comment, String createdBy,
@@ -223,30 +221,27 @@ public class Torrent {
         return uploadedSubject;
     }
 
-    public Observable<Collection<Peer>> getPeersObservable() {
-        return peersSubject;
+    public RxObservableSet<Peer> getPeersObservable() {
+        return peers;
     }
 
     public void addPeer(Peer peer) {
         peers.add(peer);
         downloadRateObservable.addSource(peer.getDownloadRateObservable());
-        peersSubject.onNext(peers);
     }
 
     public void removePeer(Peer peer) {
         peers.remove(peer);
         downloadRateObservable.removeSource(peer.getDownloadRateObservable());
-        peersSubject.onNext(peers);
     }
 
     public void clearPeers() {
         peers.clear();
         downloadRateObservable.clearSources();
-        peersSubject.onNext(new ArrayList<>(peers));
     }
 
     public boolean hasPeer(Peer peer) {
-        return peers.contains(peer);
+        return peers.containsItem(peer);
     }
 
     @Override
