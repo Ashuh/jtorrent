@@ -49,7 +49,7 @@ public class TorrentManager implements IncomingConnectionManager.Listener, Local
                 infoHashToTorrentHandler.clear();
                 break;
             default:
-                throw new AssertionError("Unknown event type: " + event.getEventType());
+                throw new AssertionError("Unknown event type: " + event.getType());
             }
         });
     }
