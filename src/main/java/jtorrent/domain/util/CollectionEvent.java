@@ -7,7 +7,7 @@ public class CollectionEvent<T> {
     private final Type type;
     private final T item;
 
-    private CollectionEvent(Type type, T item) {
+    protected CollectionEvent(Type type, T item) {
         this.type = requireNonNull(type);
         this.item = item;
     }

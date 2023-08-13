@@ -5,10 +5,12 @@ import static java.util.Objects.requireNonNull;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import jtorrent.domain.manager.TorrentManager;
+import jtorrent.domain.model.peer.Peer;
 import jtorrent.domain.model.torrent.Torrent;
 import jtorrent.presentation.model.UiPeer;
 import jtorrent.presentation.model.UiTorrent;
@@ -27,18 +29,24 @@ public class ViewModel {
         this.torrentManager = requireNonNull(torrentManager);
 
         torrentManager.getTorrents().subscribe(event -> {
-            switch (event.getEventType()) {
+            Optional<Integer> indexOptional = event.getIndex();
+            switch (event.getType()) {
             case ADD:
                 UiTorrent uiTorrent = UiTorrent.fromDomain(event.getItem());
                 uiTorrentToTorrent.put(uiTorrent, event.getItem());
-                uiTorrents.add(event.getIndex(), uiTorrent);
+                assert indexOptional.isPresent();
+                uiTorrents.add(indexOptional.get(), uiTorrent);
                 break;
             case REMOVE:
-                UiTorrent removed = uiTorrents.remove(event.getIndex());
+                assert indexOptional.isPresent();
+                UiTorrent removed = uiTorrents.remove(indexOptional.get().intValue());
                 uiTorrentToTorrent.remove(removed);
                 break;
+            case CLEAR:
+                uiTorrents.clear();
+                break;
             default:
-                throw new AssertionError("Unknown event type: " + event.getEventType());
+                throw new AssertionError("Unknown event type: " + event.getType());
             }
         });
     }

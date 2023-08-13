@@ -37,12 +37,16 @@ public class TorrentManager implements IncomingConnectionManager.Listener, Local
         this.localServiceDiscoveryManager.start();
 
         torrentRepository.getTorrents().subscribe(event -> {
-            switch (event.getEventType()) {
+            switch (event.getType()) {
             case ADD:
                 startTorrent(event.getItem());
                 break;
             case REMOVE:
                 stopTorrent(event.getItem());
+                break;
+            case CLEAR:
+                infoHashToTorrentHandler.values().forEach(TorrentHandler::stop);
+                infoHashToTorrentHandler.clear();
                 break;
             default:
                 throw new AssertionError("Unknown event type: " + event.getEventType());

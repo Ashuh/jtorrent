@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
+import java.util.ArrayList;
 
 import jtorrent.data.model.torrent.BencodedTorrent;
 import jtorrent.domain.model.torrent.Torrent;
@@ -15,7 +16,7 @@ import jtorrent.domain.util.RxObservableList;
 
 public class FileTorrentRepository implements TorrentRepository {
 
-    private final MutableRxObservableList<Torrent> torrents = new MutableRxObservableList<>();
+    private final MutableRxObservableList<Torrent> torrents = new MutableRxObservableList<>(new ArrayList<>());
 
     public FileTorrentRepository() {
         // TODO: temporary

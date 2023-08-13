@@ -1,60 +1,87 @@
 package jtorrent.domain.util;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.IntStream;
 
-import io.reactivex.rxjava3.annotations.NonNull;
-import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Observer;
-import io.reactivex.rxjava3.subjects.PublishSubject;
 
-public class RxObservableList<T> extends Observable<ListEvent<T>> {
+public class RxObservableList<E> extends RxObservableCollectionBase<E, List<E>, OrderedCollectionEvent<E>> {
 
-    protected final List<T> list = new ArrayList<>();
-    protected final PublishSubject<ListEvent<T>> publishSubject = PublishSubject.create();
-
-    public List<T> getList() {
-        return Collections.unmodifiableList(list);
+    public RxObservableList(List<E> list) {
+        super(list);
     }
 
-    public T get(int index) {
-        return list.get(index);
+    public E get(int index) {
+        try {
+            rLock.lock();
+            return collection.get(index);
+        } finally {
+            rLock.unlock();
+        }
     }
 
-    protected void add(T item) {
-        list.add(item);
-        notifySubscribers(new ListEvent<>(ListEvent.Type.ADD, item, list.size() - 1));
+    @Override
+    protected void add(E item) {
+        try {
+            wLock.lock();
+            collection.add(item);
+            notifyAdded(item, collection.size() - 1);
+        } finally {
+            wLock.unlock();
+        }
     }
 
-    protected void add(int index, T item) {
-        list.add(index, item);
-        notifySubscribers(new ListEvent<>(ListEvent.Type.ADD, item, index));
+    protected void add(int index, E item) {
+        try {
+            wLock.lock();
+            collection.add(index, item);
+            notifyAdded(item, index);
+        } finally {
+            wLock.unlock();
+        }
     }
 
-    protected void remove(T item) {
-        int index = list.indexOf(item);
+    @Override
+    protected void remove(E item) {
+        try {
+            wLock.lock();
+            int index = collection.indexOf(item);
 
-        if (index != -1) {
-            list.remove(index);
-            notifySubscribers(new ListEvent<>(ListEvent.Type.REMOVE, item, index));
+            if (index != -1) {
+                collection.remove(index);
+                notifyRemoved(item, index);
+            }
+        } finally {
+            wLock.unlock();
         }
     }
 
     protected void remove(int index) {
-        T item = list.remove(index);
-        notifySubscribers(new ListEvent<>(ListEvent.Type.REMOVE, item, index));
+        try {
+            wLock.lock();
+            E item = collection.remove(index);
+            notifyRemoved(item, index);
+        } finally {
+            wLock.unlock();
+        }
     }
 
-    protected void notifySubscribers(ListEvent<T> event) {
-        publishSubject.onNext(event);
+    private void notifyRemoved(E item, int index) {
+        emitEvent(OrderedCollectionEvent.remove(item, index));
     }
 
     @Override
-    protected void subscribeActual(@NonNull Observer<? super ListEvent<T>> observer) {
-        IntStream.range(0, list.size())
-                .forEach(index -> observer.onNext(new ListEvent<>(ListEvent.Type.ADD, list.get(index), index)));
-        publishSubject.subscribe(observer);
+    protected void emitInitialState(Observer<? super OrderedCollectionEvent<E>> observer) {
+        IntStream.range(0, collection.size())
+                .forEach(i -> observer.onNext(OrderedCollectionEvent.add(collection.get(i), i)));
+    }
+
+    private void notifyAdded(E item, int index) {
+        emitEvent(OrderedCollectionEvent.add(item, index));
+    }
+
+    @Override
+    protected void notifyCleared() {
+        emitEvent(OrderedCollectionEvent.clear());
     }
 }
