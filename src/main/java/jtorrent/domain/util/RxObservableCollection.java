@@ -13,15 +13,25 @@ public abstract class RxObservableCollection<E>
 
     @Override
     protected void add(E item) {
-        if (collection.add(item)) {
-            notifyAdded(item);
+        try {
+            wLock.lock();
+            if (collection.add(item)) {
+                notifyAdded(item);
+            }
+        } finally {
+            wLock.unlock();
         }
     }
 
     @Override
     protected void remove(E item) {
-        if (collection.remove(item)) {
-            notifyRemoved(item);
+        try {
+            wLock.lock();
+            if (collection.remove(item)) {
+                notifyRemoved(item);
+            }
+        } finally {
+            wLock.unlock();
         }
     }
 

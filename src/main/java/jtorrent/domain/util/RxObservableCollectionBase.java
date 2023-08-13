@@ -3,6 +3,9 @@ package jtorrent.domain.util;
 import static java.util.Objects.requireNonNull;
 
 import java.util.Collection;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.core.Observable;
@@ -18,8 +21,11 @@ import io.reactivex.rxjava3.subjects.PublishSubject;
  */
 public abstract class RxObservableCollectionBase<E, T extends Collection<E>, V> extends Observable<V> {
 
-    protected final PublishSubject<V> publishSubject = PublishSubject.create();
     protected final T collection;
+    protected final PublishSubject<V> publishSubject = PublishSubject.create();
+    protected final ReadWriteLock rwLock = new ReentrantReadWriteLock();
+    protected final Lock rLock = rwLock.readLock();
+    protected final Lock wLock = rwLock.writeLock();
 
     protected RxObservableCollectionBase(T collection) {
         this.collection = requireNonNull(collection);
@@ -40,9 +46,13 @@ public abstract class RxObservableCollectionBase<E, T extends Collection<E>, V> 
 
     @Override
     protected void subscribeActual(@NonNull Observer<? super V> observer) {
-        // TODO: need to make this thread safe
-        emitInitialState(observer);
-        publishSubject.subscribe(observer);
+        try {
+            rLock.lock();
+            emitInitialState(observer);
+            publishSubject.subscribe(observer);
+        } finally {
+            rLock.unlock();
+        }
     }
 
     protected abstract void add(E item);
