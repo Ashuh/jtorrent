@@ -25,18 +25,6 @@ public abstract class RxObservableCollectionBase<E, T extends Collection<E>, V> 
         this.collection = requireNonNull(collection);
     }
 
-    protected void add(E item) {
-        if (collection.add(item)) {
-            notifyAdded(item);
-        }
-    }
-
-    protected void remove(E item) {
-        if (collection.remove(item)) {
-            notifyRemoved(item);
-        }
-    }
-
     protected void clear() {
         collection.clear();
         notifyCleared();
@@ -53,15 +41,15 @@ public abstract class RxObservableCollectionBase<E, T extends Collection<E>, V> 
     @Override
     protected void subscribeActual(@NonNull Observer<? super V> observer) {
         // TODO: need to make this thread safe
+        emitInitialState(observer);
         publishSubject.subscribe(observer);
-        emitInitialState();
     }
 
-    protected abstract void emitInitialState();
+    protected abstract void add(E item);
 
-    protected abstract void notifyAdded(E item);
+    protected abstract void remove(E item);
 
-    protected abstract void notifyRemoved(E item);
+    protected abstract void emitInitialState(Observer<? super V> observer);
 
     protected abstract void notifyCleared();
 }
