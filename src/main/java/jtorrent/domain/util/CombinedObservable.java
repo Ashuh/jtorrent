@@ -24,20 +24,20 @@ public abstract class CombinedObservable<T, R> extends Observable<R> {
         combined = sourcesSubject.switchMap(this::combineLatest);
     }
 
-    public void addSource(Observable<T> source) {
+    public synchronized void addSource(Observable<T> source) {
         Observable<T> actual = source.doOnComplete(() -> removeSource(source));
         originalToActual.put(source, actual);
         sources.add(actual);
         sourcesSubject.onNext(sources);
     }
 
-    public void removeSource(Observable<T> source) {
+    public synchronized void removeSource(Observable<T> source) {
         Observable<T> actualSource = originalToActual.remove(source);
         sources.remove(actualSource);
         sourcesSubject.onNext(sources);
     }
 
-    public void clearSources() {
+    public synchronized void clearSources() {
         sources.clear();
         sourcesSubject.onNext(sources);
     }
