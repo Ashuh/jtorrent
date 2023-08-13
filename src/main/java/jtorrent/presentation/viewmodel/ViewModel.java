@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import io.reactivex.rxjava3.disposables.Disposable;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import jtorrent.domain.manager.TorrentManager;
@@ -24,6 +25,7 @@ public class ViewModel {
     private final Map<Peer, UiPeer> peerToUiPeer = new HashMap<>();
 
     private Torrent selectedTorrent;
+    private Disposable selectedTorrentPeersSubscription;
 
     public ViewModel(TorrentManager torrentManager) {
         this.torrentManager = requireNonNull(torrentManager);
@@ -52,11 +54,15 @@ public class ViewModel {
     }
 
     public void setTorrentSelected(UiTorrent uiTorrent) {
+        if (selectedTorrentPeersSubscription != null) {
+            selectedTorrentPeersSubscription.dispose();
+        }
+
         Torrent torrent = uiTorrentToTorrent.get(uiTorrent);
         selectedTorrent = torrent;
         uiPeers.clear();
 
-        torrent.getPeersObservable().subscribe(event -> {
+        selectedTorrentPeersSubscription = torrent.getPeersObservable().subscribe(event -> {
             switch (event.getType()) {
             case ADD:
                 UiPeer uiPeer = UiPeer.fromDomain(event.getItem());
