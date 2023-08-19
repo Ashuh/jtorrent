@@ -8,13 +8,19 @@ public abstract class BackgroundTask implements Runnable {
     private static final Logger LOGGER = System.getLogger(BackgroundTask.class.getName());
 
     private final Thread thread = new Thread(this);
-    private volatile boolean isRunning = false;
-    private volatile boolean isStopping = false;
+    private volatile State state = State.IDLE;
 
     @Override
     public final void run() {
-        doOnStarted();
-        while (isRunning) {
+        synchronized (this) {
+            if (state != State.STOPPING) {
+                assert state == State.STARTING;
+                state = State.STARTED;
+                doOnStarted();
+            }
+        }
+
+        while (state == State.STARTED) {
             try {
                 execute();
             } catch (InterruptedException e) {
@@ -22,28 +28,45 @@ public abstract class BackgroundTask implements Runnable {
                 Thread.currentThread().interrupt();
             }
         }
+
+        state = State.STOPPED;
         doOnStopped();
         LOGGER.log(Level.DEBUG, "Task finished: {0}", getClass().getName());
     }
 
     protected abstract void execute() throws InterruptedException;
 
-    public final void start() {
+    public final synchronized void start() {
+        if (state != State.IDLE) {
+            boolean isStopRequested = state == State.STOPPING || state == State.STOPPED;
+            if (isStopRequested) {
+                LOGGER.log(Level.ERROR, "Unable to start task: {0}, stop already requested", getClass().getName());
+            } else {
+                LOGGER.log(Level.DEBUG, "Task: {0} is already starting or started", getClass().getName());
+            }
+            return;
+        }
+
         LOGGER.log(Level.DEBUG, "Starting task: {0}", getClass().getName());
-        isRunning = true;
+        state = State.STARTING;
         doOnStart();
         thread.start();
     }
 
-    public final void stop() {
-        isStopping = true;
+    public final synchronized void stop() {
+        if (state != State.STARTING && state != State.STARTED) {
+            LOGGER.log(Level.DEBUG, "Task: {0} is not running or is already stopping", getClass().getName());
+            return;
+        }
+
+        LOGGER.log(Level.DEBUG, "Stopping task: {0}", getClass().getName());
+        state = State.STOPPING;
         doOnStop();
-        isRunning = false;
         thread.interrupt();
     }
 
     public boolean isStopping() {
-        return isStopping;
+        return state == State.STOPPING;
     }
 
     protected void doOnStart() {
@@ -56,5 +79,13 @@ public abstract class BackgroundTask implements Runnable {
     }
 
     protected void doOnStopped() {
+    }
+
+    private enum State {
+        IDLE,
+        STARTING,
+        STARTED,
+        STOPPING,
+        STOPPED
     }
 }
