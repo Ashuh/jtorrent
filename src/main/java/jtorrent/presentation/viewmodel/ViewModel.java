@@ -58,9 +58,16 @@ public class ViewModel {
             selectedTorrentPeersSubscription.dispose();
         }
 
+        uiPeers.clear();
+
+        if (uiTorrent == null) {
+            selectedTorrent = null;
+            selectedTorrentPeersSubscription = null;
+            return;
+        }
+
         Torrent torrent = uiTorrentToTorrent.get(uiTorrent);
         selectedTorrent = torrent;
-        uiPeers.clear();
 
         selectedTorrentPeersSubscription = torrent.getPeersObservable().subscribe(event -> {
             switch (event.getType()) {
