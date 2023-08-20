@@ -177,8 +177,7 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.List
                     peerHandler.assignBlock(block);
                     torrent.setBlockRequested(pieceIndex, blockIndex);
                 } catch (IOException e) {
-                    //TODO: handle this properly
-                    throw new RuntimeException(e);
+                    WorkDispatcher.this.stop();
                 }
             }, () -> LOGGER.log(Level.DEBUG, "No block to assign to {0}", peerHandler));
         }
