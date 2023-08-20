@@ -58,6 +58,7 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.List
     }
 
     public void start() {
+        torrent.setIsActive(true);
         workDispatcher.start();
         trackerHandlers.forEach(TrackerHandler::start);
         executorService.scheduleAtFixedRate(new Unchoke(peerHandlers), 0, 10, SECONDS);
@@ -65,6 +66,7 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.List
     }
 
     public void stop() {
+        torrent.setIsActive(false);
         workDispatcher.stop();
         trackerHandlers.forEach(TrackerHandler::stop);
         executorService.shutdownNow();

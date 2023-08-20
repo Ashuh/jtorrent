@@ -1,5 +1,9 @@
 package jtorrent.presentation.view;
 
+import javafx.beans.binding.BooleanBinding;
+import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.SortedList;
 import javafx.fxml.FXML;
@@ -46,6 +50,14 @@ public class TorrentsTableView extends UiComponent {
         downSpeed.setCellValueFactory(cd -> cd.getValue().downSpeedProperty().asObject());
         upSpeed.setCellValueFactory(cd -> cd.getValue().upSpeedProperty().asObject());
         eta.setCellValueFactory(cd -> cd.getValue().etaProperty().asObject());
+
+        StartButtonDisabledBinding startButtonDisabledBinding =
+                new StartButtonDisabledBinding(tableView.getSelectionModel().selectedItemProperty());
+        startButton.disableProperty().bind(startButtonDisabledBinding);
+
+        StopButtonDisabledBinding stopButtonDisabledBinding =
+                new StopButtonDisabledBinding(tableView.getSelectionModel().selectedItemProperty());
+        stopButton.disableProperty().bind(stopButtonDisabledBinding);
     }
 
     public TableView.TableViewSelectionModel<UiTorrent> getSelectionModel() {
@@ -64,5 +76,55 @@ public class TorrentsTableView extends UiComponent {
 
     public void setOnStopButtonClickedCallback(Runnable callback) {
         stopButton.setOnMouseClicked(event -> callback.run());
+    }
+
+    private abstract static class ButtonDisabledBinding extends BooleanBinding implements ChangeListener<UiTorrent> {
+
+        protected UiTorrent selectedTorrent;
+
+        public ButtonDisabledBinding(ReadOnlyObjectProperty<UiTorrent> selectedTorrent) {
+            selectedTorrent.addListener(this);
+        }
+
+        @Override
+        protected boolean computeValue() {
+            return selectedTorrent != null && selectedTorrent.isActiveProperty().get();
+        }
+
+        @Override
+        public void changed(ObservableValue<? extends UiTorrent> observable, UiTorrent oldValue, UiTorrent newValue) {
+            if (oldValue != null) {
+                unbind(oldValue.isActiveProperty());
+            }
+            if (newValue != null) {
+                bind(newValue.isActiveProperty());
+            }
+            selectedTorrent = newValue;
+            invalidate();
+        }
+    }
+
+    private static class StartButtonDisabledBinding extends ButtonDisabledBinding {
+
+        public StartButtonDisabledBinding(ReadOnlyObjectProperty<UiTorrent> selectedTorrent) {
+            super(selectedTorrent);
+        }
+
+        @Override
+        protected boolean computeValue() {
+            return selectedTorrent == null || selectedTorrent.isActiveProperty().get();
+        }
+    }
+
+    private static class StopButtonDisabledBinding extends ButtonDisabledBinding {
+
+        public StopButtonDisabledBinding(ReadOnlyObjectProperty<UiTorrent> selectedTorrent) {
+            super(selectedTorrent);
+        }
+
+        @Override
+        protected boolean computeValue() {
+            return selectedTorrent == null || !selectedTorrent.isActiveProperty().get();
+        }
     }
 }

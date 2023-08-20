@@ -46,6 +46,8 @@ public class Torrent {
     private final BehaviorSubject<Integer> uploadedSubject = BehaviorSubject.createDefault(0);
     private final MutableRxObservableSet<Peer> peers = new MutableRxObservableSet<>(new HashSet<>());
     private final CombinedDoubleSumObservable downloadRateObservable = new CombinedDoubleSumObservable();
+    private final BehaviorSubject<Boolean> isActiveSubject = BehaviorSubject.createDefault(false);
+    private boolean isActive = false;
 
     public Torrent(Set<Tracker> trackers, LocalDateTime creationDate, String comment, String createdBy,
             int pieceSize, List<Sha1Hash> pieceHashes, String name, List<File> files, Sha1Hash infoHash) {
@@ -243,6 +245,19 @@ public class Torrent {
 
     public boolean hasPeer(Peer peer) {
         return peers.containsItem(peer);
+    }
+
+    public Observable<Boolean> getIsActiveObservable() {
+        return isActiveSubject;
+    }
+
+    public boolean isActive() {
+        return isActive;
+    }
+
+    public void setIsActive(boolean isActive) {
+        this.isActive = isActive;
+        isActiveSubject.onNext(isActive);
     }
 
     @Override
