@@ -48,5 +48,9 @@ public class DurationWindow {
 
     public void close() {
         executor.shutdownNow();
+        window.clear();
+        windowTotal = 0;
+        rate.onNext(0.0);
+        rate.onComplete();
     }
 }
