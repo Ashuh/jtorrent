@@ -50,7 +50,7 @@ public class HttpPeerResponse implements PeerResponse {
 
     @Override
     public Optional<String> getPeerId() {
-        return Optional.empty();
+        return Optional.of(peerId);
     }
 
     @Override

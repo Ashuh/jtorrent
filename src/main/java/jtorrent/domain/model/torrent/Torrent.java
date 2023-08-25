@@ -15,9 +15,14 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.subjects.BehaviorSubject;
 import jtorrent.domain.model.peer.Peer;
 import jtorrent.domain.model.tracker.Tracker;
+import jtorrent.domain.util.CombinedDoubleSumObservable;
+import jtorrent.domain.util.MutableRxObservableSet;
 import jtorrent.domain.util.RangeList;
+import jtorrent.domain.util.RxObservableSet;
 import jtorrent.domain.util.Sha1Hash;
 
 public class Torrent {
@@ -36,8 +41,13 @@ public class Torrent {
     private final RangeList fileByteRanges;
     private final PieceTracker pieceTracker;
     private final AtomicInteger downloaded = new AtomicInteger(0);
+    private final BehaviorSubject<Integer> downloadedSubject = BehaviorSubject.createDefault(0);
     private final AtomicInteger uploaded = new AtomicInteger(0);
-    private final Set<Peer> peers = new HashSet<>();
+    private final BehaviorSubject<Integer> uploadedSubject = BehaviorSubject.createDefault(0);
+    private final MutableRxObservableSet<Peer> peers = new MutableRxObservableSet<>(new HashSet<>());
+    private final CombinedDoubleSumObservable downloadRateObservable = new CombinedDoubleSumObservable();
+    private final BehaviorSubject<Boolean> isActiveSubject = BehaviorSubject.createDefault(false);
+    private boolean isActive = false;
 
     public Torrent(Set<Tracker> trackers, LocalDateTime creationDate, String comment, String createdBy,
             int pieceSize, List<Sha1Hash> pieceHashes, String name, List<File> files, Sha1Hash infoHash) {
@@ -150,11 +160,11 @@ public class Torrent {
     }
 
     public void incrementDownloaded(int amount) {
-        downloaded.addAndGet(amount);
+        downloadedSubject.onNext(downloaded.addAndGet(amount));
     }
 
     public void incrementUploaded(int amount) {
-        uploaded.addAndGet(amount);
+        uploadedSubject.onNext(uploaded.addAndGet(amount));
     }
 
     public void setBlockReceived(int pieceIndex, int blockIndex) {
@@ -202,12 +212,52 @@ public class Torrent {
         return (int) Math.ceil((double) getPieceSize(pieceIndex) / BLOCK_SIZE);
     }
 
+    public Observable<Double> getDownloadRateObservable() {
+        return downloadRateObservable;
+    }
+
+    public Observable<Integer> getDownloadedObservable() {
+        return downloadedSubject;
+    }
+
+    public Observable<Integer> getUploadedObservable() {
+        return uploadedSubject;
+    }
+
+    public RxObservableSet<Peer> getPeersObservable() {
+        return peers;
+    }
+
     public void addPeer(Peer peer) {
         peers.add(peer);
+        downloadRateObservable.addSource(peer.getDownloadRateObservable());
+    }
+
+    public void removePeer(Peer peer) {
+        peers.remove(peer);
+        downloadRateObservable.removeSource(peer.getDownloadRateObservable());
+    }
+
+    public void clearPeers() {
+        peers.clear();
+        downloadRateObservable.clearSources();
     }
 
     public boolean hasPeer(Peer peer) {
-        return peers.contains(peer);
+        return peers.containsItem(peer);
+    }
+
+    public Observable<Boolean> getIsActiveObservable() {
+        return isActiveSubject;
+    }
+
+    public boolean isActive() {
+        return isActive;
+    }
+
+    public void setIsActive(boolean isActive) {
+        this.isActive = isActive;
+        isActiveSubject.onNext(isActive);
     }
 
     @Override
@@ -243,7 +293,6 @@ public class Torrent {
                 + ", comment='" + comment + '\''
                 + ", createdBy='" + createdBy + '\''
                 + ", pieceSize=" + pieceSize
-                + ", pieceHashes=" + pieceHashes
                 + ", name='" + name + '\''
                 + ", files=" + files
                 + ", infoHash=" + infoHash

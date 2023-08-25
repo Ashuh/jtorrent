@@ -1,19 +1,23 @@
 package jtorrent.domain.util;
 
 import java.time.Duration;
-import java.time.Instant;
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.subjects.BehaviorSubject;
+import io.reactivex.rxjava3.subjects.Subject;
 
 public class DurationWindow {
 
-    private final Queue<Integer> valueWindow = new LinkedList<>();
-
-    private final Queue<Instant> timestampWindow = new LinkedList<>();
-
     private final Duration windowDuration;
-
-    private long total = 0;
+    private final Queue<Integer> window = new LinkedList<>();
+    private long windowTotal = 0;
+    private final Subject<Double> rate = BehaviorSubject.createDefault(0.0);
+    private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
 
     public DurationWindow(Duration windowDuration) {
         if (windowDuration.isNegative() || windowDuration.isZero()) {
@@ -23,39 +27,30 @@ public class DurationWindow {
     }
 
     public synchronized void add(int value) {
-        timestampWindow.add(Instant.now());
-        valueWindow.add(value);
-        total += value;
-        clearOldValues();
+        window.add(value);
+        windowTotal += value;
+        executor.schedule(this::remove, windowDuration.toMillis(), TimeUnit.MILLISECONDS);
+        rate.onNext(getRate());
     }
 
-    public synchronized long getWindowTotal() {
-        clearOldValues();
-        return total;
+    private synchronized void remove() {
+        windowTotal -= window.remove();
+        rate.onNext(getRate());
     }
 
-    public synchronized double getWindowAverageRate() {
-        clearOldValues();
-
-        if (timestampWindow.isEmpty()) {
-            return 0;
-        }
-
-        Instant windowStart = timestampWindow.peek();
-        Instant windowEnd = Instant.now();
-
-        long windowDurationMillis = Duration.between(windowStart, windowEnd).toMillis();
-        double windowDurationSeconds = windowDurationMillis / 1000.0;
-        return total / windowDurationSeconds;
+    public double getRate() {
+        return windowTotal / (windowDuration.toMillis() / 1000.0);
     }
 
-    private void clearOldValues() {
-        Instant now = Instant.now();
-        Instant threshold = now.minus(windowDuration);
+    public Observable<Double> getRateObservable() {
+        return rate;
+    }
 
-        while (!timestampWindow.isEmpty() && timestampWindow.peek().isBefore(threshold)) {
-            timestampWindow.remove();
-            total -= valueWindow.remove();
-        }
+    public void close() {
+        executor.shutdownNow();
+        window.clear();
+        windowTotal = 0;
+        rate.onNext(0.0);
+        rate.onComplete();
     }
 }

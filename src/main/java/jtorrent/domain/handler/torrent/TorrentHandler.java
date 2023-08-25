@@ -33,6 +33,7 @@ import jtorrent.domain.model.torrent.Block;
 import jtorrent.domain.model.torrent.Torrent;
 import jtorrent.domain.model.tracker.PeerResponse;
 import jtorrent.domain.repository.PieceRepository;
+import jtorrent.domain.util.BackgroundTask;
 import jtorrent.domain.util.Sha1Hash;
 
 public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Listener {
@@ -42,29 +43,35 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.List
     private final Torrent torrent;
     private final Set<TrackerHandler> trackerHandlers;
     private final Set<PeerHandler> peerHandlers = new HashSet<>();
-
     private final Map<Integer, Set<PeerHandler>> pieceIndexToAvailablePeerHandlers = new HashMap<>();
-    private final WorkDispatcher workDispatcher;
+    private final WorkDispatcher workDispatcher = new WorkDispatcher();
     private final PieceRepository repository = new FilePieceRepository();
     private final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1);
 
     public TorrentHandler(Torrent torrent) {
         this.torrent = requireNonNull(torrent);
 
-        this.trackerHandlers = torrent.getTrackers().stream()
+        trackerHandlers = torrent.getTrackers().stream()
                 .map(tracker -> TrackerHandlerFactory.create(torrent, tracker))
                 .collect(Collectors.toSet());
+        trackerHandlers.forEach(trackerHandler -> trackerHandler.addListener(this));
+    }
 
-        workDispatcher = new WorkDispatcher();
-        Thread dispatcherThread = new Thread(workDispatcher);
-        dispatcherThread.start();
+    public void start() {
+        torrent.setIsActive(true);
+        workDispatcher.start();
+        trackerHandlers.forEach(TrackerHandler::start);
         executorService.scheduleAtFixedRate(new Unchoke(peerHandlers), 0, 10, SECONDS);
         executorService.scheduleAtFixedRate(new OptimisticUnchoke(peerHandlers), 0, 30, SECONDS);
     }
 
-    public void start() {
-        trackerHandlers.forEach(trackerHandler -> trackerHandler.addListener(this));
-        trackerHandlers.forEach(TrackerHandler::start);
+    public void stop() {
+        torrent.setIsActive(false);
+        workDispatcher.stop();
+        trackerHandlers.forEach(TrackerHandler::stop);
+        executorService.shutdownNow();
+        peerHandlers.forEach(PeerHandler::stop);
+        torrent.clearPeers();
     }
 
     public void addPeer(Peer peer) {
@@ -72,8 +79,7 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.List
         PeerHandler peerHandler = new PeerHandler(peer, torrent);
         peerHandler.addListener(this);
         peerHandlers.add(peerHandler);
-        Thread thread = new Thread(peerHandler);
-        thread.start();
+        peerHandler.start();
     }
 
     @Override
@@ -153,27 +159,17 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.List
                 .forEach(this::addPeer);
     }
 
-    private class WorkDispatcher implements Runnable {
+    private class WorkDispatcher extends BackgroundTask {
 
         private final LinkedBlockingQueue<PeerHandler> peerHandlersQueue = new LinkedBlockingQueue<>();
 
-        private boolean isRunning = true;
-
         @Override
-        public void run() {
-            while (isRunning) {
-                try {
-                    PeerHandler peerHandler = peerHandlersQueue.take();
-                    assignBlock(peerHandler);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            }
+        protected void execute() throws InterruptedException {
+            PeerHandler peerHandler = peerHandlersQueue.take();
+            assignBlock(peerHandler);
         }
 
-        private void assignBlock(PeerHandler peerHandler) throws IOException {
+        private void assignBlock(PeerHandler peerHandler) {
             getPieceIndexToAssign(peerHandler).ifPresentOrElse(pieceIndex -> {
                 int blockIndex = torrent.getmissingBlockIndices(pieceIndex).iterator().next();
                 Block block = createBlock(pieceIndex, blockIndex);
@@ -181,8 +177,7 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.List
                     peerHandler.assignBlock(block);
                     torrent.setBlockRequested(pieceIndex, blockIndex);
                 } catch (IOException e) {
-                    //TODO: handle this properly
-                    throw new RuntimeException(e);
+                    WorkDispatcher.this.stop();
                 }
             }, () -> LOGGER.log(Level.DEBUG, "No block to assign to {0}", peerHandler));
         }

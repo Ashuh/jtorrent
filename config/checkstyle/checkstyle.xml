@@ -10,6 +10,10 @@
 
 <module name="Checker">
 
+    <module name="BeforeExecutionExclusionFileFilter">
+        <property name="fileNamePattern" value="module-info.java"/>
+    </module>
+
     <module name="FileTabCharacter">
         <!-- Checks that there are no tab characters in the file. -->
     </module>
@@ -398,6 +402,5 @@
 <!--            <property name="allowMissingPropertyJavadoc" value="true"/>-->
 <!--            <property name="ignoreMethodNamesRegex" value="(set.*|get.*)"/>-->
 <!--        </module>-->
-
     </module>
 </module>

@@ -11,6 +11,7 @@ import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.Objects;
 
+import io.reactivex.rxjava3.core.Observable;
 import jtorrent.domain.model.peer.exception.UnexpectedEndOfStreamException;
 import jtorrent.domain.model.peer.message.Handshake;
 import jtorrent.domain.model.peer.message.KeepAlive;
@@ -50,7 +51,14 @@ public abstract class Peer {
         this.port = socket.getPort();
     }
 
-    public abstract void connect(Sha1Hash infoHash) throws IOException;
+    public abstract void connect(Sha1Hash infoHash) throws IOException; // TODO: refactor socket creation?
+
+    public void disconnect() throws IOException {
+        if (socket != null) {
+            socket.close();
+        }
+        durationWindow.close();
+    }
 
     public void sendMessage(PeerMessage message) throws IOException {
         LOGGER.log(Level.DEBUG, "Sending message: {0}", message);
@@ -151,7 +159,19 @@ public abstract class Peer {
     }
 
     public double getDownloadRate() {
-        return durationWindow.getWindowAverageRate();
+        return durationWindow.getRate();
+    }
+
+    public Observable<Double> getDownloadRateObservable() {
+        return durationWindow.getRateObservable();
+    }
+
+    public double getUploadRate() {
+        return 0; // TODO: implement
+    }
+
+    public Observable<Double> getUploadRateObservable() {
+        return Observable.never(); // TODO: implement
     }
 
     @Override
