@@ -68,8 +68,8 @@ public class BencodedTorrent extends BencodedObject {
     public static BencodedTorrent fromMap(Map<String, Object> map) {
         String announce = getValueAsString(map, KEY_ANNOUNCE).orElseThrow();
 
-        List<List<ByteBuffer>> annouceListRaw = getValueAsList(map, KEY_ANNOUNCE_LIST);
-        List<List<String>> announceList = annouceListRaw.stream()
+        List<List<ByteBuffer>> announceListRaw = getValueAsList(map, KEY_ANNOUNCE_LIST);
+        List<List<String>> announceList = announceListRaw.stream()
                 .map(buffers -> buffers.stream()
                         .map(buffer -> new String(buffer.array()))
                         .collect(Collectors.toList()))
