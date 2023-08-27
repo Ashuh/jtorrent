@@ -10,7 +10,8 @@ public enum MessageType {
     BITFIELD((byte) 5),
     REQUEST((byte) 6),
     PIECE((byte) 7),
-    CANCEL((byte) 8);
+    CANCEL((byte) 8),
+    PORT((byte) 9);
 
     private final byte value;
 
@@ -38,6 +39,8 @@ public enum MessageType {
             return PIECE;
         case 8:
             return CANCEL;
+        case 9:
+            return PORT;
         default:
             throw new IllegalArgumentException("Invalid message type: " + value);
         }
