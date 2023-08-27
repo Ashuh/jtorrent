@@ -24,6 +24,7 @@ import jtorrent.domain.model.peer.message.typed.Interested;
 import jtorrent.domain.model.peer.message.typed.MessageType;
 import jtorrent.domain.model.peer.message.typed.NotInterested;
 import jtorrent.domain.model.peer.message.typed.Piece;
+import jtorrent.domain.model.peer.message.typed.Port;
 import jtorrent.domain.model.peer.message.typed.Request;
 import jtorrent.domain.model.peer.message.typed.Unchoke;
 import jtorrent.domain.util.DurationWindow;
@@ -129,6 +130,8 @@ public abstract class Peer {
             return piece;
         case CANCEL:
             return Cancel.unpack(payload);
+        case PORT:
+            return Port.unpack(payload);
         default:
             throw new IllegalArgumentException("Unsupported message type: " + messageType);
         }
