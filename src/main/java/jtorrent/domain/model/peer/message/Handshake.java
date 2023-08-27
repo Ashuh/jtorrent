@@ -18,14 +18,25 @@ public class Handshake implements PeerMessage {
 
     private final Sha1Hash infoHash;
     private final byte[] peerId;
-    private final byte[] flags = new byte[8];
+    private final byte[] flags;
 
-    public Handshake(Sha1Hash infoHash, byte[] peerId) {
+    public Handshake(Sha1Hash infoHash, byte[] peerId, boolean isDhtSupported) {
+        this(infoHash, peerId, new byte[8]);
+        if (isDhtSupported) {
+            flags[7] = (byte) (flags[7] | 0x01);
+        }
+    }
+
+    public Handshake(Sha1Hash infoHash, byte[] peerId, byte[] flags) {
         if (peerId.length != 20) {
             throw new IllegalArgumentException("Peer ID must be 20 bytes long");
         }
+        if (flags.length != 8) {
+            throw new IllegalArgumentException("Flags must be 8 bytes long");
+        }
         this.infoHash = requireNonNull(infoHash);
         this.peerId = requireNonNull(peerId);
+        this.flags = requireNonNull(flags);
     }
 
     public static Handshake unpack(byte[] payload) {
@@ -54,7 +65,7 @@ public class Handshake implements PeerMessage {
         byte[] peerId = new byte[20];
         buffer.get(peerId);
 
-        return new Handshake(infoHash, peerId);
+        return new Handshake(infoHash, peerId, flags);
     }
 
     public Sha1Hash getInfoHash() {
@@ -67,6 +78,10 @@ public class Handshake implements PeerMessage {
 
     public byte[] getFlags() {
         return flags;
+    }
+
+    public boolean isDhtSupported() {
+        return (flags[7] & 0x01) == 0x01;
     }
 
     @Override

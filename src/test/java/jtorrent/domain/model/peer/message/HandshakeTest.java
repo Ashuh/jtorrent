@@ -14,12 +14,13 @@ class HandshakeTest {
 
     @Test
     void unpack() {
-        byte[] infoHashBytes = new byte[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19};
-        Sha1Hash infoHash = new Sha1Hash(infoHashBytes);
-        byte[] peerId = new byte[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-        Handshake expected = new Handshake(infoHash, peerId);
+        byte[] infoHashBytes = new byte[] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19};
+        byte[] peerId = new byte[] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+        byte[] flags = new byte[] {0, 0, 0, 0, 0, 0, 0, 0};
 
-        byte[] flags = new byte[]{0, 0, 0, 0, 0, 0, 0, 0};
+        Sha1Hash infoHash = new Sha1Hash(infoHashBytes);
+        Handshake expected = new Handshake(infoHash, peerId, flags);
+
         byte[] handshakeBytes = ByteBuffer.allocate(68)
                 .order(ByteOrder.BIG_ENDIAN)
                 .put((byte) 19)
@@ -35,9 +36,10 @@ class HandshakeTest {
 
     @Test
     void pack() {
-        byte[] flags = new byte[]{0, 0, 0, 0, 0, 0, 0, 0};
-        byte[] infoHashBytes = new byte[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19};
-        byte[] peerId = new byte[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+        byte[] flags = new byte[] {0, 0, 0, 0, 0, 0, 0, 0};
+        byte[] infoHashBytes = new byte[] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19};
+        byte[] peerId = new byte[] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+
         byte[] expected = ByteBuffer.allocate(68)
                 .order(ByteOrder.BIG_ENDIAN)
                 .put((byte) 19)
@@ -48,7 +50,7 @@ class HandshakeTest {
                 .array();
 
         Sha1Hash infoHash = new Sha1Hash(infoHashBytes);
-        Handshake handshake = new Handshake(infoHash, peerId);
+        Handshake handshake = new Handshake(infoHash, peerId, flags);
         byte[] actual = handshake.pack();
 
         assertArrayEquals(expected, actual);

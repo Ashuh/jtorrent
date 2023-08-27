@@ -51,7 +51,7 @@ public abstract class Peer {
         this.port = socket.getPort();
     }
 
-    public abstract void connect(Sha1Hash infoHash) throws IOException; // TODO: refactor socket creation?
+    public abstract void connect(Sha1Hash infoHash, boolean isDhtSupported) throws IOException;
 
     public void disconnect() throws IOException {
         if (socket != null) {

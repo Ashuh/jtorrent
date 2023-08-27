@@ -20,7 +20,7 @@ public class OutgoingPeer extends Peer {
     }
 
     @Override
-    public void connect(Sha1Hash infoHash) throws IOException {
+    public void connect(Sha1Hash infoHash, boolean isDhtSupported) throws IOException {
         if (infoHash == null) {
             throw new IllegalArgumentException("infoHash cannot be null");
         }
@@ -28,7 +28,7 @@ public class OutgoingPeer extends Peer {
         LOGGER.log(Level.DEBUG, "Connecting to peer: {0}:{1}", address, port);
         this.socket = new Socket(address, port);
 
-        Handshake handshake = new Handshake(infoHash, PEER_ID.getBytes());
+        Handshake handshake = new Handshake(infoHash, PEER_ID.getBytes(), isDhtSupported);
         sendMessage(handshake);
 
         Handshake inHandshake = receiveHandshake();

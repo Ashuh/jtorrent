@@ -156,7 +156,8 @@ public class PeerHandler {
         @Override
         protected void doOnStarted() {
             try {
-                peer.connect(torrent.getInfoHash());
+                // TODO: hardcoded true for now
+                peer.connect(torrent.getInfoHash(), true);
                 isConnected = true;
                 sendInterested();
             } catch (IOException e) {

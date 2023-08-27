@@ -17,12 +17,12 @@ public class IncomingPeer extends Peer {
     }
 
     @Override
-    public void connect(Sha1Hash infoHash) throws IOException {
+    public void connect(Sha1Hash infoHash, boolean isDhtSupported) throws IOException {
         if (infoHash == null) {
             throw new IllegalArgumentException("infoHash cannot be null");
         }
         LOGGER.log(System.Logger.Level.DEBUG, "Connecting to peer: {0}:{1}", address, port);
-        Handshake handshake = new Handshake(infoHash, PEER_ID.getBytes());
+        Handshake handshake = new Handshake(infoHash, PEER_ID.getBytes(), isDhtSupported);
         sendMessage(handshake);
         LOGGER.log(System.Logger.Level.DEBUG, "Sent handshake to peer: {0}:{1}", address, port);
     }
