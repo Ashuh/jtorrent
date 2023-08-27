@@ -8,22 +8,18 @@ import jtorrent.domain.model.peer.message.PeerMessage;
 public abstract class TypedPeerMessage implements PeerMessage {
 
     public byte[] pack() {
-        return ByteBuffer.allocate(getSizeInBytes())
+        byte[] payload = getPayload();
+        // total size of the message in bytes
+        int sizeInBytes = payload.length + Integer.BYTES + Byte.BYTES;
+        // size of the payload in bytes + 1 byte for the message type
+        int lengthPrefix = payload.length + Byte.BYTES;
+
+        return ByteBuffer.allocate(sizeInBytes)
                 .order(ByteOrder.BIG_ENDIAN)
-                .putInt(getLengthPrefix())
+                .putInt(lengthPrefix)
                 .put(getMessageType().getValue())
                 .put(getPayload())
                 .array();
-    }
-
-    private int getSizeInBytes() {
-        return getPayload().length
-                + Integer.BYTES
-                + Byte.BYTES;
-    }
-
-    private int getLengthPrefix() {
-        return getPayload().length + Byte.BYTES;
     }
 
     public abstract MessageType getMessageType();
