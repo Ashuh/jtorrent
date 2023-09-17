@@ -13,6 +13,8 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
+import jtorrent.domain.util.Bit160Value;
+
 class NodeIdTest {
 
     @Test
@@ -29,22 +31,22 @@ class NodeIdTest {
 
     @Test
     void fromBigInteger_longerThan160Bits_throwsIllegalArgumentException() {
-        BigInteger value = BigInteger.TWO.pow(NodeId.SIZE);
-        assertTrue(value.bitLength() > NodeId.SIZE);
+        BigInteger value = BigInteger.TWO.pow(Bit160Value.SIZE_BITS);
+        assertTrue(value.bitLength() > Bit160Value.SIZE_BITS);
         assertThrowsExactly(IllegalArgumentException.class, () -> NodeId.fromBigInteger(value));
     }
 
     @Test
     void fromBigInteger_equalTo160Bits_success() {
-        BigInteger value = BigInteger.TWO.pow(NodeId.SIZE).subtract(BigInteger.ONE);
-        assertEquals(NodeId.SIZE, value.bitLength());
+        BigInteger value = BigInteger.TWO.pow(Bit160Value.SIZE_BITS).subtract(BigInteger.ONE);
+        assertEquals(Bit160Value.SIZE_BITS, value.bitLength());
         assertDoesNotThrow(() -> NodeId.fromBigInteger(value));
     }
 
     @Test
     void fromBigInteger_shorterThan160Bits_success() {
         BigInteger zero = BigInteger.ZERO;
-        assertTrue(zero.bitLength() < NodeId.SIZE);
+        assertTrue(zero.bitLength() < Bit160Value.SIZE_BITS);
         assertDoesNotThrow(() -> NodeId.fromBigInteger(zero));
     }
 
@@ -58,7 +60,7 @@ class NodeIdTest {
         BigInteger actual2 = NodeId.fromBigInteger(expected2).toBigInteger();
         assertEquals(expected2, actual2);
 
-        BigInteger expected3 = BigInteger.TWO.pow(NodeId.SIZE).subtract(BigInteger.ONE);
+        BigInteger expected3 = BigInteger.TWO.pow(Bit160Value.SIZE_BITS).subtract(BigInteger.ONE);
         BigInteger actual3 = NodeId.fromBigInteger(expected3).toBigInteger();
         assertEquals(expected3, actual3);
     }
@@ -146,7 +148,7 @@ class NodeIdTest {
         private final Set<Integer> set = new HashSet<>();
 
         public NodeIdBuilder setBit(int index) {
-            if (index < 0 || index >= NodeId.SIZE) {
+            if (index < 0 || index >= Bit160Value.SIZE_BITS) {
                 throw new IllegalArgumentException("Index must be between 0 and 159");
             }
             set.add(index);
@@ -159,14 +161,14 @@ class NodeIdTest {
         }
 
         public NodeIdBuilder setAll() {
-            for (int i = 0; i < NodeId.SIZE; i++) {
+            for (int i = 0; i < Bit160Value.SIZE_BITS; i++) {
                 setBit(i);
             }
             return this;
         }
 
         public NodeIdBuilder clearBit(int index) {
-            if (index < 0 || index >= NodeId.SIZE) {
+            if (index < 0 || index >= Bit160Value.SIZE_BITS) {
                 throw new IllegalArgumentException("Index must be between 0 and 159");
             }
             set.remove(index);
