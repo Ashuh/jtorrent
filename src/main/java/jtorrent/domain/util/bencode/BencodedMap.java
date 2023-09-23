@@ -98,6 +98,10 @@ public class BencodedMap extends HashMap<String, Object> {
         return new BencodedList(get(key, List.class));
     }
 
+    public Optional<BencodedList> getOptionalList(String key) {
+        return getOptional(key, List.class).map(BencodedList::new);
+    }
+
     private <T> T get(String key, Class<T> clazz) {
         if (!containsKey(key)) {
             throw new NoSuchElementException("Key not found: " + key);
