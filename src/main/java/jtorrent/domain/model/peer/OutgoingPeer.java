@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.lang.System.Logger.Level;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
 
 import jtorrent.domain.model.peer.exception.InfoHashMismatchException;
 import jtorrent.domain.model.peer.message.Handshake;
@@ -14,9 +16,30 @@ import jtorrent.domain.util.Sha1Hash;
 public class OutgoingPeer extends Peer {
 
     private static final System.Logger LOGGER = System.getLogger(OutgoingPeer.class.getName());
+    private static final int COMPACT_PEER_INFO_BYTES = 6;
 
     public OutgoingPeer(InetAddress address, int port) {
         super(address, port);
+    }
+
+    public static Peer fromCompactPeerInfo(byte[] bytes) {
+        if (bytes.length != COMPACT_PEER_INFO_BYTES) {
+            throw new IllegalArgumentException(
+                    String.format("Compact peer info must be %d bytes long", COMPACT_PEER_INFO_BYTES));
+        }
+        ByteBuffer buffer = ByteBuffer.wrap(bytes);
+
+        byte[] addressBytes = new byte[Integer.BYTES];
+        buffer.get(addressBytes);
+        InetAddress address;
+        try {
+            address = InetAddress.getByAddress(addressBytes);
+        } catch (UnknownHostException e) {
+            throw new AssertionError(e);
+        }
+
+        int port = Short.toUnsignedInt(buffer.getShort());
+        return new OutgoingPeer(address, port);
     }
 
     @Override

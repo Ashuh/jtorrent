@@ -6,7 +6,11 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class Node {
 
@@ -18,6 +22,20 @@ public class Node {
     public Node(NodeId id, InetSocketAddress address) {
         this.address = requireNonNull(address);
         this.id = requireNonNull(id);
+    }
+
+    public static Collection<Node> multipleFromCompactNodeInfo(byte[] bytes) {
+        if (bytes.length % Node.COMPACT_NODE_INFO_BYTES != 0) {
+            throw new IllegalArgumentException(
+                    String.format("Bytes length must be a multiple of %d", Node.COMPACT_NODE_INFO_BYTES));
+        }
+
+        int numNodes = bytes.length / Node.COMPACT_NODE_INFO_BYTES;
+        return IntStream.range(0, numNodes)
+                .map(i -> i * Node.COMPACT_NODE_INFO_BYTES)
+                .mapToObj(from -> Arrays.copyOfRange(bytes, from, from + Node.COMPACT_NODE_INFO_BYTES))
+                .map(Node::fromCompactNodeInfo)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -54,12 +72,33 @@ public class Node {
         return new Node(id, socketAddress);
     }
 
+    public static byte[] multipleToCompactNodeInfo(Collection<Node> nodes) {
+        ByteBuffer buffer = ByteBuffer.allocate(nodes.size() * COMPACT_NODE_INFO_BYTES);
+        nodes.stream()
+                .map(Node::toCompactNodeInfo)
+                .forEach(buffer::put);
+        return buffer.array();
+    }
+
+    public byte[] toCompactNodeInfo() {
+        return ByteBuffer.allocate(COMPACT_NODE_INFO_BYTES)
+                .put(id.getBytes())
+                .put(address.getAddress().getAddress())
+                .putShort((short) address.getPort())
+                .array();
+    }
+
     public InetSocketAddress getAddress() {
         return address;
     }
 
     public NodeId getId() {
         return id;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(address, id);
     }
 
     @Override
@@ -72,11 +111,6 @@ public class Node {
         }
         Node node = (Node) o;
         return Objects.equals(address, node.address) && Objects.equals(id, node.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(address, id);
     }
 
     @Override

@@ -52,6 +52,13 @@ public abstract class Peer {
         this.port = socket.getPort();
     }
 
+    public byte[] toCompactPeerInfo() {
+        return ByteBuffer.allocate(6)
+                .put(address.getAddress())
+                .putShort((short) port)
+                .array();
+    }
+
     public abstract void connect(Sha1Hash infoHash, boolean isDhtSupported) throws IOException;
 
     public void disconnect() throws IOException {
