@@ -30,7 +30,7 @@ public class FindNodeResponse extends DefinedResponse {
         this.nodes = nodes;
     }
 
-    public static FindNodeResponse fromUnknownResponse(UndefinedResponse response) {
+    public static FindNodeResponse fromUndefinedResponse(UndefinedResponse response) {
         TransactionId transactionId = response.getTransactionId();
 
         byte[] nodeIdBytes = response.getReturnValues().getBytes(KEY_ID).array();
