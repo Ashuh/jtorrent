@@ -12,29 +12,29 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class Node {
+public class NodeContactInfo {
 
     public static final int COMPACT_NODE_INFO_BYTES = 26;
 
     private final NodeId id;
     private final InetSocketAddress address;
 
-    public Node(NodeId id, InetSocketAddress address) {
+    public NodeContactInfo(NodeId id, InetSocketAddress address) {
         this.address = requireNonNull(address);
         this.id = requireNonNull(id);
     }
 
-    public static Collection<Node> multipleFromCompactNodeInfo(byte[] bytes) {
-        if (bytes.length % Node.COMPACT_NODE_INFO_BYTES != 0) {
+    public static Collection<NodeContactInfo> multipleFromCompactNodeInfo(byte[] bytes) {
+        if (bytes.length % NodeContactInfo.COMPACT_NODE_INFO_BYTES != 0) {
             throw new IllegalArgumentException(
-                    String.format("Bytes length must be a multiple of %d", Node.COMPACT_NODE_INFO_BYTES));
+                    String.format("Bytes length must be a multiple of %d", NodeContactInfo.COMPACT_NODE_INFO_BYTES));
         }
 
-        int numNodes = bytes.length / Node.COMPACT_NODE_INFO_BYTES;
+        int numNodes = bytes.length / NodeContactInfo.COMPACT_NODE_INFO_BYTES;
         return IntStream.range(0, numNodes)
-                .map(i -> i * Node.COMPACT_NODE_INFO_BYTES)
-                .mapToObj(from -> Arrays.copyOfRange(bytes, from, from + Node.COMPACT_NODE_INFO_BYTES))
-                .map(Node::fromCompactNodeInfo)
+                .map(i -> i * NodeContactInfo.COMPACT_NODE_INFO_BYTES)
+                .mapToObj(from -> Arrays.copyOfRange(bytes, from, from + NodeContactInfo.COMPACT_NODE_INFO_BYTES))
+                .map(NodeContactInfo::fromCompactNodeInfo)
                 .collect(Collectors.toList());
     }
 
@@ -47,7 +47,7 @@ public class Node {
      * @return the unpacked node
      * @throws IllegalArgumentException if bytes is not 26 bytes long
      */
-    public static Node fromCompactNodeInfo(byte[] bytes) {
+    public static NodeContactInfo fromCompactNodeInfo(byte[] bytes) {
         if (bytes.length != COMPACT_NODE_INFO_BYTES) {
             throw new IllegalArgumentException(
                     String.format("Compact node info must be %d bytes long", COMPACT_NODE_INFO_BYTES));
@@ -69,13 +69,13 @@ public class Node {
 
         int port = Short.toUnsignedInt(buffer.getShort());
         InetSocketAddress socketAddress = new InetSocketAddress(address, port);
-        return new Node(id, socketAddress);
+        return new NodeContactInfo(id, socketAddress);
     }
 
-    public static byte[] multipleToCompactNodeInfo(Collection<Node> nodes) {
+    public static byte[] multipleToCompactNodeInfo(Collection<NodeContactInfo> nodes) {
         ByteBuffer buffer = ByteBuffer.allocate(nodes.size() * COMPACT_NODE_INFO_BYTES);
         nodes.stream()
-                .map(Node::toCompactNodeInfo)
+                .map(NodeContactInfo::toCompactNodeInfo)
                 .forEach(buffer::put);
         return buffer.array();
     }
@@ -109,7 +109,7 @@ public class Node {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        Node node = (Node) o;
+        NodeContactInfo node = (NodeContactInfo) o;
         return Objects.equals(address, node.address) && Objects.equals(id, node.id);
     }
 

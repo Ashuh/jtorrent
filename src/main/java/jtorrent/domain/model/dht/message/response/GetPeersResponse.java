@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 
 import jtorrent.domain.model.dht.message.TransactionId;
 import jtorrent.domain.model.dht.message.query.GetPeers;
-import jtorrent.domain.model.dht.node.Node;
+import jtorrent.domain.model.dht.node.NodeContactInfo;
 import jtorrent.domain.model.dht.node.NodeId;
 import jtorrent.domain.model.peer.OutgoingPeer;
 import jtorrent.domain.model.peer.Peer;
@@ -18,7 +18,7 @@ import jtorrent.domain.util.bencode.BencodedMap;
 /**
  * Represents a response to a {@link GetPeers} request.
  * The response contains a collection of {@link Peer Peers} if the queried node has peers for the requested info hash.
- * Otherwise, the response contains the K closest {@link Node Nodes} to the requested info hash.
+ * Otherwise, the response contains the K closest {@link NodeContactInfo Nodes} to the requested info hash.
  */
 public class GetPeersResponse extends DefinedResponse {
 
@@ -28,9 +28,9 @@ public class GetPeersResponse extends DefinedResponse {
 
     private final String token;
     private final Collection<Peer> peers;
-    private final Collection<Node> nodes;
+    private final Collection<NodeContactInfo> nodes;
 
-    protected GetPeersResponse(NodeId id, String token, Collection<Peer> peers, Collection<Node> nodes) {
+    protected GetPeersResponse(NodeId id, String token, Collection<Peer> peers, Collection<NodeContactInfo> nodes) {
         super(id);
         this.token = token;
         this.peers = peers;
@@ -38,7 +38,7 @@ public class GetPeersResponse extends DefinedResponse {
     }
 
     protected GetPeersResponse(TransactionId transactionId, NodeId id, String token, Collection<Peer> peers,
-            Collection<Node> nodes) {
+            Collection<NodeContactInfo> nodes) {
         super(transactionId, id);
         this.token = token;
         this.peers = peers;
@@ -46,7 +46,7 @@ public class GetPeersResponse extends DefinedResponse {
     }
 
     protected GetPeersResponse(TransactionId transactionId, String clientVersion, NodeId id, String token,
-            Collection<Peer> peers, Collection<Node> nodes) {
+            Collection<Peer> peers, Collection<NodeContactInfo> nodes) {
         super(transactionId, clientVersion, id);
         this.token = token;
         this.peers = peers;
@@ -66,9 +66,9 @@ public class GetPeersResponse extends DefinedResponse {
                 )
                 .orElse(null);
 
-        Collection<Node> nodes = returnValues.getOptionalBytes(KEY_NODES)
+        Collection<NodeContactInfo> nodes = returnValues.getOptionalBytes(KEY_NODES)
                 .map(ByteBuffer::array)
-                .map(Node::multipleFromCompactNodeInfo)
+                .map(NodeContactInfo::multipleFromCompactNodeInfo)
                 .orElse(null);
 
         if (peers == null && nodes == null) {
@@ -90,7 +90,7 @@ public class GetPeersResponse extends DefinedResponse {
         return Optional.ofNullable(peers);
     }
 
-    public Optional<Collection<Node>> getNodes() {
+    public Optional<Collection<NodeContactInfo>> getNodes() {
         return Optional.ofNullable(nodes);
     }
 
@@ -107,7 +107,7 @@ public class GetPeersResponse extends DefinedResponse {
             );
         }
         if (nodes != null) {
-            returnValues.put(KEY_NODES, ByteBuffer.wrap(Node.multipleToCompactNodeInfo(nodes)));
+            returnValues.put(KEY_NODES, ByteBuffer.wrap(NodeContactInfo.multipleToCompactNodeInfo(nodes)));
         }
 
         return returnValues;
