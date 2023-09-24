@@ -19,6 +19,13 @@ public class TransactionId {
         return new TransactionId(value);
     }
 
+    /**
+     * Creates a {@link TransactionId} from the given bytes.
+     *
+     * @param bytes The bytes to create the transaction id from.
+     * @return The transaction id.
+     * @throws IllegalArgumentException If the given byte array is not exactly 2 bytes long.
+     */
     public static TransactionId fromBytes(byte[] bytes) {
         if (bytes.length != Character.BYTES) {
             throw new IllegalArgumentException(
