@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import jtorrent.domain.model.dht.message.TransactionId;
 import jtorrent.domain.model.dht.message.query.GetPeers;
+import jtorrent.domain.model.dht.message.query.Method;
 import jtorrent.domain.model.dht.node.NodeContactInfo;
 import jtorrent.domain.model.dht.node.NodeId;
 import jtorrent.domain.model.peer.OutgoingPeer;
@@ -53,10 +54,14 @@ public class GetPeersResponse extends DefinedResponse {
         this.nodes = nodes;
     }
 
-    public static GetPeersResponse fromUndefinedResponse(UndefinedResponse response) {
-        BencodedMap returnValues = response.getReturnValues();
-        NodeId id = new NodeId(returnValues.getBytes(KEY_ID).array());
+    public static GetPeersResponse fromMap(BencodedMap map) {
+        TransactionId txId = TransactionId.fromBytes(map.getBytes(KEY_TRANSACTION_ID).array());
+        String clientVersion = map.getOptionalString(KEY_CLIENT_VERSION).orElse(null);
+        BencodedMap returnValues = map.getMap(KEY_RETURN_VALUES);
+
+        NodeId nodeId = new NodeId(returnValues.getBytes(KEY_ID).array());
         String token = returnValues.getString(KEY_TOKEN);
+
         Collection<Peer> peers = returnValues.getOptionalList(KEY_VALUES)
                 .map(list -> list.stream()
                         .map(x -> (ByteBuffer) x)
@@ -75,7 +80,7 @@ public class GetPeersResponse extends DefinedResponse {
             throw new IllegalArgumentException("Either peers or nodes must be present");
         }
 
-        return new GetPeersResponse(response.getTransactionId(), id, token, peers, nodes);
+        return new GetPeersResponse(txId, clientVersion, nodeId, token, peers, nodes);
     }
 
     public String getToken() {
@@ -111,5 +116,10 @@ public class GetPeersResponse extends DefinedResponse {
         }
 
         return returnValues;
+    }
+
+    @Override
+    public Method getMethod() {
+        return Method.GET_PEERS;
     }
 }

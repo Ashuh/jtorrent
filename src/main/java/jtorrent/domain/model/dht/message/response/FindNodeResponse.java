@@ -3,10 +3,13 @@ package jtorrent.domain.model.dht.message.response;
 import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Objects;
 
 import jtorrent.domain.model.dht.message.TransactionId;
+import jtorrent.domain.model.dht.message.query.Method;
 import jtorrent.domain.model.dht.node.NodeContactInfo;
 import jtorrent.domain.model.dht.node.NodeId;
+import jtorrent.domain.util.bencode.BencodedMap;
 
 public class FindNodeResponse extends DefinedResponse {
 
@@ -30,22 +33,18 @@ public class FindNodeResponse extends DefinedResponse {
         this.nodes = nodes;
     }
 
-    public static FindNodeResponse fromUndefinedResponse(UndefinedResponse response) {
-        TransactionId transactionId = response.getTransactionId();
+    public static FindNodeResponse fromMap(BencodedMap map) {
+        TransactionId txId = TransactionId.fromBytes(map.getBytes(KEY_TRANSACTION_ID).array());
+        String clientVersion = map.getOptionalString(KEY_CLIENT_VERSION).orElse(null);
+        BencodedMap returnValues = map.getMap(KEY_RETURN_VALUES);
 
-        byte[] nodeIdBytes = response.getReturnValues().getBytes(KEY_ID).array();
+        byte[] nodeIdBytes = returnValues.getBytes(KEY_ID).array();
         NodeId nodeId = new NodeId(nodeIdBytes);
 
-        byte[] nodesBytes = response.getReturnValues().getBytes(KEY_NODES).array();
+        byte[] nodesBytes = returnValues.getBytes(KEY_NODES).array();
         Collection<NodeContactInfo> nodes = NodeContactInfo.multipleFromCompactNodeInfo(nodesBytes);
 
-        return new FindNodeResponse(transactionId, nodeId, nodes);
-    }
-
-    private static byte[] packNodes(Collection<NodeContactInfo> nodes) {
-        ByteBuffer buffer = ByteBuffer.allocate(nodes.size() * NodeContactInfo.COMPACT_NODE_INFO_BYTES);
-        nodes.forEach(node -> buffer.put(node.toCompactNodeInfo()));
-        return buffer.array();
+        return new FindNodeResponse(txId, clientVersion, nodeId, nodes);
     }
 
     public Collection<NodeContactInfo> getNodes() {
@@ -55,5 +54,36 @@ public class FindNodeResponse extends DefinedResponse {
     @Override
     protected Map<String, Object> getResponseSpecificReturnValues() {
         return Map.of(KEY_NODES, ByteBuffer.wrap(packNodes(nodes)));
+    }
+
+    private static byte[] packNodes(Collection<NodeContactInfo> nodes) {
+        ByteBuffer buffer = ByteBuffer.allocate(nodes.size() * NodeContactInfo.COMPACT_NODE_INFO_BYTES);
+        nodes.forEach(node -> buffer.put(node.toCompactNodeInfo()));
+        return buffer.array();
+    }
+
+    @Override
+    public Method getMethod() {
+        return Method.FIND_NODE;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
+        FindNodeResponse that = (FindNodeResponse) o;
+        return Objects.equals(nodes, that.nodes);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), nodes);
     }
 }

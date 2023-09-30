@@ -5,6 +5,8 @@ import java.util.Map;
 import java.util.Objects;
 
 import jtorrent.domain.model.dht.message.TransactionId;
+import jtorrent.domain.model.dht.message.query.Method;
+import jtorrent.domain.model.dht.message.query.Query;
 import jtorrent.domain.model.dht.node.NodeId;
 
 public abstract class DefinedResponse extends Response {
@@ -44,6 +46,11 @@ public abstract class DefinedResponse extends Response {
     }
 
     protected abstract Map<String, Object> getResponseSpecificReturnValues();
+
+    /**
+     * Gets the {@link Method} of the {@link Query} that this {@link DefinedResponse} is a response to.
+     */
+    public abstract Method getMethod();
 
     @Override
     public boolean equals(Object o) {
