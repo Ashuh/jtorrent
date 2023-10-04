@@ -17,7 +17,7 @@ public class GetPeers extends Query {
 
     private final Sha1Hash infoHash;
 
-    protected GetPeers(NodeId id, Sha1Hash infoHash) {
+    public GetPeers(NodeId id, Sha1Hash infoHash) {
         super(Method.GET_PEERS, id);
         this.infoHash = requireNonNull(infoHash);
     }
