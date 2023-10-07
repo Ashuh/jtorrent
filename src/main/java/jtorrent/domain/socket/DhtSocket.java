@@ -12,7 +12,6 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import jtorrent.domain.model.dht.message.DhtMessage;
 import jtorrent.domain.model.dht.message.DhtMessageDecoder;
@@ -63,8 +62,21 @@ public class DhtSocket {
         handleIncomingMessagesTask.stop();
     }
 
-    public CompletableFuture<PingResponse> sendPing(Ping query, InetSocketAddress address) {
-        return sendQuery(query, address);
+    public CompletableFuture<PingResponse> sendPing(Ping ping, InetSocketAddress address) {
+        return sendQuery(ping, address);
+    }
+
+    public CompletableFuture<FindNodeResponse> sendFindNode(FindNode findNode, InetSocketAddress address) {
+        return sendQuery(findNode, address);
+    }
+
+    public CompletableFuture<GetPeersResponse> sendGetPeers(GetPeers getPeers, InetSocketAddress address) {
+        return sendQuery(getPeers, address);
+    }
+
+    public CompletableFuture<AnnouncePeerResponse> sendAnnouncePeer(AnnouncePeer announcePeer,
+            InetSocketAddress address) {
+        return sendQuery(announcePeer, address);
     }
 
     private <T extends Query, R extends DefinedResponse> CompletableFuture<R> sendQuery(T query,
@@ -74,11 +86,6 @@ public class DhtSocket {
         txIdToFuture.put(query.getTransactionId(), completableFuture);
 
         completableFuture.exceptionally(throwable -> {
-            if (throwable instanceof TimeoutException) {
-                LOGGER.log(Level.ERROR, "[DHT] Timeout while waiting for response to query {0}", query);
-            } else {
-                LOGGER.log(Level.ERROR, "[DHT] Failed to send query {0}: {1}", query, throwable.getMessage());
-            }
             txIdToMethod.remove(query.getTransactionId());
             txIdToFuture.remove(query.getTransactionId());
             return null;
@@ -110,19 +117,6 @@ public class DhtSocket {
         socket.send(packet);
         LOGGER.log(Level.DEBUG, "[DHT] Sent message: {0} to {1}", message, address);
     }
-
-    public CompletableFuture<FindNodeResponse> sendFindNode(FindNode query, InetSocketAddress address) {
-        return sendQuery(query, address);
-    }
-
-    public CompletableFuture<AnnouncePeerResponse> sendAnnouncePeer(AnnouncePeer query, InetSocketAddress address) {
-        return sendQuery(query, address);
-    }
-
-    public CompletableFuture<GetPeersResponse> sendGetPeers(GetPeers query, InetSocketAddress address) {
-        return sendQuery(query, address);
-    }
-
 
     private Method getTransactionId(TransactionId transactionId) {
         Method method = txIdToMethod.get(transactionId);
