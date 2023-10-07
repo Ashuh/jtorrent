@@ -8,10 +8,15 @@ import jtorrent.domain.util.Bit160Value;
 
 public class NodeId extends Bit160Value {
 
+    public static final NodeId LOCAL;
     public static final NodeId ZERO = NodeId.fromBigInteger(BigInteger.ZERO);
     public static final NodeId MAX =
             NodeId.fromBigInteger(BigInteger.TWO.pow(Bit160Value.SIZE_BITS).subtract(BigInteger.ONE));
     private static final Random RANDOM = new Random();
+
+    static {
+        LOCAL = NodeId.random();
+    }
 
     public NodeId(byte[] id) {
         super(id);
