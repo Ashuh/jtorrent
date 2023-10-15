@@ -28,6 +28,22 @@ public class NodeId extends Bit160Value {
         return new NodeId(id);
     }
 
+    // TODO: quick solution to get a random node id with a given prefix. Improve this.
+    public static NodeId randomWithPrefix(NodeIdPrefix prefix) {
+        if (prefix == null) {
+            throw new IllegalArgumentException("Prefix cannot be null");
+        }
+
+        byte[] id = new byte[Bit160Value.SIZE_BYTES];
+        RANDOM.nextBytes(id);
+
+        for (int i = 0; i < prefix.getLength(); i++) {
+            id[i] |= prefix.getBytes()[i];
+        }
+
+        return new NodeId(id);
+    }
+
     public static NodeId fromBigInteger(BigInteger id) {
         if (id == null) {
             throw new IllegalArgumentException("Node ID cannot be null");
@@ -61,5 +77,10 @@ public class NodeId extends Bit160Value {
 
     public BigInteger distanceTo(Bit160Value other) {
         return xor(other).toBigInteger();
+    }
+
+    @Override
+    public String toString() {
+        return toBigInteger().toString(2);
     }
 }
