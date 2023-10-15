@@ -30,6 +30,10 @@ public class Port extends TypedPeerMessage {
         return new Port(port);
     }
 
+    public int getListenPort() {
+        return listenPort;
+    }
+
     @Override
     public MessageType getMessageType() {
         return MessageType.PORT;
