@@ -8,25 +8,26 @@ import java.util.Objects;
 
 import jtorrent.domain.model.dht.message.TransactionId;
 import jtorrent.domain.model.dht.node.NodeId;
+import jtorrent.domain.util.Bit160Value;
 import jtorrent.domain.util.bencode.BencodedMap;
 
 public class FindNode extends Query {
 
     protected static final String KEY_TARGET = "target";
 
-    private final NodeId target;
+    private final Bit160Value target;
 
-    public FindNode(NodeId id, NodeId target) {
+    public FindNode(NodeId id, Bit160Value target) {
         super(Method.FIND_NODE, id);
         this.target = requireNonNull(target);
     }
 
-    public FindNode(TransactionId transactionId, NodeId id, NodeId target) {
+    public FindNode(TransactionId transactionId, NodeId id, Bit160Value target) {
         super(transactionId, Method.FIND_NODE, id);
         this.target = requireNonNull(target);
     }
 
-    public FindNode(TransactionId transactionId, String clientVersion, NodeId id, NodeId target) {
+    public FindNode(TransactionId transactionId, String clientVersion, NodeId id, Bit160Value target) {
         super(transactionId, clientVersion, Method.FIND_NODE, id);
         this.target = requireNonNull(target);
     }
@@ -40,7 +41,7 @@ public class FindNode extends Query {
         return new FindNode(txId, clientVersion, id, target);
     }
 
-    public NodeId getTarget() {
+    public Bit160Value getTarget() {
         return target;
     }
 
