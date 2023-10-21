@@ -85,10 +85,9 @@ public class DhtSocket {
         txIdToMethod.put(query.getTransactionId(), query.getMethod());
         txIdToFuture.put(query.getTransactionId(), completableFuture);
 
-        completableFuture.exceptionally(throwable -> {
+        completableFuture.whenComplete((response, throwable) -> {
             txIdToMethod.remove(query.getTransactionId());
             txIdToFuture.remove(query.getTransactionId());
-            return null;
         });
 
         try {
@@ -220,7 +219,7 @@ public class DhtSocket {
 
             TransactionId transactionId = response.getTransactionId();
             txIdToMethod.remove(transactionId);
-            CompletableFuture<T> completableFuture = (CompletableFuture<T>) txIdToFuture.remove(transactionId);
+            CompletableFuture<T> completableFuture = (CompletableFuture<T>) txIdToFuture.get(transactionId);
 
             if (completableFuture == null) {
                 logNoOutstandingQueryFound(transactionId);
@@ -231,11 +230,11 @@ public class DhtSocket {
         }
 
         private void handleError(Error error) {
-            LOGGER.log(Level.DEBUG, "Received error: {0}", error);
+            LOGGER.log(Level.DEBUG, "[DHT] Received error: {0}", error);
 
             TransactionId transactionId = error.getTransactionId();
             txIdToMethod.remove(transactionId);
-            CompletableFuture<? extends DefinedResponse> future = txIdToFuture.remove(transactionId);
+            CompletableFuture<? extends DefinedResponse> future = txIdToFuture.get(transactionId);
 
             if (future == null) {
                 logNoOutstandingQueryFound(transactionId);
