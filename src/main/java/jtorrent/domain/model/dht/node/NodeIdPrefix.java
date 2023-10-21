@@ -10,8 +10,11 @@ import jtorrent.domain.util.ByteArray;
  */
 public class NodeIdPrefix extends ByteArray {
 
-    private NodeIdPrefix(byte[] bytes) {
+    private final int bitLength;
+
+    private NodeIdPrefix(byte[] bytes, int bitLength) {
         super(bytes);
+        this.bitLength = bitLength;
     }
 
     /**
@@ -42,6 +45,10 @@ public class NodeIdPrefix extends ByteArray {
         if (numTrailingBits > 0) {
             bytes[numFullBytes] &= (byte) (0xFF << (Byte.SIZE - numTrailingBits));
         }
-        return new NodeIdPrefix(bytes);
+        return new NodeIdPrefix(bytes, bitLength);
+    }
+
+    public int getBitLength() {
+        return bitLength;
     }
 }
