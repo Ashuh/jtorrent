@@ -1,11 +1,19 @@
 package jtorrent.domain.util;
 
+import java.util.Arrays;
 import java.util.stream.IntStream;
 
 public class Bit160Value extends ByteArray {
 
     public static final int SIZE_BITS = 160;
     public static final int SIZE_BYTES = SIZE_BITS / 8;
+    public static final Bit160Value MAX;
+
+    static {
+        byte[] maxBytes = new byte[SIZE_BYTES];
+        Arrays.fill(maxBytes, (byte) 0xFF);
+        MAX = new Bit160Value(maxBytes);
+    }
 
     public Bit160Value(byte[] bytes) {
         super(validateBytes(bytes));
