@@ -34,12 +34,13 @@ public class Node {
     private LocalDateTime lastSeen;
     private int numFailedQueries;
 
-    private Node(NodeContactInfo nodeContactInfo) {
+    private Node(NodeContactInfo nodeContactInfo, LocalDateTime lastSeen) {
         this.nodeContactInfo = requireNonNull(nodeContactInfo);
+        this.lastSeen = requireNonNull(lastSeen);
     }
 
     public static Node neverSeen(NodeContactInfo nodeContactInfo) {
-        return new Node(nodeContactInfo);
+        return new Node(nodeContactInfo, LocalDateTime.MIN);
     }
 
     /**
@@ -57,9 +58,7 @@ public class Node {
     }
 
     public static Node seenNow(NodeContactInfo nodeContactInfo) {
-        Node node = new Node(nodeContactInfo);
-        node.lastSeen = LocalDateTime.now();
-        return node;
+        return new Node(nodeContactInfo, LocalDateTime.now());
     }
 
     public static void setDhtSocket(DhtSocket dhtSocket) {
