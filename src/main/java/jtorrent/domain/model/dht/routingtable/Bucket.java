@@ -3,6 +3,7 @@ package jtorrent.domain.model.dht.routingtable;
 import static jtorrent.domain.util.ValidationUtil.requireNonNull;
 
 import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -38,7 +39,7 @@ public class Bucket {
 
     public boolean addNode(Node node) {
         if (isFull()) {
-            LOGGER.log(Logger.Level.DEBUG, "[DHT] Bucket {0} is full", getPrefixBitLength());
+            LOGGER.log(Level.DEBUG, "[DHT] Bucket {0} is full", getPrefixBitLength());
             Optional<Node> removedNode = evictBadOrQuestionableNode();
             if (removedNode.isPresent()) {
                 return nodes.add(node);
