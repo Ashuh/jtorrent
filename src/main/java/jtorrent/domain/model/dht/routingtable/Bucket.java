@@ -12,7 +12,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import jtorrent.domain.manager.dht.DhtConstants;
+import jtorrent.domain.manager.dht.DhtManager;
 import jtorrent.domain.model.dht.node.Node;
 import jtorrent.domain.model.dht.node.NodeIdPrefix;
 
@@ -25,7 +25,7 @@ public class Bucket {
 
     public Bucket(NodeIdPrefix prefix) {
         this.prefix = requireNonNull(prefix);
-        this.nodes = new HashSet<>(DhtConstants.K);
+        this.nodes = new HashSet<>(DhtManager.K);
     }
 
     public int size() {
@@ -38,20 +38,19 @@ public class Bucket {
 
     public boolean addNode(Node node) {
         if (isFull()) {
-            LOGGER.log(Logger.Level.ERROR, "[DHT] Bucket {0} is full", getPrefixBitLength());
+            LOGGER.log(Logger.Level.DEBUG, "[DHT] Bucket {0} is full", getPrefixBitLength());
             Optional<Node> removedNode = evictBadOrQuestionableNode();
             if (removedNode.isPresent()) {
                 return nodes.add(node);
             }
             return false;
         }
-        LOGGER.log(Logger.Level.ERROR, "[DHT] Bucket {0} is not full", getPrefixBitLength());
 
         return nodes.add(node);
     }
 
     public boolean isFull() {
-        return nodes.size() >= DhtConstants.K;
+        return nodes.size() >= DhtManager.K;
     }
 
     public int getPrefixBitLength() {

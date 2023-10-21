@@ -44,6 +44,10 @@ public class RoutingTable {
         return buckets[numMatchingPrefixBits];
     }
 
+    public Collection<Bucket> getBuckets() {
+        return Arrays.asList(buckets);
+    }
+
     public Collection<Node> getClosestNodes(Bit160Value target, int limit) {
         return Arrays.stream(buckets)
                 .flatMap(bucket -> bucket.getNodes().stream())

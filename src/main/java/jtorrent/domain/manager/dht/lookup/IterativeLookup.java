@@ -18,7 +18,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.stream.Collectors;
 
-import jtorrent.domain.manager.dht.DhtConstants;
+import jtorrent.domain.manager.dht.DhtManager;
 import jtorrent.domain.model.dht.message.response.DefinedResponse;
 import jtorrent.domain.model.dht.node.Node;
 import jtorrent.domain.model.dht.node.NodeContactInfo;
@@ -58,7 +58,7 @@ public abstract class IterativeLookup<T extends DefinedResponse, R> {
     private Collection<Node> getNodesToQuery(BigInteger prevMinDist, BigInteger curMinDist) {
         boolean isCloserNodeFound = curMinDist.compareTo(prevMinDist) < 0;
         if (isCloserNodeFound) {
-            return nodeStore.getClosestUnqueriedNodes(DhtConstants.ALPHA);
+            return nodeStore.getClosestUnqueriedNodes(DhtManager.ALPHA);
         } else {
             return nodeStore.getClosestUnqueriedNodes();
         }
@@ -143,8 +143,8 @@ public abstract class IterativeLookup<T extends DefinedResponse, R> {
         public NodeStore(Bit160Value target) {
             this.target = requireNonNull(target);
             Comparator<Node> nodeComparator = new DistanceToTargetComparator(target);
-            closestNodes = new PriorityBlockingQueue<>(DhtConstants.K, nodeComparator.reversed());
-            backupNodes = new PriorityQueue<>(DhtConstants.K, nodeComparator);
+            closestNodes = new PriorityBlockingQueue<>(DhtManager.K, nodeComparator.reversed());
+            backupNodes = new PriorityQueue<>(DhtManager.K, nodeComparator);
         }
 
         public void addNewNode(Node node) {
@@ -160,7 +160,7 @@ public abstract class IterativeLookup<T extends DefinedResponse, R> {
                 minDist = distance;
             }
 
-            if (closestNodes.size() <= DhtConstants.K) {
+            if (closestNodes.size() <= DhtManager.K) {
                 return;
             }
 
@@ -193,7 +193,7 @@ public abstract class IterativeLookup<T extends DefinedResponse, R> {
         }
 
         public Collection<Node> getClosestUnqueriedNodes() {
-            return getClosestUnqueriedNodes(DhtConstants.K);
+            return getClosestUnqueriedNodes(DhtManager.K);
         }
 
         public Collection<Node> getClosestUnqueriedNodes(int limit) {
