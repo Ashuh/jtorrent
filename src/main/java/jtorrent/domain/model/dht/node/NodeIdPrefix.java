@@ -1,6 +1,7 @@
 package jtorrent.domain.model.dht.node;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 import jtorrent.domain.util.Bit160Value;
 import jtorrent.domain.util.ByteArray;
@@ -50,5 +51,25 @@ public class NodeIdPrefix extends ByteArray {
 
     public int getBitLength() {
         return bitLength;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
+        NodeIdPrefix that = (NodeIdPrefix) o;
+        return bitLength == that.bitLength;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), bitLength);
     }
 }
