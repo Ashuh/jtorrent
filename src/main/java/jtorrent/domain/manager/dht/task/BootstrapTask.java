@@ -72,7 +72,7 @@ public class BootstrapTask implements BooleanSupplier {
 
     private void refreshEmptyBucketsFurtherThanNonEmptyBuckets() {
         CompletableFuture<?>[] futures = routingTable.getEmptyBucketsFurtherThanNonEmptyBuckets().stream()
-                .map(bucket -> new RefreshBucketTask(routingTable, bucket, new FindNodeLookup()))
+                .map(bucket -> new RefreshBucketTask(routingTable, bucket))
                 .map(refreshBucketTask -> CompletableFuture.runAsync(refreshBucketTask, executor))
                 .toArray(CompletableFuture<?>[]::new);
         CompletableFuture.allOf(futures).join();

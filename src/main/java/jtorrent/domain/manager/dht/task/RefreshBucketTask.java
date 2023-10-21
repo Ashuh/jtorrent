@@ -25,12 +25,10 @@ public class RefreshBucketTask implements Runnable {
      * The bucket to refresh.
      */
     private final Bucket bucket;
-    private final FindNodeLookup findNodeLookup;
 
-    public RefreshBucketTask(RoutingTable routingTable, Bucket bucket, FindNodeLookup findNodeLookup) {
+    public RefreshBucketTask(RoutingTable routingTable, Bucket bucket) {
         this.routingTable = requireNonNull(routingTable);
         this.bucket = requireNonNull(bucket);
-        this.findNodeLookup = requireNonNull(findNodeLookup);
     }
 
     @Override
@@ -38,7 +36,7 @@ public class RefreshBucketTask implements Runnable {
         LOGGER.log(Logger.Level.DEBUG, "[DHT] Refreshing bucket {0}", bucket);
         NodeId randomNodeId = NodeId.randomWithPrefix(bucket.getPrefix());
         Collection<Node> closestNodes = routingTable.getClosestNodes(randomNodeId, DhtConstants.ALPHA);
-        findNodeLookup.lookup(randomNodeId, closestNodes).forEach(routingTable::addNode);
+        new FindNodeLookup().lookup(randomNodeId, closestNodes).forEach(routingTable::addNode);
         LOGGER.log(Logger.Level.DEBUG, "[DHT] Refreshed bucket {0}", bucket);
     }
 }
