@@ -28,6 +28,8 @@ import jtorrent.domain.model.dht.message.response.DefinedResponse;
 import jtorrent.domain.model.dht.message.response.FindNodeResponse;
 import jtorrent.domain.model.dht.message.response.GetPeersResponse;
 import jtorrent.domain.model.dht.message.response.PingResponse;
+import jtorrent.domain.model.dht.node.Node;
+import jtorrent.domain.model.dht.node.NodeContactInfo;
 import jtorrent.domain.util.BackgroundTask;
 
 public class DhtSocket {
@@ -127,13 +129,13 @@ public class DhtSocket {
 
     public interface QueryHandler {
 
-        void handle(Ping ping);
+        void handle(Ping ping, Node node);
 
-        void handle(FindNode findNode);
+        void handle(FindNode findNode, Node node);
 
-        void handle(AnnouncePeer announcePeer);
+        void handle(GetPeers getPeers, Node node);
 
-        void handle(GetPeers getPeers);
+        void handle(AnnouncePeer announcePeer, Node node);
     }
 
     private class HandleIncomingMessagesTask extends BackgroundTask {
@@ -150,8 +152,8 @@ public class DhtSocket {
         protected void execute() {
             try {
                 LOGGER.log(Level.DEBUG, "[DHT] Waiting for message");
-                DhtMessage message = receiveMessage();
-                handleMessage(message);
+                IncomingMessage incomingMessage = receiveMessage();
+                handleMessage(incomingMessage.getMessage(), incomingMessage.getAddress());
             } catch (IOException e) {
                 LOGGER.log(Level.ERROR, "[DHT] Error while receiving message: {0}", e.getMessage());
                 HandleIncomingMessagesTask.this.stop();
@@ -167,19 +169,19 @@ public class DhtSocket {
          * @return the received message
          * @throws IOException if an I/O error occurs
          */
-        private DhtMessage receiveMessage() throws IOException {
+        private IncomingMessage receiveMessage() throws IOException {
             byte[] buffer = new byte[1024];
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
             socket.receive(packet);
+            InetSocketAddress address = new InetSocketAddress(packet.getAddress(), packet.getPort());
             DhtMessage message = dhtMessageDecoder.decode(packet.getData());
-            LOGGER.log(Level.DEBUG, "[DHT] Received {0}: {1}", message.getMessageType(), message);
-            return message;
+            return new IncomingMessage(address, message);
         }
 
-        private void handleMessage(DhtMessage message) {
+        private void handleMessage(DhtMessage message, InetSocketAddress address) {
             switch (message.getMessageType()) {
             case QUERY:
-                handleQuery((Query) message);
+                handleQuery((Query) message, address);
                 break;
             case RESPONSE:
                 handleResponse((DefinedResponse) message);
@@ -192,21 +194,22 @@ public class DhtSocket {
             }
         }
 
-        private void handleQuery(Query query) {
+        private void handleQuery(Query query, InetSocketAddress address) {
             LOGGER.log(Level.DEBUG, "[DHT] Received {0} query: {1}", query.getMethod(), query);
-
+            NodeContactInfo nodeContactInfo = new NodeContactInfo(query.getId(), address);
+            Node node = Node.seenNowWithContactInfo(nodeContactInfo);
             switch (query.getMethod()) {
             case PING:
-                queryHandler.handle((Ping) query);
+                queryHandler.handle((Ping) query, node);
                 break;
             case FIND_NODE:
-                queryHandler.handle((FindNode) query);
+                queryHandler.handle((FindNode) query, node);
                 break;
             case ANNOUNCE_PEER:
-                queryHandler.handle((AnnouncePeer) query);
+                queryHandler.handle((AnnouncePeer) query, node);
                 break;
             case GET_PEERS:
-                queryHandler.handle((GetPeers) query);
+                queryHandler.handle((GetPeers) query, node);
                 break;
             default:
                 throw new AssertionError(String.format(FORMAT_UNKNOWN_METHOD, query.getMethod()));
@@ -246,6 +249,25 @@ public class DhtSocket {
 
         private void logNoOutstandingQueryFound(TransactionId transactionId) {
             LOGGER.log(Level.ERROR, "[DHT] No outstanding query found for transaction id: {0}", transactionId);
+        }
+    }
+
+    private static class IncomingMessage {
+
+        private final InetSocketAddress address;
+        private final DhtMessage message;
+
+        public IncomingMessage(InetSocketAddress address, DhtMessage message) {
+            this.address = requireNonNull(address);
+            this.message = requireNonNull(message);
+        }
+
+        public InetSocketAddress getAddress() {
+            return address;
+        }
+
+        public DhtMessage getMessage() {
+            return message;
         }
     }
 }
