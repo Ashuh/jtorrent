@@ -25,7 +25,7 @@ public class FindNodeLookup extends IterativeLookup<FindNodeResponse, Collection
     @Override
     protected Collection<Node> getNodesFromResponse(FindNodeResponse response) {
         return response.getNodes().stream()
-                .map(Node::neverSeen)
+                .map(Node::withContactInfo)
                 .collect(Collectors.toList());
     }
 

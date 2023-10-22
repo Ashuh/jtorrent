@@ -1,14 +1,17 @@
 package jtorrent.domain.model.dht.node;
 
-import static java.util.Objects.requireNonNull;
+import static jtorrent.domain.util.ValidationUtil.requireNonNull;
 
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
+import java.lang.ref.WeakReference;
 import java.net.InetSocketAddress;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 
 import jtorrent.domain.model.dht.message.query.AnnouncePeer;
@@ -28,6 +31,8 @@ import jtorrent.domain.util.Sha1Hash;
 public class Node {
 
     private static final Logger LOGGER = System.getLogger(Node.class.getName());
+    private static final Map<NodeContactInfo, WeakReference<Node>> NODE_CONTACT_INFO_TO_NODE =
+            new ConcurrentHashMap<>();
     private static DhtSocket dhtSocket;
 
     private final NodeContactInfo nodeContactInfo;
@@ -37,10 +42,6 @@ public class Node {
     private Node(NodeContactInfo nodeContactInfo, LocalDateTime lastSeen) {
         this.nodeContactInfo = requireNonNull(nodeContactInfo);
         this.lastSeen = requireNonNull(lastSeen);
-    }
-
-    public static Node neverSeen(NodeContactInfo nodeContactInfo) {
-        return new Node(nodeContactInfo, LocalDateTime.MIN);
     }
 
     /**
@@ -54,11 +55,28 @@ public class Node {
         return dhtSocket.sendPing(new Ping(NodeId.LOCAL), address)
                 .thenApply(PingResponse::getId)
                 .thenApply(nodeId -> new NodeContactInfo(nodeId, address))
-                .thenApply(Node::seenNow);
+                .thenApply(Node::seenNowWithContactInfo);
     }
 
-    public static Node seenNow(NodeContactInfo nodeContactInfo) {
-        return new Node(nodeContactInfo, LocalDateTime.now());
+    public static Node seenNowWithContactInfo(NodeContactInfo nodeContactInfo) {
+        Node node = withContactInfo(nodeContactInfo);
+        node.setLastSeenNow();
+        return node;
+    }
+
+    public static Node withContactInfo(NodeContactInfo nodeContactInfo) {
+        WeakReference<Node> nodeReference = NODE_CONTACT_INFO_TO_NODE.get(nodeContactInfo);
+        if (nodeReference == null || nodeReference.get() == null) {
+            Node node = new Node(nodeContactInfo, LocalDateTime.MIN);
+            NODE_CONTACT_INFO_TO_NODE.put(nodeContactInfo, new WeakReference<>(node));
+            return node;
+        } else {
+            return nodeReference.get();
+        }
+    }
+
+    private void setLastSeenNow() {
+        lastSeen = LocalDateTime.now();
     }
 
     public static void setDhtSocket(DhtSocket dhtSocket) {
@@ -111,10 +129,6 @@ public class Node {
 
     private void resetNumFailedQueries() {
         numFailedQueries = 0;
-    }
-
-    private void setLastSeenNow() {
-        lastSeen = LocalDateTime.now();
     }
 
     public boolean isContactable() {
