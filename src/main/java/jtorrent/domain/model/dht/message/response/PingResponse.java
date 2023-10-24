@@ -10,15 +10,15 @@ import jtorrent.domain.util.bencode.BencodedMap;
 
 public class PingResponse extends DefinedResponse {
 
-    protected PingResponse(NodeId id) {
+    public PingResponse(NodeId id) {
         super(id);
     }
 
-    protected PingResponse(TransactionId transactionId, NodeId id) {
+    public PingResponse(TransactionId transactionId, NodeId id) {
         super(transactionId, id);
     }
 
-    protected PingResponse(TransactionId transactionId, String clientVersion, NodeId id) {
+    public PingResponse(TransactionId transactionId, String clientVersion, NodeId id) {
         super(transactionId, clientVersion, id);
     }
 
