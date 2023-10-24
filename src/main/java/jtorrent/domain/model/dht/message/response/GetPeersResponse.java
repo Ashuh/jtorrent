@@ -27,18 +27,18 @@ public class GetPeersResponse extends DefinedResponse {
     private static final String KEY_TOKEN = "token";
     private static final String KEY_VALUES = "values";
 
-    private final String token;
+    private final byte[] token;
     private final Collection<Peer> peers;
     private final Collection<NodeContactInfo> nodes;
 
-    protected GetPeersResponse(NodeId id, String token, Collection<Peer> peers, Collection<NodeContactInfo> nodes) {
+    protected GetPeersResponse(NodeId id, byte[] token, Collection<Peer> peers, Collection<NodeContactInfo> nodes) {
         super(id);
         this.token = token;
         this.peers = peers;
         this.nodes = nodes;
     }
 
-    protected GetPeersResponse(TransactionId transactionId, NodeId id, String token, Collection<Peer> peers,
+    protected GetPeersResponse(TransactionId transactionId, NodeId id, byte[] token, Collection<Peer> peers,
             Collection<NodeContactInfo> nodes) {
         super(transactionId, id);
         this.token = token;
@@ -46,7 +46,7 @@ public class GetPeersResponse extends DefinedResponse {
         this.nodes = nodes;
     }
 
-    protected GetPeersResponse(TransactionId transactionId, String clientVersion, NodeId id, String token,
+    protected GetPeersResponse(TransactionId transactionId, String clientVersion, NodeId id, byte[] token,
             Collection<Peer> peers, Collection<NodeContactInfo> nodes) {
         super(transactionId, clientVersion, id);
         this.token = token;
@@ -60,7 +60,7 @@ public class GetPeersResponse extends DefinedResponse {
         BencodedMap returnValues = map.getMap(KEY_RETURN_VALUES);
 
         NodeId nodeId = new NodeId(returnValues.getBytes(KEY_ID).array());
-        String token = returnValues.getString(KEY_TOKEN);
+        byte[] token = returnValues.getBytes(KEY_TOKEN).array();
 
         Collection<Peer> peers = returnValues.getOptionalList(KEY_VALUES)
                 .map(list -> list.stream()
@@ -83,7 +83,7 @@ public class GetPeersResponse extends DefinedResponse {
         return new GetPeersResponse(txId, clientVersion, nodeId, token, peers, nodes);
     }
 
-    public String getToken() {
+    public byte[] getToken() {
         return token;
     }
 

@@ -3,6 +3,7 @@ package jtorrent.domain.model.dht.message.query;
 import static java.util.Objects.requireNonNull;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
 
@@ -19,16 +20,16 @@ public class AnnouncePeer extends Query {
 
     private final int port;
     private final Sha1Hash infoHash;
-    private final String token;
+    private final byte[] token;
 
-    public AnnouncePeer(NodeId id, Sha1Hash infoHash, int port, String token) {
+    public AnnouncePeer(NodeId id, Sha1Hash infoHash, int port, byte[] token) {
         super(Method.ANNOUNCE_PEER, id);
         this.infoHash = requireNonNull(infoHash);
         this.port = port;
         this.token = requireNonNull(token);
     }
 
-    public AnnouncePeer(TransactionId transactionId, NodeId id, Sha1Hash infoHash, int port, String token) {
+    public AnnouncePeer(TransactionId transactionId, NodeId id, Sha1Hash infoHash, int port, byte[] token) {
         super(transactionId, Method.ANNOUNCE_PEER, id);
         this.infoHash = requireNonNull(infoHash);
         this.port = port;
@@ -36,7 +37,7 @@ public class AnnouncePeer extends Query {
     }
 
     public AnnouncePeer(TransactionId transactionId, String clientVersion, NodeId id, Sha1Hash infoHash, int port,
-            String token) {
+            byte[] token) {
         super(transactionId, clientVersion, Method.ANNOUNCE_PEER, id);
         this.infoHash = requireNonNull(infoHash);
         this.port = port;
@@ -50,7 +51,7 @@ public class AnnouncePeer extends Query {
         NodeId id = new NodeId(args.getBytes(KEY_ID).array());
         Sha1Hash infoHash = new Sha1Hash(args.getBytes(KEY_INFO_HASH).array());
         int port = args.getInt(KEY_PORT);
-        String token = args.getString(KEY_TOKEN);
+        byte[] token = args.getBytes(KEY_TOKEN).array();
         return new AnnouncePeer(txId, clientVersion, id, infoHash, port, token);
     }
 
@@ -77,11 +78,13 @@ public class AnnouncePeer extends Query {
         AnnouncePeer that = (AnnouncePeer) o;
         return port == that.port
                 && Objects.equals(infoHash, that.infoHash)
-                && Objects.equals(token, that.token);
+                && Arrays.equals(token, that.token);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), port, infoHash, token);
+        int result = Objects.hash(super.hashCode(), port, infoHash);
+        result = 31 * result + Arrays.hashCode(token);
+        return result;
     }
 }

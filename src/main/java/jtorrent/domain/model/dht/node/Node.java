@@ -169,7 +169,7 @@ public class Node {
                 .whenComplete(new FutureHandler<>(Method.GET_PEERS));
     }
 
-    public CompletableFuture<AnnouncePeerResponse> announcePeer(Sha1Hash infoHash, int port, String token) {
+    public CompletableFuture<AnnouncePeerResponse> announcePeer(Sha1Hash infoHash, int port, byte[] token) {
         checkSocketIsSet();
         AnnouncePeer announcePeer = new AnnouncePeer(NodeId.LOCAL, infoHash, port, token);
         return dhtSocket.sendAnnouncePeer(announcePeer, getAddress())
