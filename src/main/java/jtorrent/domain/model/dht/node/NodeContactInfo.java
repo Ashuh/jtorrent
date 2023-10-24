@@ -88,7 +88,7 @@ public class NodeContactInfo {
                 .array();
     }
 
-    public InetSocketAddress getAddress() {
+    public InetSocketAddress getSocketAddress() {
         return address;
     }
 

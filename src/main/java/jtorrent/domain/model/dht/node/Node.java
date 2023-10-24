@@ -141,7 +141,7 @@ public class Node {
 
     public CompletableFuture<PingResponse> ping() {
         checkSocketIsSet();
-        return dhtSocket.sendPing(new Ping(NodeId.LOCAL), getAddress())
+        return dhtSocket.sendPing(new Ping(NodeId.LOCAL), getSocketAddress())
                 .whenComplete(new FutureHandler<>(Method.PING));
     }
 
@@ -151,28 +151,28 @@ public class Node {
         }
     }
 
-    public InetSocketAddress getAddress() {
-        return nodeContactInfo.getAddress();
+    public InetSocketAddress getSocketAddress() {
+        return nodeContactInfo.getSocketAddress();
     }
 
     public CompletableFuture<FindNodeResponse> findNode(Bit160Value target) {
         checkSocketIsSet();
         FindNode findNode = new FindNode(NodeId.LOCAL, target);
-        return dhtSocket.sendFindNode(findNode, getAddress())
+        return dhtSocket.sendFindNode(findNode, getSocketAddress())
                 .whenComplete(new FutureHandler<>(Method.FIND_NODE));
     }
 
     public CompletableFuture<GetPeersResponse> getPeers(Sha1Hash infoHash) {
         checkSocketIsSet();
         GetPeers getPeers = new GetPeers(NodeId.LOCAL, infoHash);
-        return dhtSocket.sendGetPeers(getPeers, getAddress())
+        return dhtSocket.sendGetPeers(getPeers, getSocketAddress())
                 .whenComplete(new FutureHandler<>(Method.GET_PEERS));
     }
 
     public CompletableFuture<AnnouncePeerResponse> announcePeer(Sha1Hash infoHash, int port, byte[] token) {
         checkSocketIsSet();
         AnnouncePeer announcePeer = new AnnouncePeer(NodeId.LOCAL, infoHash, port, token);
-        return dhtSocket.sendAnnouncePeer(announcePeer, getAddress())
+        return dhtSocket.sendAnnouncePeer(announcePeer, getSocketAddress())
                 .whenComplete(new FutureHandler<>(Method.ANNOUNCE_PEER));
     }
 
