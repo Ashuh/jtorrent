@@ -55,6 +55,18 @@ public class AnnouncePeer extends Query {
         return new AnnouncePeer(txId, clientVersion, id, infoHash, port, token);
     }
 
+    public int getPort() {
+        return port;
+    }
+
+    public Sha1Hash getInfoHash() {
+        return infoHash;
+    }
+
+    public byte[] getToken() {
+        return token;
+    }
+
     @Override
     protected Map<String, Object> getQuerySpecificArgs() {
         return Map.of(

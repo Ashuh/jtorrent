@@ -2,12 +2,15 @@ package jtorrent.domain.model.dht.node;
 
 import static jtorrent.domain.util.ValidationUtil.requireNonNull;
 
+import java.io.IOException;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
 import java.lang.ref.WeakReference;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -24,6 +27,7 @@ import jtorrent.domain.model.dht.message.response.DefinedResponse;
 import jtorrent.domain.model.dht.message.response.FindNodeResponse;
 import jtorrent.domain.model.dht.message.response.GetPeersResponse;
 import jtorrent.domain.model.dht.message.response.PingResponse;
+import jtorrent.domain.model.peer.Peer;
 import jtorrent.domain.socket.DhtSocket;
 import jtorrent.domain.util.Bit160Value;
 import jtorrent.domain.util.Sha1Hash;
@@ -155,6 +159,10 @@ public class Node {
         return nodeContactInfo.getSocketAddress();
     }
 
+    public InetAddress getAddress() {
+        return nodeContactInfo.getAddress();
+    }
+
     public CompletableFuture<FindNodeResponse> findNode(Bit160Value target) {
         checkSocketIsSet();
         FindNode findNode = new FindNode(NodeId.LOCAL, target);
@@ -174,6 +182,30 @@ public class Node {
         AnnouncePeer announcePeer = new AnnouncePeer(NodeId.LOCAL, infoHash, port, token);
         return dhtSocket.sendAnnouncePeer(announcePeer, getSocketAddress())
                 .whenComplete(new FutureHandler<>(Method.ANNOUNCE_PEER));
+    }
+
+    public void sendPingResponse() throws IOException {
+        checkSocketIsSet();
+        PingResponse pingResponse = new PingResponse(NodeId.LOCAL);
+        dhtSocket.sendResponse(pingResponse, getSocketAddress());
+    }
+
+    public void sendFindNodeResponse(Collection<NodeContactInfo> nodes) throws IOException {
+        checkSocketIsSet();
+        FindNodeResponse findNodeResponse = new FindNodeResponse(NodeId.LOCAL, nodes);
+        dhtSocket.sendResponse(findNodeResponse, getSocketAddress());
+    }
+
+    public void sendGetPeersResponseWithPeers(byte[] token, Collection<Peer> peers) throws IOException {
+        checkSocketIsSet();
+        GetPeersResponse getPeersResponse = GetPeersResponse.withPeers(NodeId.LOCAL, token, peers);
+        dhtSocket.sendResponse(getPeersResponse, getSocketAddress());
+    }
+
+    public void sendGetPeersResponseWithNodes(byte[] token, Collection<NodeContactInfo> nodes) throws IOException {
+        checkSocketIsSet();
+        GetPeersResponse getPeersResponse = GetPeersResponse.withNodes(NodeId.LOCAL, token, nodes);
+        dhtSocket.sendResponse(getPeersResponse, getSocketAddress());
     }
 
     @Override

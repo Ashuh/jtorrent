@@ -1,5 +1,7 @@
 package jtorrent.domain.model.dht.message.response;
 
+import static jtorrent.domain.util.ValidationUtil.requireNonNull;
+
 import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.HashMap;
@@ -31,14 +33,14 @@ public class GetPeersResponse extends DefinedResponse {
     private final Collection<Peer> peers;
     private final Collection<NodeContactInfo> nodes;
 
-    protected GetPeersResponse(NodeId id, byte[] token, Collection<Peer> peers, Collection<NodeContactInfo> nodes) {
+    private GetPeersResponse(NodeId id, byte[] token, Collection<Peer> peers, Collection<NodeContactInfo> nodes) {
         super(id);
         this.token = token;
         this.peers = peers;
         this.nodes = nodes;
     }
 
-    protected GetPeersResponse(TransactionId transactionId, NodeId id, byte[] token, Collection<Peer> peers,
+    private GetPeersResponse(TransactionId transactionId, NodeId id, byte[] token, Collection<Peer> peers,
             Collection<NodeContactInfo> nodes) {
         super(transactionId, id);
         this.token = token;
@@ -46,12 +48,20 @@ public class GetPeersResponse extends DefinedResponse {
         this.nodes = nodes;
     }
 
-    protected GetPeersResponse(TransactionId transactionId, String clientVersion, NodeId id, byte[] token,
+    private GetPeersResponse(TransactionId transactionId, String clientVersion, NodeId id, byte[] token,
             Collection<Peer> peers, Collection<NodeContactInfo> nodes) {
         super(transactionId, clientVersion, id);
         this.token = token;
         this.peers = peers;
         this.nodes = nodes;
+    }
+
+    public static GetPeersResponse withPeers(NodeId id, byte[] token, Collection<Peer> peers) {
+        return new GetPeersResponse(id, token, requireNonNull(peers), null);
+    }
+
+    public static GetPeersResponse withNodes(NodeId id, byte[] token, Collection<NodeContactInfo> nodes) {
+        return new GetPeersResponse(id, token, null, requireNonNull(nodes));
     }
 
     public static GetPeersResponse fromMap(BencodedMap map) {

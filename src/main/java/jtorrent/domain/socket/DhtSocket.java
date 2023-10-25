@@ -100,6 +100,10 @@ public class DhtSocket {
         return completableFuture;
     }
 
+    public void sendResponse(DefinedResponse response, InetSocketAddress address) throws IOException {
+        sendMessage(response, address);
+    }
+
     private static <T> CompletableFuture<T> completableFutureWithTimeout(int timeoutSecs) {
         return new CompletableFuture<T>().orTimeout(timeoutSecs, TimeUnit.SECONDS);
     }

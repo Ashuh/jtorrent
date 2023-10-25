@@ -92,6 +92,10 @@ public class NodeContactInfo {
         return address;
     }
 
+    public InetAddress getAddress() {
+        return address.getAddress();
+    }
+
     public NodeId getId() {
         return id;
     }
