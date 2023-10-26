@@ -4,6 +4,7 @@ package jtorrent.domain.manager.dht.task;
 import static jtorrent.domain.util.ValidationUtil.requireNonNull;
 
 import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.util.Collection;
 
 import jtorrent.domain.manager.dht.DhtManager;
@@ -33,10 +34,10 @@ public class RefreshBucketTask implements Runnable {
 
     @Override
     public void run() {
-        LOGGER.log(Logger.Level.DEBUG, "[DHT] Refreshing bucket {0}", bucket);
+        LOGGER.log(Level.DEBUG, "[DHT] Refreshing bucket {0}", bucket);
         NodeId randomNodeId = NodeId.randomWithPrefix(bucket.getPrefix());
         Collection<Node> closestNodes = routingTable.getClosestNodes(randomNodeId, DhtManager.ALPHA);
         new FindNodeLookup().lookup(randomNodeId, closestNodes).forEach(routingTable::addNode);
-        LOGGER.log(Logger.Level.DEBUG, "[DHT] Refreshed bucket {0}", bucket);
+        LOGGER.log(Level.DEBUG, "[DHT] Refreshed bucket {0}", bucket);
     }
 }
