@@ -29,7 +29,6 @@ import jtorrent.domain.model.dht.message.response.GetPeersResponse;
 import jtorrent.domain.model.dht.message.response.PingResponse;
 import jtorrent.domain.model.peer.Peer;
 import jtorrent.domain.socket.DhtSocket;
-import jtorrent.domain.util.Bit160Value;
 import jtorrent.domain.util.Sha1Hash;
 
 public class Node {
@@ -163,7 +162,7 @@ public class Node {
         return nodeContactInfo.getAddress();
     }
 
-    public CompletableFuture<FindNodeResponse> findNode(Bit160Value target) {
+    public CompletableFuture<FindNodeResponse> findNode(NodeId target) {
         checkSocketIsSet();
         FindNode findNode = new FindNode(NodeId.LOCAL, target);
         return dhtSocket.sendFindNode(findNode, getSocketAddress())
