@@ -3,9 +3,11 @@ package jtorrent.domain.model.dht.message.response;
 import static jtorrent.domain.util.ValidationUtil.requireNonNull;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -131,5 +133,29 @@ public class GetPeersResponse extends DefinedResponse {
     @Override
     public Method getMethod() {
         return Method.GET_PEERS;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
+        GetPeersResponse that = (GetPeersResponse) o;
+        return Arrays.equals(token, that.token)
+                && Objects.equals(peers, that.peers)
+                && Objects.equals(nodes, that.nodes);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hash(super.hashCode(), peers, nodes);
+        result = 31 * result + Arrays.hashCode(token);
+        return result;
     }
 }
