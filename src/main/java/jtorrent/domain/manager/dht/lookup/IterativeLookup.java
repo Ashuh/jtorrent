@@ -25,14 +25,14 @@ import jtorrent.domain.model.dht.node.NodeContactInfo;
 import jtorrent.domain.util.Bit160Value;
 import jtorrent.domain.util.DistanceToTargetComparator;
 
-public abstract class IterativeLookup<T extends DefinedResponse, R> {
+public abstract class IterativeLookup<T extends DefinedResponse, U extends Bit160Value, R> {
 
     private static final Logger LOGGER = System.getLogger(IterativeLookup.class.getName());
 
-    private Bit160Value target;
+    private U target;
     private NodeStore nodeStore;
 
-    public R lookup(Bit160Value target, Collection<Node> initialNodes) {
+    public R lookup(U target, Collection<Node> initialNodes) {
         this.target = requireNonNull(target);
         this.nodeStore = new NodeStore(target);
         requireNonNull(initialNodes).forEach(nodeStore::addNewNode);
@@ -44,7 +44,6 @@ public abstract class IterativeLookup<T extends DefinedResponse, R> {
             Collection<Node> nodesToQuery = getNodesToQuery(prevMinDist, nodeStore.getMinDist());
             Collection<T> responses = queryNodes(nodesToQuery);
             getNodesFromResponses(responses).forEach(nodeStore::addNewNode);
-            responses.forEach(this::handleResponse);
         }
 
         onLookupComplete();
@@ -82,9 +81,6 @@ public abstract class IterativeLookup<T extends DefinedResponse, R> {
                 .collect(Collectors.toList());
     }
 
-    protected void handleResponse(T response) {
-    }
-
     private void onLookupComplete() {
         LOGGER.log(Level.DEBUG, "[DHT] Completed {0} for {1}", getName(), getTarget());
     }
@@ -116,7 +112,7 @@ public abstract class IterativeLookup<T extends DefinedResponse, R> {
 
     protected abstract Collection<Node> getNodesFromResponse(T response);
 
-    protected abstract CompletableFuture<T> doQuery(Node node, Bit160Value target);
+    protected abstract CompletableFuture<T> doQuery(Node node, U target);
 
     protected Collection<Node> getClosestNodesSeen() {
         return nodeStore.getClosetNodes();

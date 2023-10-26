@@ -6,9 +6,9 @@ import java.util.stream.Collectors;
 
 import jtorrent.domain.model.dht.message.response.FindNodeResponse;
 import jtorrent.domain.model.dht.node.Node;
-import jtorrent.domain.util.Bit160Value;
+import jtorrent.domain.model.dht.node.NodeId;
 
-public class FindNodeLookup extends IterativeLookup<FindNodeResponse, Collection<Node>> {
+public class FindNodeLookup extends IterativeLookup<FindNodeResponse, NodeId, Collection<Node>> {
 
     private static final String NAME = "find node lookup";
 
@@ -30,7 +30,7 @@ public class FindNodeLookup extends IterativeLookup<FindNodeResponse, Collection
     }
 
     @Override
-    protected CompletableFuture<FindNodeResponse> doQuery(Node node, Bit160Value target) {
+    protected CompletableFuture<FindNodeResponse> doQuery(Node node, NodeId target) {
         return node.findNode(target);
     }
 }
