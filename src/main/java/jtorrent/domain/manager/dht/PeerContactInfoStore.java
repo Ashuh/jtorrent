@@ -7,20 +7,20 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import jtorrent.domain.model.peer.Peer;
+import jtorrent.domain.model.peer.PeerContactInfo;
 import jtorrent.domain.util.Sha1Hash;
 
 public class PeerContactInfoStore {
 
-    private final Map<Sha1Hash, Set<Peer>> infoHashToPeerContactInfo = new HashMap<>();
+    private final Map<Sha1Hash, Set<PeerContactInfo>> infoHashToPeerContactInfo = new HashMap<>();
 
-    public void addPeerContactInfo(Sha1Hash infoHash, Peer peerContactInfo) {
+    public void addPeerContactInfo(Sha1Hash infoHash, PeerContactInfo peerContactInfo) {
         infoHashToPeerContactInfo
                 .computeIfAbsent(infoHash, k -> new HashSet<>())
                 .add(peerContactInfo);
     }
 
-    public Collection<Peer> getPeerContactInfos(Sha1Hash infoHash) {
+    public Collection<PeerContactInfo> getPeerContactInfos(Sha1Hash infoHash) {
         return infoHashToPeerContactInfo.getOrDefault(infoHash, Collections.emptySet());
     }
 }

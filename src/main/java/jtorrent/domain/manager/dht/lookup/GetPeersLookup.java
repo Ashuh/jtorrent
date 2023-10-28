@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 
 import jtorrent.domain.model.dht.message.response.GetPeersResponse;
 import jtorrent.domain.model.dht.node.Node;
-import jtorrent.domain.model.peer.Peer;
+import jtorrent.domain.model.peer.PeerContactInfo;
 import jtorrent.domain.util.Sha1Hash;
 
 public class GetPeersLookup extends IterativeLookup<GetPeersResponse, Sha1Hash, GetPeersLookup.Result> {
@@ -22,7 +22,7 @@ public class GetPeersLookup extends IterativeLookup<GetPeersResponse, Sha1Hash, 
     private static final Logger LOGGER = System.getLogger(GetPeersLookup.class.getName());
     private static final String NAME = "get peers";
 
-    private final Set<Peer> peers = new HashSet<>();
+    private final Set<PeerContactInfo> peers = new HashSet<>();
     private final Map<Node, byte[]> nodeContactInfoToToken = new HashMap<>();
 
     @Override
@@ -64,15 +64,15 @@ public class GetPeersLookup extends IterativeLookup<GetPeersResponse, Sha1Hash, 
 
     public static class Result {
 
-        private final Collection<Peer> peers = new HashSet<>();
+        private final Collection<PeerContactInfo> peers = new HashSet<>();
         private final Map<Node, byte[]> nodeToToken = new HashMap<>();
 
-        public Result(Collection<Peer> peers, Map<Node, byte[]> nodeToToken) {
+        public Result(Collection<PeerContactInfo> peers, Map<Node, byte[]> nodeToToken) {
             this.peers.addAll(peers);
             this.nodeToToken.putAll(nodeToToken);
         }
 
-        public Collection<Peer> getPeers() {
+        public Collection<PeerContactInfo> getPeers() {
             return peers;
         }
 

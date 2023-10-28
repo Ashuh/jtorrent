@@ -76,7 +76,7 @@ public class PeerHandler {
     }
 
     public void choke() {
-        LOGGER.log(Level.DEBUG, "Choking peer");
+        LOGGER.log(Level.DEBUG, "Choking peer: " + peer.getPeerContactInfo());
         Choke choke = new Choke();
         try {
             peer.sendMessage(choke);
@@ -87,7 +87,7 @@ public class PeerHandler {
     }
 
     public void unchoke() {
-        LOGGER.log(Level.DEBUG, "Unchoking peer");
+        LOGGER.log(Level.DEBUG, "Unchoking peer: " + peer.getPeerContactInfo());
         Unchoke unchoke = new Unchoke();
         try {
             peer.sendMessage(unchoke);
@@ -115,6 +115,10 @@ public class PeerHandler {
 
     public boolean isReady() {
         return isConnected && !peer.isLocalChoked() && !isBusy;
+    }
+
+    public InetAddress getAddress() {
+        return peer.getAddress();
     }
 
     @Override
@@ -180,6 +184,8 @@ public class PeerHandler {
         }
 
         private void handleMessage(PeerMessage message) {
+            LOGGER.log(Level.INFO, "Received message {0} from peer {1}", message, peer);
+
             if (message instanceof KeepAlive) {
                 handleKeepAlive();
                 return;
@@ -241,6 +247,14 @@ public class PeerHandler {
             notifyIfReady();
         }
 
+        private void notifyIfReady() {
+            if (!isReady()) {
+                return;
+            }
+
+            listeners.forEach(listener -> listener.onReady(PeerHandler.this));
+        }
+
         public void handleInterested() {
             LOGGER.log(Level.DEBUG, "Handling Interested");
         }
@@ -282,14 +296,6 @@ public class PeerHandler {
 
         private void handlePort(Port port) {
             listeners.forEach(listener -> listener.onPortReceived(PeerHandler.this, port.getListenPort()));
-        }
-
-        private void notifyIfReady() {
-            if (!isReady()) {
-                return;
-            }
-
-            listeners.forEach(listener -> listener.onReady(PeerHandler.this));
         }
     }
 }

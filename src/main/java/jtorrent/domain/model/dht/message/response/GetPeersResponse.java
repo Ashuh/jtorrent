@@ -18,13 +18,13 @@ import jtorrent.domain.model.dht.message.query.GetPeers;
 import jtorrent.domain.model.dht.message.query.Method;
 import jtorrent.domain.model.dht.node.NodeContactInfo;
 import jtorrent.domain.model.dht.node.NodeId;
-import jtorrent.domain.model.peer.OutgoingPeer;
-import jtorrent.domain.model.peer.Peer;
+import jtorrent.domain.model.peer.PeerContactInfo;
 import jtorrent.domain.util.bencode.BencodedMap;
 
 /**
  * Represents a response to a {@link GetPeers} request.
- * The response contains a collection of {@link Peer Peers} if the queried node has peers for the requested info hash.
+ * The response contains a collection of {@link PeerContactInfo}s if the queried node has peers for the requested
+ * info hash.
  * Otherwise, the response contains the K closest {@link NodeContactInfo Nodes} to the requested info hash.
  */
 public class GetPeersResponse extends DefinedResponse {
@@ -34,17 +34,18 @@ public class GetPeersResponse extends DefinedResponse {
     private static final String KEY_VALUES = "values";
 
     private final byte[] token;
-    private final Collection<Peer> peers;
+    private final Collection<PeerContactInfo> peers;
     private final Collection<NodeContactInfo> nodes;
 
-    private GetPeersResponse(NodeId id, byte[] token, Collection<Peer> peers, Collection<NodeContactInfo> nodes) {
+    private GetPeersResponse(NodeId id, byte[] token, Collection<PeerContactInfo> peers,
+            Collection<NodeContactInfo> nodes) {
         super(id);
         this.token = token;
         this.peers = peers;
         this.nodes = nodes;
     }
 
-    private GetPeersResponse(TransactionId transactionId, NodeId id, byte[] token, Collection<Peer> peers,
+    private GetPeersResponse(TransactionId transactionId, NodeId id, byte[] token, Collection<PeerContactInfo> peers,
             Collection<NodeContactInfo> nodes) {
         super(transactionId, id);
         this.token = token;
@@ -53,14 +54,14 @@ public class GetPeersResponse extends DefinedResponse {
     }
 
     private GetPeersResponse(TransactionId transactionId, String clientVersion, NodeId id, byte[] token,
-            Collection<Peer> peers, Collection<NodeContactInfo> nodes) {
+            Collection<PeerContactInfo> peers, Collection<NodeContactInfo> nodes) {
         super(transactionId, clientVersion, id);
         this.token = token;
         this.peers = peers;
         this.nodes = nodes;
     }
 
-    public static GetPeersResponse withPeers(NodeId id, byte[] token, Collection<Peer> peers) {
+    public static GetPeersResponse withPeers(NodeId id, byte[] token, Collection<PeerContactInfo> peers) {
         return new GetPeersResponse(id, token, requireNonNull(peers), null);
     }
 
@@ -75,7 +76,7 @@ public class GetPeersResponse extends DefinedResponse {
             BencodedMap returnValues = getReturnValuesFromMap(map);
             NodeId nodeId = getNodeIdFromMap(returnValues);
             byte[] token = returnValues.getBytes(KEY_TOKEN).array();
-            Collection<Peer> peers = getPeersFromMap(returnValues).orElse(null);
+            Collection<PeerContactInfo> peers = getPeersFromMap(returnValues).orElse(null);
             Collection<NodeContactInfo> nodes = getNodesFromMap(returnValues).orElse(null);
 
             if (peers == null && nodes == null) {
@@ -89,12 +90,12 @@ public class GetPeersResponse extends DefinedResponse {
         }
     }
 
-    private static Optional<Collection<Peer>> getPeersFromMap(BencodedMap returnValues) {
+    private static Optional<Collection<PeerContactInfo>> getPeersFromMap(BencodedMap returnValues) {
         return returnValues.getOptionalList(KEY_VALUES)
                 .map(list -> list.stream()
                         .map(x -> (ByteBuffer) x)
                         .map(ByteBuffer::array)
-                        .map(OutgoingPeer::fromCompactPeerInfo)
+                        .map(PeerContactInfo::fromCompactPeerInfo)
                         .collect(Collectors.toList())
                 );
     }
@@ -113,7 +114,7 @@ public class GetPeersResponse extends DefinedResponse {
         return peers != null;
     }
 
-    public Optional<Collection<Peer>> getPeers() {
+    public Optional<Collection<PeerContactInfo>> getPeers() {
         return Optional.ofNullable(peers);
     }
 
@@ -128,7 +129,7 @@ public class GetPeersResponse extends DefinedResponse {
 
         if (peers != null) {
             returnValues.put(KEY_VALUES, peers.stream()
-                    .map(Peer::toCompactPeerInfo)
+                    .map(PeerContactInfo::toCompactPeerInfo)
                     .map(ByteBuffer::wrap)
                     .collect(Collectors.toList())
             );

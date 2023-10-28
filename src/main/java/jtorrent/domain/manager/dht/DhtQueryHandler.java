@@ -23,8 +23,7 @@ import jtorrent.domain.model.dht.message.query.Ping;
 import jtorrent.domain.model.dht.node.Node;
 import jtorrent.domain.model.dht.node.NodeContactInfo;
 import jtorrent.domain.model.dht.routingtable.RoutingTable;
-import jtorrent.domain.model.peer.OutgoingPeer;
-import jtorrent.domain.model.peer.Peer;
+import jtorrent.domain.model.peer.PeerContactInfo;
 import jtorrent.domain.socket.DhtSocket;
 import jtorrent.domain.util.Bit160Value;
 
@@ -70,7 +69,7 @@ public class DhtQueryHandler implements DhtSocket.QueryHandler {
     public void handle(GetPeers getPeers, Node node) {
         LOGGER.log(Level.DEBUG, "[DHT] Handling get peers from {0}", node);
 
-        Collection<Peer> peers = peerContactInfoStore.getPeerContactInfos(getPeers.getInfoHash());
+        Collection<PeerContactInfo> peers = peerContactInfoStore.getPeerContactInfos(getPeers.getInfoHash());
         byte[] token = generateToken();
         tokenStore.add(node.getNodeContactInfo(), token, TOKEN_EXPIRATION_MINS, TimeUnit.MINUTES);
 
@@ -106,7 +105,7 @@ public class DhtQueryHandler implements DhtSocket.QueryHandler {
 
         InetAddress address = node.getAddress();
         int port = announcePeer.getPort();
-        peerContactInfoStore.addPeerContactInfo(announcePeer.getInfoHash(), new OutgoingPeer(address, port));
+        peerContactInfoStore.addPeerContactInfo(announcePeer.getInfoHash(), new PeerContactInfo(address, port));
         LOGGER.log(Level.DEBUG, "[DHT] Added peer contact info for info hash {0}", announcePeer.getInfoHash());
     }
 

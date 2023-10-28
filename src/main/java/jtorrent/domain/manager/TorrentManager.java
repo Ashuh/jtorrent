@@ -100,7 +100,7 @@ public class TorrentManager implements IncomingConnectionManager.Listener, Local
                 .filter(infoHashToTorrentHandler::containsKey)
                 .map(infoHashToTorrentHandler::get)
                 .forEach(torrentHandler -> {
-                    OutgoingPeer peer = new OutgoingPeer(sourceAddress, announce.getPort());
+                    OutgoingPeer peer = new OutgoingPeer(new PeerContactInfo(sourceAddress, announce.getPort()));
                     torrentHandler.addPeer(peer);
                 });
     }

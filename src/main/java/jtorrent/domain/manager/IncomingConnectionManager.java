@@ -99,7 +99,7 @@ public class IncomingConnectionManager {
                 Handshake handshake = peer.receiveHandshake();
                 listeners.forEach(listener -> listener.onIncomingPeerConnection(peer, handshake.getInfoHash()));
             } catch (IOException e) {
-                LOGGER.log(Level.ERROR, "{0} disconnected", peer.getAddress());
+                LOGGER.log(Level.ERROR, "{0} disconnected", peer.getPeerContactInfo());
             }
         }
     }

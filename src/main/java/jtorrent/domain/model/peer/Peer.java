@@ -34,29 +34,19 @@ public abstract class Peer {
 
     private static final Logger LOGGER = System.getLogger(Peer.class.getName());
 
-    protected final InetAddress address;
-    protected final int port; // unsigned short
-    protected Socket socket;
+    protected final PeerContactInfo peerContactInfo;
     protected final DurationWindow durationWindow = new DurationWindow(Duration.ofSeconds(20));
+    protected Socket socket;
     protected boolean isLocalChoked = true;
     protected boolean isRemoteChoked = true;
 
-    protected Peer(InetAddress address, int port) {
-        this.address = requireNonNull(address);
-        this.port = port;
+    protected Peer(PeerContactInfo peerContactInfo) {
+        this.peerContactInfo = requireNonNull(peerContactInfo);
     }
 
     protected Peer(Socket socket) {
         this.socket = requireNonNull(socket);
-        this.address = socket.getInetAddress();
-        this.port = socket.getPort();
-    }
-
-    public byte[] toCompactPeerInfo() {
-        return ByteBuffer.allocate(6)
-                .put(address.getAddress())
-                .putShort((short) port)
-                .array();
+        this.peerContactInfo = new PeerContactInfo(socket.getInetAddress(), socket.getPort());
     }
 
     public abstract void connect(Sha1Hash infoHash, boolean isDhtSupported) throws IOException;
@@ -144,12 +134,16 @@ public abstract class Peer {
         }
     }
 
+    public PeerContactInfo getPeerContactInfo() {
+        return peerContactInfo;
+    }
+
     public InetAddress getAddress() {
-        return address;
+        return getPeerContactInfo().getAddress();
     }
 
     public int getPort() {
-        return port;
+        return getPeerContactInfo().getPort();
     }
 
     public boolean isLocalChoked() {
@@ -186,7 +180,7 @@ public abstract class Peer {
 
     @Override
     public int hashCode() {
-        return Objects.hash(address, port);
+        return Objects.hash(peerContactInfo);
     }
 
     @Override
@@ -198,14 +192,11 @@ public abstract class Peer {
             return false;
         }
         Peer peer = (Peer) o;
-        return port == peer.port && address.equals(peer.address);
+        return peerContactInfo.equals(peer.peerContactInfo);
     }
 
     @Override
     public String toString() {
-        return "Peer{"
-                + "address=" + address
-                + ", port=" + port
-                + '}';
+        return peerContactInfo.toString();
     }
 }
