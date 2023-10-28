@@ -2,6 +2,7 @@ package jtorrent.domain.handler.peer;
 
 import java.io.IOException;
 import java.lang.System.Logger.Level;
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -16,6 +17,7 @@ import jtorrent.domain.model.peer.message.typed.Choke;
 import jtorrent.domain.model.peer.message.typed.Have;
 import jtorrent.domain.model.peer.message.typed.Interested;
 import jtorrent.domain.model.peer.message.typed.Piece;
+import jtorrent.domain.model.peer.message.typed.Port;
 import jtorrent.domain.model.peer.message.typed.Request;
 import jtorrent.domain.model.peer.message.typed.TypedPeerMessage;
 import jtorrent.domain.model.peer.message.typed.Unchoke;
@@ -136,6 +138,8 @@ public class PeerHandler {
         void onPieceReceived(Piece piece);
 
         void onPieceAvailable(PeerHandler peerHandler, int index);
+
+        void onPortReceived(PeerHandler peerHandler, int port);
     }
 
     private class HandlePeerTask extends BackgroundTask {
@@ -212,6 +216,9 @@ public class PeerHandler {
             case CANCEL:
                 handleCancel((Cancel) typedMessage);
                 break;
+            case PORT:
+                handlePort((Port) typedMessage);
+                break;
             default:
                 LOGGER.log(Level.ERROR, "Unknown message type: {0}", typedMessage.getMessageType());
             }
@@ -271,6 +278,10 @@ public class PeerHandler {
 
         public void handleCancel(Cancel cancel) {
             LOGGER.log(Level.DEBUG, "Handling Cancel: {0}", cancel);
+        }
+
+        private void handlePort(Port port) {
+            listeners.forEach(listener -> listener.onPortReceived(PeerHandler.this, port.getListenPort()));
         }
 
         private void notifyIfReady() {
