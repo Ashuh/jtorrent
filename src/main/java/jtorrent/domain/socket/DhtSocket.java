@@ -9,10 +9,12 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
+import jtorrent.domain.model.dht.message.DhtDecodingException;
 import jtorrent.domain.model.dht.message.DhtMessage;
 import jtorrent.domain.model.dht.message.DhtMessageDecoder;
 import jtorrent.domain.model.dht.message.TransactionId;
