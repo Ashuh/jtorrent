@@ -245,7 +245,7 @@ public class DhtSocket {
                 return;
             }
 
-            future.completeExceptionally(new RuntimeException(error.getErrorMessage()));
+            future.completeExceptionally(new DhtErrorException(error));
         }
 
         private void logNoOutstandingQueryFound(TransactionId transactionId) {
