@@ -1,11 +1,13 @@
 package jtorrent.domain.model.dht.message.query;
 
-import static java.util.Objects.requireNonNull;
+import static jtorrent.domain.util.ValidationUtil.requireNonNull;
 
 import java.nio.ByteBuffer;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 
+import jtorrent.domain.model.dht.message.DhtDecodingException;
 import jtorrent.domain.model.dht.message.TransactionId;
 import jtorrent.domain.model.dht.node.NodeId;
 import jtorrent.domain.util.Sha1Hash;
@@ -32,13 +34,21 @@ public class GetPeers extends Query {
         this.infoHash = requireNonNull(infoHash);
     }
 
-    public static GetPeers fromMap(BencodedMap map) {
-        TransactionId txId = TransactionId.fromBytes(map.getBytes(KEY_TRANSACTION_ID).array());
-        String clientVersion = map.getOptionalString(KEY_CLIENT_VERSION).orElse(null);
-        BencodedMap args = map.getMap(KEY_ARGS);
-        NodeId id = new NodeId(args.getBytes(KEY_ID).array());
-        Sha1Hash infoHash = new Sha1Hash(args.getBytes(KEY_INFO_HASH).array());
-        return new GetPeers(txId, clientVersion, id, infoHash);
+    public static GetPeers fromMap(BencodedMap map) throws DhtDecodingException {
+        try {
+            TransactionId txId = getTransactionIdFromMap(map);
+            String clientVersion = map.getOptionalString(KEY_CLIENT_VERSION).orElse(null);
+            BencodedMap args = getArgsFromMap(map);
+            NodeId id = getNodeIdFromMap(args);
+            Sha1Hash infoHash = getInfoHashFromMap(args);
+            return new GetPeers(txId, clientVersion, id, infoHash);
+        } catch (NoSuchElementException | IllegalArgumentException e) {
+            throw new DhtDecodingException("Failed to decode GetPeers", e);
+        }
+    }
+
+    private static Sha1Hash getInfoHashFromMap(BencodedMap args) {
+        return new Sha1Hash(args.getBytes(KEY_INFO_HASH).array());
     }
 
     public Sha1Hash getInfoHash() {

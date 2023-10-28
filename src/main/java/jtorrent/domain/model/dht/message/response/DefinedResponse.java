@@ -8,6 +8,7 @@ import jtorrent.domain.model.dht.message.TransactionId;
 import jtorrent.domain.model.dht.message.query.Method;
 import jtorrent.domain.model.dht.message.query.Query;
 import jtorrent.domain.model.dht.node.NodeId;
+import jtorrent.domain.util.bencode.BencodedMap;
 
 public abstract class DefinedResponse extends Response {
 
@@ -31,6 +32,14 @@ public abstract class DefinedResponse extends Response {
     protected DefinedResponse(TransactionId transactionId, String clientVersion, NodeId id) {
         super(transactionId, clientVersion);
         this.id = id;
+    }
+
+    protected static NodeId getNodeIdFromMap(BencodedMap map) {
+        return new NodeId(map.getBytes(KEY_ID).array());
+    }
+
+    protected static BencodedMap getReturnValuesFromMap(BencodedMap map) {
+        return map.getMap(KEY_RETURN_VALUES);
     }
 
     public NodeId getId() {

@@ -2,7 +2,9 @@ package jtorrent.domain.model.dht.message.response;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
+import jtorrent.domain.model.dht.message.DhtDecodingException;
 import jtorrent.domain.model.dht.message.TransactionId;
 import jtorrent.domain.model.dht.message.query.Method;
 import jtorrent.domain.model.dht.node.NodeId;
@@ -22,12 +24,16 @@ public class AnnouncePeerResponse extends DefinedResponse {
         super(transactionId, clientVersion, id);
     }
 
-    public static AnnouncePeerResponse fromMap(BencodedMap map) {
-        TransactionId txId = TransactionId.fromBytes(map.getBytes(KEY_TRANSACTION_ID).array());
-        String clientVersion = map.getOptionalString(KEY_CLIENT_VERSION).orElse(null);
-        BencodedMap returnValues = map.getMap(KEY_RETURN_VALUES);
-        NodeId nodeId = new NodeId(returnValues.getBytes(KEY_ID).array());
-        return new AnnouncePeerResponse(txId, clientVersion, nodeId);
+    public static AnnouncePeerResponse fromMap(BencodedMap map) throws DhtDecodingException {
+        try {
+            TransactionId txId = getTransactionIdFromMap(map);
+            String clientVersion = map.getOptionalString(KEY_CLIENT_VERSION).orElse(null);
+            BencodedMap returnValues = getReturnValuesFromMap(map);
+            NodeId nodeId = getNodeIdFromMap(returnValues);
+            return new AnnouncePeerResponse(txId, clientVersion, nodeId);
+        } catch (NoSuchElementException | IllegalArgumentException e) {
+            throw new DhtDecodingException("Failed to decode AnnouncePeerResponse", e);
+        }
     }
 
     @Override

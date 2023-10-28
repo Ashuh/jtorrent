@@ -3,8 +3,10 @@ package jtorrent.domain.model.dht.message.response;
 import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 
+import jtorrent.domain.model.dht.message.DhtDecodingException;
 import jtorrent.domain.model.dht.message.TransactionId;
 import jtorrent.domain.model.dht.message.query.Method;
 import jtorrent.domain.model.dht.node.NodeContactInfo;
@@ -33,18 +35,21 @@ public class FindNodeResponse extends DefinedResponse {
         this.nodes = nodes;
     }
 
-    public static FindNodeResponse fromMap(BencodedMap map) {
-        TransactionId txId = TransactionId.fromBytes(map.getBytes(KEY_TRANSACTION_ID).array());
-        String clientVersion = map.getOptionalString(KEY_CLIENT_VERSION).orElse(null);
-        BencodedMap returnValues = map.getMap(KEY_RETURN_VALUES);
+    public static FindNodeResponse fromMap(BencodedMap map) throws DhtDecodingException {
+        try {
+            TransactionId txId = getTransactionIdFromMap(map);
+            String clientVersion = map.getOptionalString(KEY_CLIENT_VERSION).orElse(null);
+            BencodedMap returnValues = getReturnValuesFromMap(map);
+            NodeId nodeId = getNodeIdFromMap(returnValues);
+            Collection<NodeContactInfo> nodes = getNodesFromMap(returnValues);
+            return new FindNodeResponse(txId, clientVersion, nodeId, nodes);
+        } catch (NoSuchElementException | IllegalArgumentException e) {
+            throw new DhtDecodingException("Failed to decode FindNodeResponse", e);
+        }
+    }
 
-        byte[] nodeIdBytes = returnValues.getBytes(KEY_ID).array();
-        NodeId nodeId = new NodeId(nodeIdBytes);
-
-        byte[] nodesBytes = returnValues.getBytes(KEY_NODES).array();
-        Collection<NodeContactInfo> nodes = NodeContactInfo.multipleFromCompactNodeInfo(nodesBytes);
-
-        return new FindNodeResponse(txId, clientVersion, nodeId, nodes);
+    private static Collection<NodeContactInfo> getNodesFromMap(BencodedMap returnValues) {
+        return NodeContactInfo.multipleFromCompactNodeInfo(returnValues.getBytes(KEY_NODES).array());
     }
 
     public Collection<NodeContactInfo> getNodes() {

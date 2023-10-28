@@ -123,12 +123,8 @@ public class DhtSocket {
         LOGGER.log(Level.DEBUG, "[DHT] Sent message: {0} to {1}", message, address);
     }
 
-    private Method getTransactionId(TransactionId transactionId) {
-        Method method = txIdToMethod.get(transactionId);
-        if (method == null) {
-            throw new IllegalArgumentException("No method found for transaction id: " + transactionId);
-        }
-        return method;
+    private Optional<Method> getTransactionId(TransactionId transactionId) {
+        return Optional.ofNullable(txIdToMethod.get(transactionId));
     }
 
     public interface QueryHandler {
@@ -159,11 +155,10 @@ public class DhtSocket {
                 IncomingMessage incomingMessage = receiveMessage();
                 handleMessage(incomingMessage.getMessage(), incomingMessage.getAddress());
             } catch (IOException e) {
-                LOGGER.log(Level.ERROR, "[DHT] Error while receiving message: {0}", e.getMessage());
+                LOGGER.log(Level.ERROR, "[DHT] Error receiving message: " + e.getMessage(), e);
                 HandleIncomingMessagesTask.this.stop();
-            } catch (Exception e) {
-                // TODO: use more specific exception
-                LOGGER.log(Level.ERROR, "[DHT] Error while handling message: {0}", e.getMessage());
+            } catch (DhtDecodingException e) {
+                LOGGER.log(Level.ERROR, "[DHT] Error decoding message: " + e.getMessage(), e);
             }
         }
 
@@ -173,7 +168,7 @@ public class DhtSocket {
          * @return the received message
          * @throws IOException if an I/O error occurs
          */
-        private IncomingMessage receiveMessage() throws IOException {
+        private IncomingMessage receiveMessage() throws IOException, DhtDecodingException {
             byte[] buffer = new byte[1024];
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
             socket.receive(packet);

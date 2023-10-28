@@ -7,10 +7,12 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import jtorrent.domain.model.dht.message.DhtDecodingException;
 import jtorrent.domain.model.dht.message.TransactionId;
 import jtorrent.domain.model.dht.message.query.GetPeers;
 import jtorrent.domain.model.dht.message.query.Method;
@@ -66,33 +68,41 @@ public class GetPeersResponse extends DefinedResponse {
         return new GetPeersResponse(id, token, null, requireNonNull(nodes));
     }
 
-    public static GetPeersResponse fromMap(BencodedMap map) {
-        TransactionId txId = TransactionId.fromBytes(map.getBytes(KEY_TRANSACTION_ID).array());
-        String clientVersion = map.getOptionalString(KEY_CLIENT_VERSION).orElse(null);
-        BencodedMap returnValues = map.getMap(KEY_RETURN_VALUES);
+    public static GetPeersResponse fromMap(BencodedMap map) throws DhtDecodingException {
+        try {
+            TransactionId txId = getTransactionIdFromMap(map);
+            String clientVersion = map.getOptionalString(KEY_CLIENT_VERSION).orElse(null);
+            BencodedMap returnValues = getReturnValuesFromMap(map);
+            NodeId nodeId = getNodeIdFromMap(returnValues);
+            byte[] token = returnValues.getBytes(KEY_TOKEN).array();
+            Collection<Peer> peers = getPeersFromMap(returnValues).orElse(null);
+            Collection<NodeContactInfo> nodes = getNodesFromMap(returnValues).orElse(null);
 
-        NodeId nodeId = new NodeId(returnValues.getBytes(KEY_ID).array());
-        byte[] token = returnValues.getBytes(KEY_TOKEN).array();
+            if (peers == null && nodes == null) {
+                throw new DhtDecodingException("Failed to decode GetPeersResponse: Both peers and nodes are null");
+            }
 
-        Collection<Peer> peers = returnValues.getOptionalList(KEY_VALUES)
+            return new GetPeersResponse(txId, clientVersion, nodeId, token, peers, nodes);
+
+        } catch (NoSuchElementException | IllegalArgumentException e) {
+            throw new DhtDecodingException("Failed to decode GetPeersResponse", e);
+        }
+    }
+
+    private static Optional<Collection<Peer>> getPeersFromMap(BencodedMap returnValues) {
+        return returnValues.getOptionalList(KEY_VALUES)
                 .map(list -> list.stream()
                         .map(x -> (ByteBuffer) x)
                         .map(ByteBuffer::array)
                         .map(OutgoingPeer::fromCompactPeerInfo)
                         .collect(Collectors.toList())
-                )
-                .orElse(null);
+                );
+    }
 
-        Collection<NodeContactInfo> nodes = returnValues.getOptionalBytes(KEY_NODES)
+    private static Optional<Collection<NodeContactInfo>> getNodesFromMap(BencodedMap returnValues) {
+        return returnValues.getOptionalBytes(KEY_NODES)
                 .map(ByteBuffer::array)
-                .map(NodeContactInfo::multipleFromCompactNodeInfo)
-                .orElse(null);
-
-        if (peers == null && nodes == null) {
-            throw new IllegalArgumentException("Either peers or nodes must be present");
-        }
-
-        return new GetPeersResponse(txId, clientVersion, nodeId, token, peers, nodes);
+                .map(NodeContactInfo::multipleFromCompactNodeInfo);
     }
 
     public byte[] getToken() {

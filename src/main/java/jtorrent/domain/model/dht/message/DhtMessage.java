@@ -11,6 +11,8 @@ import java.util.Objects;
 
 import com.dampcake.bencode.BencodeOutputStream;
 
+import jtorrent.domain.util.bencode.BencodedMap;
+
 public abstract class DhtMessage {
 
     public static final String KEY_TRANSACTION_ID = "t";
@@ -67,6 +69,10 @@ public abstract class DhtMessage {
     }
 
     public abstract MessageType getMessageType();
+
+    protected static TransactionId getTransactionIdFromMap(BencodedMap map) {
+        return TransactionId.fromBytes(map.getBytes(KEY_TRANSACTION_ID).array());
+    }
 
     @Override
     public boolean equals(Object o) {

@@ -11,6 +11,7 @@ import jtorrent.domain.model.dht.message.DhtMessage;
 import jtorrent.domain.model.dht.message.MessageType;
 import jtorrent.domain.model.dht.message.TransactionId;
 import jtorrent.domain.model.dht.node.NodeId;
+import jtorrent.domain.util.bencode.BencodedMap;
 
 public abstract class Query extends DhtMessage {
 
@@ -71,6 +72,14 @@ public abstract class Query extends DhtMessage {
     }
 
     protected abstract Map<String, Object> getQuerySpecificArgs();
+
+    protected static NodeId getNodeIdFromMap(BencodedMap map) {
+        return new NodeId(map.getBytes(KEY_ID).array());
+    }
+
+    protected static BencodedMap getArgsFromMap(BencodedMap map) {
+        return map.getMap(KEY_ARGS);
+    }
 
     @Override
     public boolean equals(Object o) {

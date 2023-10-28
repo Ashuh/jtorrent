@@ -5,8 +5,10 @@ import static java.util.Objects.requireNonNull;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 
+import jtorrent.domain.model.dht.message.DhtDecodingException;
 import jtorrent.domain.model.dht.message.TransactionId;
 import jtorrent.domain.model.dht.node.NodeId;
 import jtorrent.domain.util.Sha1Hash;
@@ -44,23 +46,31 @@ public class AnnouncePeer extends Query {
         this.token = requireNonNull(token);
     }
 
-    public static AnnouncePeer fromMap(BencodedMap map) {
-        TransactionId txId = TransactionId.fromBytes(map.getBytes(KEY_TRANSACTION_ID).array());
-        String clientVersion = map.getOptionalString(KEY_CLIENT_VERSION).orElse(null);
-        BencodedMap args = map.getMap(KEY_ARGS);
-        NodeId id = new NodeId(args.getBytes(KEY_ID).array());
-        Sha1Hash infoHash = new Sha1Hash(args.getBytes(KEY_INFO_HASH).array());
-        int port = args.getInt(KEY_PORT);
-        byte[] token = args.getBytes(KEY_TOKEN).array();
-        return new AnnouncePeer(txId, clientVersion, id, infoHash, port, token);
+    public static AnnouncePeer fromMap(BencodedMap map) throws DhtDecodingException {
+        try {
+            TransactionId txId = getTransactionIdFromMap(map);
+            String clientVersion = map.getOptionalString(KEY_CLIENT_VERSION).orElse(null);
+            BencodedMap args = getArgsFromMap(map);
+            NodeId id = getNodeIdFromMap(args);
+            Sha1Hash infoHash = getInfoHashFromMap(args);
+            int port = args.getInt(KEY_PORT);
+            byte[] token = args.getBytes(KEY_TOKEN).array();
+            return new AnnouncePeer(txId, clientVersion, id, infoHash, port, token);
+        } catch (NoSuchElementException | IllegalArgumentException e) {
+            throw new DhtDecodingException("Failed to decode AnnouncePeer", e);
+        }
     }
 
-    public int getPort() {
-        return port;
+    private static Sha1Hash getInfoHashFromMap(BencodedMap args) {
+        return new Sha1Hash(args.getBytes(KEY_INFO_HASH).array());
     }
 
     public Sha1Hash getInfoHash() {
         return infoHash;
+    }
+
+    public int getPort() {
+        return port;
     }
 
     public byte[] getToken() {

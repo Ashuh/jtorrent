@@ -2,8 +2,10 @@ package jtorrent.domain.model.dht.message.error;
 
 import static java.util.Objects.requireNonNull;
 
+import java.util.NoSuchElementException;
 import java.util.Objects;
 
+import jtorrent.domain.model.dht.message.DhtDecodingException;
 import jtorrent.domain.model.dht.message.DhtMessage;
 import jtorrent.domain.model.dht.message.MessageType;
 import jtorrent.domain.model.dht.message.TransactionId;
@@ -35,16 +37,20 @@ public class Error extends DhtMessage {
         this.errorMessage = requireNonNull(errorMessage);
     }
 
-    public static Error fromMap(BencodedMap map) {
-        TransactionId txId = TransactionId.fromBytes(map.getBytes(KEY_TRANSACTION_ID).array());
-        String clientVersion = map.getOptionalString(KEY_CLIENT_VERSION).orElse(null);
-        BencodedList list = map.getList(KEY_LIST);
-        if (list.size() != 2) {
-            throw new IllegalArgumentException("List must have 2 elements");
+    public static Error fromMap(BencodedMap map) throws DhtDecodingException {
+        try {
+            TransactionId txId = getTransactionIdFromMap(map);
+            String clientVersion = map.getOptionalString(KEY_CLIENT_VERSION).orElse(null);
+            BencodedList list = map.getList(KEY_LIST);
+            if (list.size() != 2) {
+                throw new DhtDecodingException("Failed to decode Error: list size is not 2");
+            }
+            ErrorCode errorCode = ErrorCode.fromValue((list.getInt(0)));
+            String errorMessage = list.getString(1);
+            return new Error(txId, clientVersion, errorCode, errorMessage);
+        } catch (NoSuchElementException | IllegalArgumentException e) {
+            throw new DhtDecodingException("Failed to decode Error", e);
         }
-        ErrorCode errorCode = ErrorCode.fromValue((list.getInt(0)));
-        String errorMessage = list.getString(1);
-        return new Error(txId, clientVersion, errorCode, errorMessage);
     }
 
     public ErrorCode getErrorCode() {

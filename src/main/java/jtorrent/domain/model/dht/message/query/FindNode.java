@@ -4,8 +4,10 @@ import static java.util.Objects.requireNonNull;
 
 import java.nio.ByteBuffer;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 
+import jtorrent.domain.model.dht.message.DhtDecodingException;
 import jtorrent.domain.model.dht.message.TransactionId;
 import jtorrent.domain.model.dht.node.NodeId;
 import jtorrent.domain.util.Bit160Value;
@@ -32,13 +34,21 @@ public class FindNode extends Query {
         this.target = requireNonNull(target);
     }
 
-    public static FindNode fromMap(BencodedMap map) {
-        TransactionId txId = TransactionId.fromBytes(map.getBytes(KEY_TRANSACTION_ID).array());
-        String clientVersion = map.getOptionalString(KEY_CLIENT_VERSION).orElse(null);
-        BencodedMap args = map.getMap(KEY_ARGS);
-        NodeId id = new NodeId(args.getBytes(KEY_ID).array());
-        NodeId target = new NodeId(args.getBytes(KEY_TARGET).array());
-        return new FindNode(txId, clientVersion, id, target);
+    public static FindNode fromMap(BencodedMap map) throws DhtDecodingException {
+        try {
+            TransactionId txId = getTransactionIdFromMap(map);
+            String clientVersion = map.getOptionalString(KEY_CLIENT_VERSION).orElse(null);
+            BencodedMap args = getArgsFromMap(map);
+            NodeId id = getNodeIdFromMap(args);
+            NodeId target = getTargetFromMap(args);
+            return new FindNode(txId, clientVersion, id, target);
+        } catch (NoSuchElementException | IllegalArgumentException e) {
+            throw new DhtDecodingException("Failed to decode FindNode", e);
+        }
+    }
+
+    protected static NodeId getTargetFromMap(BencodedMap args) {
+        return new NodeId(args.getBytes(KEY_TARGET).array());
     }
 
     public Bit160Value getTarget() {
