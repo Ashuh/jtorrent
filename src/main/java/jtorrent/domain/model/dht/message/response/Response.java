@@ -7,6 +7,7 @@ import jtorrent.domain.model.dht.message.DhtMessage;
 import jtorrent.domain.model.dht.message.MessageType;
 import jtorrent.domain.model.dht.message.TransactionId;
 
+// TODO: merge with DefinedResponse
 public abstract class Response extends DhtMessage {
 
     protected static final String KEY_RETURN_VALUES = "r";
@@ -24,7 +25,7 @@ public abstract class Response extends DhtMessage {
     }
 
     @Override
-    protected Map<String, Object> toMap() {
+    public Map<String, Object> toMap() {
         Map<String, Object> map = new HashMap<>(super.toMap());
         map.put(KEY_RETURN_VALUES, getReturnValues());
         return map;

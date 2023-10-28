@@ -48,7 +48,7 @@ public abstract class Query extends DhtMessage {
     }
 
     @Override
-    protected final Map<String, Object> toMap() {
+    public final Map<String, Object> toMap() {
         Map<String, Object> map = new HashMap<>(super.toMap());
         map.put(KEY_METHOD_NAME, method.getValue());
         map.put(KEY_ARGS, getArgs());

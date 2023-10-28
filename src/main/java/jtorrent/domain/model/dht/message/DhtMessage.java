@@ -2,18 +2,15 @@ package jtorrent.domain.model.dht.message;
 
 import static java.util.Objects.requireNonNull;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Objects;
 
-import com.dampcake.bencode.BencodeOutputStream;
-
 import jtorrent.domain.util.bencode.BencodedMap;
+import jtorrent.domain.util.bencode.BencodedObject;
 
-public abstract class DhtMessage {
+public abstract class DhtMessage extends BencodedObject {
 
     public static final String KEY_TRANSACTION_ID = "t";
     public static final String KEY_MESSAGE_TYPE = "y";
@@ -49,19 +46,8 @@ public abstract class DhtMessage {
         return transactionId;
     }
 
-    public byte[] bencode() {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        BencodeOutputStream bos = new BencodeOutputStream(baos, StandardCharsets.UTF_8);
-        try {
-            bos.writeDictionary(toMap());
-        } catch (IOException e) {
-            // This should never happen since IOException is only thrown if the underlying stream is closed.
-            throw new AssertionError(e);
-        }
-        return baos.toByteArray();
-    }
-
-    protected Map<String, Object> toMap() {
+    @Override
+    public Map<String, Object> toMap() {
         return Map.of(
                 KEY_TRANSACTION_ID, ByteBuffer.wrap(transactionId.getBytes()),
                 KEY_MESSAGE_TYPE, getMessageType().getValue()
