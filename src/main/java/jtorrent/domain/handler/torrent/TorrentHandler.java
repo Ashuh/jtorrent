@@ -50,6 +50,7 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.List
     private final WorkDispatcher workDispatcher = new WorkDispatcher();
     private final PieceRepository repository = new FilePieceRepository();
     private final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1);
+    private final List<Listener> listeners = new ArrayList<>();
 
     public TorrentHandler(Torrent torrent) {
         this.torrent = requireNonNull(torrent);
@@ -110,6 +111,10 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.List
         } catch (IOException e) {
             LOGGER.log(Level.ERROR, "Failed to connect to peer: {0}", peerContactInfo);
         }
+    }
+
+    public void addListener(Listener listener) {
+        listeners.add(listener);
     }
 
     @Override
@@ -182,11 +187,22 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.List
     }
 
     @Override
+    public void onPortReceived(PeerHandler peerHandler, int port) {
+        InetSocketAddress address = new InetSocketAddress(peerHandler.getAddress(), port);
+        listeners.forEach(listener -> listener.onDhtNodeDiscovered(address));
+    }
+
+    @Override
     public void onAnnounceResponse(List<PeerResponse> peerResponses) {
         peerResponses.stream()
                 .map(PeerResponse::toPeerContactInfo)
                 .filter(Predicate.not(torrent::hasPeer))
                 .forEach(this::addPeer);
+    }
+
+    public interface Listener {
+
+        void onDhtNodeDiscovered(InetSocketAddress address);
     }
 
     private class WorkDispatcher extends BackgroundTask {
