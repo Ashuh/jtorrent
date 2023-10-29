@@ -177,7 +177,7 @@ public class PeerHandler {
         }
 
         private void handleMessage(PeerMessage message) {
-            LOGGER.log(Level.INFO, "Received message {0} from ", message, peer.getPeerContactInfo());
+            LOGGER.log(Level.INFO, "Received message {0} from {1}", message, peer.getPeerContactInfo());
 
             if (message instanceof KeepAlive) {
                 handleKeepAlive();
