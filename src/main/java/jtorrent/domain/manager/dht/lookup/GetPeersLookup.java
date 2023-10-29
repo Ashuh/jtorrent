@@ -53,11 +53,6 @@ public class GetPeersLookup extends IterativeLookup<GetPeersResponse, Sha1Hash, 
                     if (response != null) {
                         response.getPeers().ifPresent(peers::addAll);
                         nodeContactInfoToToken.put(node, response.getToken());
-                        // log num peers
-                        LOGGER.log(Level.WARNING, "[DHT] Got {0} peers from {1}",
-                                response.getPeers().orElse(Collections.emptyList()).size(), node);
-                    } else {
-                        LOGGER.log(Level.WARNING, "Failed to get peers from node " + node, throwable);
                     }
                 });
     }
