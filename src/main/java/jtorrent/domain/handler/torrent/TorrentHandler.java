@@ -7,6 +7,7 @@ import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -28,11 +29,13 @@ import jtorrent.domain.handler.peer.PeerHandler;
 import jtorrent.domain.handler.tracker.TrackerHandler;
 import jtorrent.domain.handler.tracker.factory.TrackerHandlerFactory;
 import jtorrent.domain.model.peer.Peer;
+import jtorrent.domain.model.peer.PeerContactInfo;
 import jtorrent.domain.model.peer.message.typed.Piece;
 import jtorrent.domain.model.torrent.Block;
 import jtorrent.domain.model.torrent.Torrent;
 import jtorrent.domain.model.tracker.PeerResponse;
 import jtorrent.domain.repository.PieceRepository;
+import jtorrent.domain.socket.PeerSocket;
 import jtorrent.domain.util.BackgroundTask;
 import jtorrent.domain.util.Sha1Hash;
 
@@ -74,12 +77,39 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.List
         torrent.clearPeers();
     }
 
-    public void addPeer(Peer peer) {
+    public void addPeer(PeerSocket peerSocket) {
+        PeerContactInfo peerContactInfo =
+                new PeerContactInfo(peerSocket.getRemoteAddress(), peerSocket.getRemotePort());
+
+        if (torrent.hasPeer(peerContactInfo)) {
+            return;
+        }
+
+        Peer peer = new Peer(peerContactInfo);
         torrent.addPeer(peer);
-        PeerHandler peerHandler = new PeerHandler(peer, torrent);
+        PeerHandler peerHandler = new PeerHandler(peer, peerSocket, torrent);
         peerHandler.addListener(this);
         peerHandlers.add(peerHandler);
         peerHandler.start();
+    }
+
+    public void addPeer(PeerContactInfo peerContactInfo) {
+        if (torrent.hasPeer(peerContactInfo)) {
+            return;
+        }
+
+        Peer peer = new Peer(peerContactInfo);
+        torrent.addPeer(peer);
+
+        try {
+            PeerSocket peerSocket = new PeerSocket(peerContactInfo);
+            PeerHandler peerHandler = new PeerHandler(peer, peerSocket, torrent);
+            peerHandler.addListener(this);
+            peerHandlers.add(peerHandler);
+            peerHandler.start();
+        } catch (IOException e) {
+            LOGGER.log(Level.ERROR, "Failed to connect to peer: {0}", peerContactInfo);
+        }
     }
 
     @Override
@@ -154,7 +184,7 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.List
     @Override
     public void onAnnounceResponse(List<PeerResponse> peerResponses) {
         peerResponses.stream()
-                .map(PeerResponse::toPeer)
+                .map(PeerResponse::toPeerContactInfo)
                 .filter(Predicate.not(torrent::hasPeer))
                 .forEach(this::addPeer);
     }

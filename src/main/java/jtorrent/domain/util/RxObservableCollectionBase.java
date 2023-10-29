@@ -3,6 +3,7 @@ package jtorrent.domain.util;
 import static java.util.Objects.requireNonNull;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -34,6 +35,10 @@ public abstract class RxObservableCollectionBase<E, T extends Collection<E>, V> 
     protected void clear() {
         collection.clear();
         notifyCleared();
+    }
+
+    public Collection<E> getCollection() {
+        return Collections.unmodifiableCollection(collection);
     }
 
     public boolean containsItem(E item) {

@@ -1,6 +1,7 @@
 package jtorrent.domain.handler.peer;
 
 import java.io.IOException;
+import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
 import java.net.InetAddress;
 import java.util.ArrayList;
@@ -23,22 +24,24 @@ import jtorrent.domain.model.peer.message.typed.TypedPeerMessage;
 import jtorrent.domain.model.peer.message.typed.Unchoke;
 import jtorrent.domain.model.torrent.Block;
 import jtorrent.domain.model.torrent.Torrent;
+import jtorrent.domain.socket.PeerSocket;
 import jtorrent.domain.util.BackgroundTask;
 
 public class PeerHandler {
 
-    private static final System.Logger LOGGER = System.getLogger(PeerHandler.class.getName());
+    private static final Logger LOGGER = System.getLogger(PeerHandler.class.getName());
 
     private final Peer peer;
+    private final PeerSocket peerSocket;
     private final Torrent torrent;
     private final List<Listener> listeners = new ArrayList<>();
     private final Set<Integer> availablePieces = new HashSet<>();
     private final HandlePeerTask handlePeerTask = new HandlePeerTask();
 
-    private boolean isConnected = false;
     private boolean isBusy = false;
 
-    public PeerHandler(Peer peer, Torrent torrent) {
+    public PeerHandler(Peer peer, PeerSocket peerSocket, Torrent torrent) {
+        this.peerSocket = peerSocket;
         this.peer = peer;
         this.torrent = torrent;
     }
@@ -67,19 +70,19 @@ public class PeerHandler {
 
     private void sendRequest(int index, int begin, int length) throws IOException {
         Request request = new Request(index, begin, length);
-        peer.sendMessage(request);
+        peerSocket.sendMessage(request);
     }
 
     private void sendInterested() throws IOException {
         Interested interested = new Interested();
-        peer.sendMessage(interested);
+        peerSocket.sendMessage(interested);
     }
 
     public void choke() {
         LOGGER.log(Level.DEBUG, "Choking peer: " + peer.getPeerContactInfo());
         Choke choke = new Choke();
         try {
-            peer.sendMessage(choke);
+            peerSocket.sendMessage(choke);
             peer.setRemoteChoked(true);
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -90,7 +93,7 @@ public class PeerHandler {
         LOGGER.log(Level.DEBUG, "Unchoking peer: " + peer.getPeerContactInfo());
         Unchoke unchoke = new Unchoke();
         try {
-            peer.sendMessage(unchoke);
+            peerSocket.sendMessage(unchoke);
             peer.setRemoteChoked(false);
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -109,12 +112,8 @@ public class PeerHandler {
         return peer.isRemoteChoked();
     }
 
-    public boolean isConnected() {
-        return isConnected;
-    }
-
     public boolean isReady() {
-        return isConnected && !peer.isLocalChoked() && !isBusy;
+        return peerSocket.isConnected() && !peer.isLocalChoked() && !isBusy;
     }
 
     public InetAddress getAddress() {
@@ -126,7 +125,6 @@ public class PeerHandler {
         return "PeerHandler{"
                 + "peer=" + peer
                 + ", torrent=" + torrent
-                + ", isConnected=" + isConnected
                 + ", isBusy=" + isBusy
                 + '}';
     }
@@ -151,7 +149,7 @@ public class PeerHandler {
         @Override
         protected void execute() {
             try {
-                PeerMessage message = peer.receiveMessage();
+                PeerMessage message = peerSocket.receiveMessage();
                 handleMessage(message);
             } catch (IOException e) {
                 if (!isStopping()) {
@@ -165,8 +163,7 @@ public class PeerHandler {
         protected void doOnStarted() {
             try {
                 // TODO: hardcoded true for now
-                peer.connect(torrent.getInfoHash(), true);
-                isConnected = true;
+                peerSocket.connect(torrent.getInfoHash(), true);
                 sendInterested();
             } catch (IOException e) {
                 LOGGER.log(Level.ERROR, "Error while connecting to peer {0}", peer);
@@ -176,15 +173,11 @@ public class PeerHandler {
 
         @Override
         protected void doOnStop() {
-            try {
-                peer.disconnect();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            peer.disconnect();
         }
 
         private void handleMessage(PeerMessage message) {
-            LOGGER.log(Level.INFO, "Received message {0} from peer {1}", message, peer);
+            LOGGER.log(Level.INFO, "Received message {0} from ", message, peer.getPeerContactInfo());
 
             if (message instanceof KeepAlive) {
                 handleKeepAlive();
@@ -197,36 +190,36 @@ public class PeerHandler {
             switch (typedMessage.getMessageType()) {
             case CHOKE:
                 handleChoke();
-                break;
+                return;
             case UNCHOKE:
                 handleUnchoke();
-                break;
+                return;
             case INTERESTED:
                 handleInterested();
-                break;
+                return;
             case NOT_INTERESTED:
                 handleNotInterested();
-                break;
+                return;
             case HAVE:
                 handleHave((Have) typedMessage);
-                break;
+                return;
             case BITFIELD:
                 handleBitfield((Bitfield) typedMessage);
-                break;
+                return;
             case REQUEST:
                 handleRequest((Request) typedMessage);
-                break;
+                return;
             case PIECE:
                 handlePiece((Piece) typedMessage);
-                break;
+                return;
             case CANCEL:
                 handleCancel((Cancel) typedMessage);
-                break;
+                return;
             case PORT:
                 handlePort((Port) typedMessage);
-                break;
+                return;
             default:
-                LOGGER.log(Level.ERROR, "Unknown message type: {0}", typedMessage.getMessageType());
+                throw new AssertionError("Unknown message type: " + typedMessage.getMessageType());
             }
         }
 
@@ -287,6 +280,7 @@ public class PeerHandler {
             LOGGER.log(Level.DEBUG, "Handling piece: {0}", piece);
             isBusy = false;
             listeners.forEach(listener -> listener.onPieceReceived(piece));
+            peer.addDownloadedBytes(piece.getBlock().length);
             notifyIfReady();
         }
 
@@ -294,7 +288,7 @@ public class PeerHandler {
             LOGGER.log(Level.DEBUG, "Handling Cancel: {0}", cancel);
         }
 
-        private void handlePort(Port port) {
+        public void handlePort(Port port) {
             listeners.forEach(listener -> listener.onPortReceived(PeerHandler.this, port.getListenPort()));
         }
     }

@@ -18,6 +18,7 @@ import java.util.stream.IntStream;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.subjects.BehaviorSubject;
 import jtorrent.domain.model.peer.Peer;
+import jtorrent.domain.model.peer.PeerContactInfo;
 import jtorrent.domain.model.tracker.Tracker;
 import jtorrent.domain.util.CombinedDoubleSumObservable;
 import jtorrent.domain.util.MutableRxObservableSet;
@@ -243,8 +244,11 @@ public class Torrent {
         downloadRateObservable.clearSources();
     }
 
-    public boolean hasPeer(Peer peer) {
-        return peers.containsItem(peer);
+    public boolean hasPeer(PeerContactInfo peerContactInfo) {
+        return peers.getCollection()
+                .stream()
+                .map(Peer::getPeerContactInfo)
+                .anyMatch(peerContactInfo::equals);
     }
 
     public Observable<Boolean> getIsActiveObservable() {
