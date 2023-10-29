@@ -65,7 +65,6 @@ public class IncomingConnectionManager {
                 LOGGER.log(Level.INFO, "Incoming connection from " + socket.getInetAddress());
 
                 // TODO: use completablefuture
-                peerSocket.waitForHandshake();
                 final Future<?> handler = executorService.submit(new WaitForHandshakeTask(peerSocket));
                 executorService.schedule(new TimeoutTask(handler), 10000, TimeUnit.MILLISECONDS);
             } catch (IOException e) {
