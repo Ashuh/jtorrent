@@ -88,10 +88,12 @@ public class DhtManager {
                         LOGGER.log(Level.ERROR, "[DHT] Error occurred while bootstrapping)", throwable);
                     } else if (Boolean.FALSE.equals(isSuccess)) {
                         LOGGER.log(Level.ERROR,
-                                "[DHT] Bootstrap node at {0} failed to provide new nodes. Routing table is empty", address);
+                                "[DHT] Bootstrap node at {0} failed to provide new nodes. Routing table is empty",
+                                address);
                     } else {
                         LOGGER.log(Level.DEBUG,
-                                "[DHT] Bootstrapped routing table with node at {0}." + " Routing table contains {1} nodes",
+                                "[DHT] Bootstrapped routing table with node at {0}."
+                                        + " Routing table contains {1} nodes",
                                 address, routingTable.size());
                     }
                     bootstrapSemaphore.release();
