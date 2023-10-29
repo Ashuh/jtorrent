@@ -20,6 +20,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
+import jtorrent.domain.Constants;
 import jtorrent.domain.manager.dht.lookup.GetPeersLookup;
 import jtorrent.domain.manager.dht.task.BootstrapTask;
 import jtorrent.domain.manager.dht.task.RefreshBucketTask;
@@ -214,6 +215,7 @@ public class DhtManager {
             }
 
             peerDiscoveryListeners.forEach(listener -> listener.onPeersDiscovered(target, result.getPeers()));
+            result.getNodeToToken().forEach((node, token) -> node.announcePeer(target, Constants.PORT, token));
         }
     }
 }
