@@ -8,9 +8,9 @@ import javafx.application.Application;
 import javafx.stage.Stage;
 import jtorrent.data.repository.FileTorrentRepository;
 import jtorrent.domain.Constants;
+import jtorrent.domain.manager.Client;
 import jtorrent.domain.manager.IncomingConnectionManager;
 import jtorrent.domain.manager.LocalServiceDiscoveryManager;
-import jtorrent.domain.manager.TorrentManager;
 import jtorrent.domain.manager.dht.DhtManager;
 import jtorrent.domain.manager.dht.DhtQueryHandler;
 import jtorrent.domain.manager.dht.PeerContactInfoStore;
@@ -25,7 +25,7 @@ public class JTorrent extends Application {
     private static final System.Logger LOGGER = System.getLogger(JTorrent.class.getName());
 
     private UiManager uiManager;
-    private TorrentManager torrentManager;
+    private Client client;
 
     @Override
     public void init() throws Exception {
@@ -39,19 +39,19 @@ public class JTorrent extends Application {
         DhtManager dhtManager = new DhtManager(dhtSocket, routingTable);
 
         TorrentRepository repository = new FileTorrentRepository();
-        torrentManager = new TorrentManager(repository, incomingConnectionManager, new LocalServiceDiscoveryManager(),
+        client = new Client(repository, incomingConnectionManager, new LocalServiceDiscoveryManager(),
                 dhtManager);
     }
 
     @Override
     public void start(Stage primaryStage) {
-        uiManager = new UiManager(primaryStage, new ViewModel(torrentManager));
+        uiManager = new UiManager(primaryStage, new ViewModel(client));
         uiManager.show();
     }
 
     @Override
     public void stop() {
         LOGGER.log(Level.INFO, "Stopping JTorrent");
-        torrentManager.shutdown();
+        client.shutdown();
     }
 }

@@ -10,7 +10,7 @@ import java.util.Optional;
 import io.reactivex.rxjava3.disposables.Disposable;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import jtorrent.domain.manager.TorrentManager;
+import jtorrent.domain.manager.Client;
 import jtorrent.domain.model.peer.Peer;
 import jtorrent.domain.model.torrent.Torrent;
 import jtorrent.presentation.model.UiPeer;
@@ -18,7 +18,7 @@ import jtorrent.presentation.model.UiTorrent;
 
 public class ViewModel {
 
-    private final TorrentManager torrentManager;
+    private final Client client;
     private final ObservableList<UiTorrent> uiTorrents = FXCollections.observableList(new ArrayList<>());
     private final ObservableList<UiPeer> uiPeers = FXCollections.observableList(new ArrayList<>());
     private final Map<UiTorrent, Torrent> uiTorrentToTorrent = new HashMap<>();
@@ -27,10 +27,10 @@ public class ViewModel {
     private Torrent selectedTorrent;
     private Disposable selectedTorrentPeersSubscription;
 
-    public ViewModel(TorrentManager torrentManager) {
-        this.torrentManager = requireNonNull(torrentManager);
+    public ViewModel(Client client) {
+        this.client = requireNonNull(client);
 
-        torrentManager.getTorrents().subscribe(event -> {
+        client.getTorrents().subscribe(event -> {
             Optional<Integer> indexOptional = event.getIndex();
             switch (event.getType()) {
             case ADD:
@@ -101,13 +101,13 @@ public class ViewModel {
         if (selectedTorrent == null) {
             return;
         }
-        torrentManager.startTorrent(selectedTorrent);
+        client.startTorrent(selectedTorrent);
     }
 
     public void stopSelectedTorrent() {
         if (selectedTorrent == null) {
             return;
         }
-        torrentManager.stopTorrent(selectedTorrent);
+        client.stopTorrent(selectedTorrent);
     }
 }

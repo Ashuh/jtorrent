@@ -18,10 +18,10 @@ import jtorrent.domain.socket.PeerSocket;
 import jtorrent.domain.util.RxObservableList;
 import jtorrent.domain.util.Sha1Hash;
 
-public class TorrentManager implements IncomingConnectionManager.Listener, LocalServiceDiscoveryManager.Listener,
+public class Client implements IncomingConnectionManager.Listener, LocalServiceDiscoveryManager.Listener,
         TorrentHandler.Listener, DhtManager.PeerDiscoveryListener {
 
-    private static final Logger LOGGER = System.getLogger(TorrentManager.class.getName());
+    private static final Logger LOGGER = System.getLogger(Client.class.getName());
 
     private final IncomingConnectionManager incomingConnectionManager;
     private final LocalServiceDiscoveryManager localServiceDiscoveryManager;
@@ -29,7 +29,7 @@ public class TorrentManager implements IncomingConnectionManager.Listener, Local
     private final Map<Sha1Hash, TorrentHandler> infoHashToTorrentHandler = new HashMap<>();
     private final TorrentRepository torrentRepository;
 
-    public TorrentManager(TorrentRepository torrentRepository, IncomingConnectionManager incomingConnectionManager,
+    public Client(TorrentRepository torrentRepository, IncomingConnectionManager incomingConnectionManager,
             LocalServiceDiscoveryManager localServiceDiscoveryManager, DhtManager dhtManager) {
         this.torrentRepository = torrentRepository;
 
