@@ -107,6 +107,12 @@ public class DhtQueryHandler implements DhtSocket.QueryHandler {
         int port = announcePeer.getPort();
         peerContactInfoStore.addPeerContactInfo(announcePeer.getInfoHash(), new PeerContactInfo(address, port));
         LOGGER.log(Level.DEBUG, "[DHT] Added peer contact info for info hash {0}", announcePeer.getInfoHash());
+
+        try {
+            node.sendAnnouncePeerResponse();
+        } catch (IOException e) {
+            LOGGER.log(Level.ERROR, "[DHT] Failed to send announce peer response to {0}", node);
+        }
     }
 
     private static byte[] generateToken() {

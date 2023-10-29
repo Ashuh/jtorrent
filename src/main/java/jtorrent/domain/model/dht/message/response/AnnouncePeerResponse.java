@@ -12,15 +12,15 @@ import jtorrent.domain.util.bencode.BencodedMap;
 
 public class AnnouncePeerResponse extends DefinedResponse {
 
-    protected AnnouncePeerResponse(NodeId id) {
+    public AnnouncePeerResponse(NodeId id) {
         super(id);
     }
 
-    protected AnnouncePeerResponse(TransactionId transactionId, NodeId id) {
+    public AnnouncePeerResponse(TransactionId transactionId, NodeId id) {
         super(transactionId, id);
     }
 
-    protected AnnouncePeerResponse(TransactionId transactionId, String clientVersion, NodeId id) {
+    public AnnouncePeerResponse(TransactionId transactionId, String clientVersion, NodeId id) {
         super(transactionId, clientVersion, id);
     }
 

@@ -207,6 +207,12 @@ public class Node {
         dhtSocket.sendResponse(getPeersResponse, getSocketAddress());
     }
 
+    public void sendAnnouncePeerResponse() throws IOException {
+        checkSocketIsSet();
+        AnnouncePeerResponse announcePeerResponse = new AnnouncePeerResponse(NodeId.LOCAL);
+        dhtSocket.sendResponse(announcePeerResponse, getSocketAddress());
+    }
+
     @Override
     public int hashCode() {
         return Objects.hash(nodeContactInfo, lastSeen);
