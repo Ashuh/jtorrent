@@ -32,11 +32,18 @@ public class DhtMessageDecoder {
     }
 
     public DhtMessage decode(byte[] data) throws DhtDecodingException {
+        BencodedMap bencodedMap;
+
         try {
-            BencodedMap bencodedMap = BencodedMap.decode(data);
-            return decode(bencodedMap);
+            bencodedMap = BencodedMap.decode(data);
         } catch (IOException e) {
-            throw new DhtDecodingException(e);
+            throw new DhtDecodingException("Failed to decode DHT message into map", e);
+        }
+
+        try {
+            return decode(bencodedMap);
+        } catch (NoSuchElementException | IllegalArgumentException e) {
+            throw new DhtDecodingException("Failed to decode DHT message from map: " + bencodedMap, e);
         }
     }
 
@@ -54,7 +61,7 @@ public class DhtMessageDecoder {
         }
     }
 
-    private Query decodeQuery(BencodedMap map) throws DhtDecodingException {
+    private Query decodeQuery(BencodedMap map) {
         Method method = Method.fromValue(map.getString(Query.KEY_METHOD_NAME));
         switch (method) {
         case PING:
@@ -71,28 +78,24 @@ public class DhtMessageDecoder {
     }
 
     private Response decodeResponse(BencodedMap bencodedMap) throws DhtDecodingException {
-        try {
-            byte[] transactionIdBytes = bencodedMap.getBytes(DhtMessage.KEY_TRANSACTION_ID).array();
-            TransactionId transactionId = TransactionId.fromBytes(transactionIdBytes);
-            Method method = transactionIdMethodProvider
-                    .getMethod(transactionId)
-                    .orElseThrow(() ->
-                            new DhtDecodingException("No method associated with transaction ID: " + transactionId));
+        byte[] transactionIdBytes = bencodedMap.getBytes(DhtMessage.KEY_TRANSACTION_ID).array();
+        TransactionId transactionId = TransactionId.fromBytes(transactionIdBytes);
+        Method method = transactionIdMethodProvider
+                .getMethod(transactionId)
+                .orElseThrow(() ->
+                        new DhtDecodingException("No method associated with transaction ID: " + transactionId));
 
-            switch (method) {
-            case PING:
-                return PingResponse.fromMap(bencodedMap);
-            case FIND_NODE:
-                return FindNodeResponse.fromMap(bencodedMap);
-            case GET_PEERS:
-                return GetPeersResponse.fromMap(bencodedMap);
-            case ANNOUNCE_PEER:
-                return AnnouncePeerResponse.fromMap(bencodedMap);
-            default:
-                throw new AssertionError("Unknown method: " + method);
-            }
-        } catch (NoSuchElementException | IllegalArgumentException e) {
-            throw new DhtDecodingException("Failed to decode Response", e);
+        switch (method) {
+        case PING:
+            return PingResponse.fromMap(bencodedMap);
+        case FIND_NODE:
+            return FindNodeResponse.fromMap(bencodedMap);
+        case GET_PEERS:
+            return GetPeersResponse.fromMap(bencodedMap);
+        case ANNOUNCE_PEER:
+            return AnnouncePeerResponse.fromMap(bencodedMap);
+        default:
+            throw new AssertionError("Unknown method: " + method);
         }
     }
 

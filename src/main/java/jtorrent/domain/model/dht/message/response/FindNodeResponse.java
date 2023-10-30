@@ -3,11 +3,9 @@ package jtorrent.domain.model.dht.message.response;
 import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Objects;
 
 import jtorrent.domain.model.dht.message.TransactionId;
-import jtorrent.domain.model.dht.message.decoder.DhtDecodingException;
 import jtorrent.domain.model.dht.message.query.Method;
 import jtorrent.domain.model.dht.node.NodeContactInfo;
 import jtorrent.domain.model.dht.node.NodeId;
@@ -35,17 +33,13 @@ public class FindNodeResponse extends DefinedResponse {
         this.nodes = nodes;
     }
 
-    public static FindNodeResponse fromMap(BencodedMap map) throws DhtDecodingException {
-        try {
-            TransactionId txId = getTransactionIdFromMap(map);
-            String clientVersion = map.getOptionalString(KEY_CLIENT_VERSION).orElse(null);
-            BencodedMap returnValues = getReturnValuesFromMap(map);
-            NodeId nodeId = getNodeIdFromMap(returnValues);
-            Collection<NodeContactInfo> nodes = getNodesFromMap(returnValues);
-            return new FindNodeResponse(txId, clientVersion, nodeId, nodes);
-        } catch (NoSuchElementException | IllegalArgumentException e) {
-            throw new DhtDecodingException("Failed to decode FindNodeResponse", e);
-        }
+    public static FindNodeResponse fromMap(BencodedMap map) {
+        TransactionId txId = getTransactionIdFromMap(map);
+        String clientVersion = map.getOptionalString(KEY_CLIENT_VERSION).orElse(null);
+        BencodedMap returnValues = getReturnValuesFromMap(map);
+        NodeId nodeId = getNodeIdFromMap(returnValues);
+        Collection<NodeContactInfo> nodes = getNodesFromMap(returnValues);
+        return new FindNodeResponse(txId, clientVersion, nodeId, nodes);
     }
 
     private static Collection<NodeContactInfo> getNodesFromMap(BencodedMap returnValues) {
