@@ -1,4 +1,4 @@
-package jtorrent.domain.util;
+package jtorrent.domain.manager.dht.util;
 
 import static jtorrent.domain.util.ValidationUtil.requireNonNull;
 
@@ -7,6 +7,7 @@ import java.util.Comparator;
 
 import jtorrent.domain.manager.dht.node.Node;
 import jtorrent.domain.model.dht.node.NodeId;
+import jtorrent.domain.util.Bit160Value;
 
 /**
  * Compares {@link Node}s by the distance of their {@link NodeId} to a {@link Bit160Value} target.
