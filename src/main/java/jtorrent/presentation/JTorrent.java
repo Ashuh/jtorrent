@@ -6,6 +6,7 @@ import java.net.ServerSocket;
 
 import javafx.application.Application;
 import javafx.stage.Stage;
+import jtorrent.data.repository.FilePieceRepository;
 import jtorrent.data.repository.FileTorrentRepository;
 import jtorrent.domain.Constants;
 import jtorrent.domain.manager.Client;
@@ -15,6 +16,7 @@ import jtorrent.domain.manager.dht.DhtManager;
 import jtorrent.domain.manager.dht.DhtQueryHandler;
 import jtorrent.domain.manager.dht.PeerContactInfoStore;
 import jtorrent.domain.manager.dht.routingtable.RoutingTable;
+import jtorrent.domain.repository.PieceRepository;
 import jtorrent.domain.repository.TorrentRepository;
 import jtorrent.domain.socket.DhtSocket;
 import jtorrent.presentation.manager.UiManager;
@@ -39,7 +41,8 @@ public class JTorrent extends Application {
         DhtManager dhtManager = new DhtManager(dhtSocket, routingTable);
 
         TorrentRepository repository = new FileTorrentRepository();
-        client = new Client(repository, incomingConnectionManager, new LocalServiceDiscoveryManager(),
+        PieceRepository pieceRepository = new FilePieceRepository();
+        client = new Client(repository, pieceRepository, incomingConnectionManager, new LocalServiceDiscoveryManager(),
                 dhtManager);
     }
 

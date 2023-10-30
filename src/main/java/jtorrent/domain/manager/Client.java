@@ -13,6 +13,7 @@ import jtorrent.domain.manager.dht.DhtManager;
 import jtorrent.domain.model.localservicediscovery.Announce;
 import jtorrent.domain.model.peer.PeerContactInfo;
 import jtorrent.domain.model.torrent.Torrent;
+import jtorrent.domain.repository.PieceRepository;
 import jtorrent.domain.repository.TorrentRepository;
 import jtorrent.domain.socket.PeerSocket;
 import jtorrent.domain.util.RxObservableList;
@@ -28,10 +29,13 @@ public class Client implements IncomingConnectionManager.Listener, LocalServiceD
     private final DhtManager dhtManager;
     private final Map<Sha1Hash, TorrentHandler> infoHashToTorrentHandler = new HashMap<>();
     private final TorrentRepository torrentRepository;
+    private final PieceRepository pieceRepository;
 
-    public Client(TorrentRepository torrentRepository, IncomingConnectionManager incomingConnectionManager,
+    public Client(TorrentRepository torrentRepository, PieceRepository pieceRepository,
+            IncomingConnectionManager incomingConnectionManager,
             LocalServiceDiscoveryManager localServiceDiscoveryManager, DhtManager dhtManager) {
         this.torrentRepository = torrentRepository;
+        this.pieceRepository = pieceRepository;
 
         this.incomingConnectionManager = incomingConnectionManager;
         this.incomingConnectionManager.addListener(this);
@@ -76,7 +80,7 @@ public class Client implements IncomingConnectionManager.Listener, LocalServiceD
 
     public void startTorrent(Torrent torrent) {
         LOGGER.log(Level.INFO, "Starting torrent " + torrent.getName());
-        TorrentHandler torrentHandler = new TorrentHandler(torrent);
+        TorrentHandler torrentHandler = new TorrentHandler(torrent, pieceRepository);
         infoHashToTorrentHandler.put(torrent.getInfoHash(), torrentHandler);
         torrentHandler.addListener(this);
         torrentHandler.start();

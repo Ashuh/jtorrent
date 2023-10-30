@@ -24,7 +24,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import jtorrent.data.repository.FilePieceRepository;
 import jtorrent.domain.handler.peer.PeerHandler;
 import jtorrent.domain.handler.tracker.TrackerHandler;
 import jtorrent.domain.handler.tracker.factory.TrackerHandlerFactory;
@@ -48,12 +47,13 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.List
     private final Set<PeerHandler> peerHandlers = new HashSet<>();
     private final Map<Integer, Set<PeerHandler>> pieceIndexToAvailablePeerHandlers = new HashMap<>();
     private final WorkDispatcher workDispatcher = new WorkDispatcher();
-    private final PieceRepository repository = new FilePieceRepository();
+    private final PieceRepository repository;
     private final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1);
     private final List<Listener> listeners = new ArrayList<>();
 
-    public TorrentHandler(Torrent torrent) {
+    public TorrentHandler(Torrent torrent, PieceRepository pieceRepository) {
         this.torrent = requireNonNull(torrent);
+        this.repository = requireNonNull(pieceRepository);
 
         trackerHandlers = torrent.getTrackers().stream()
                 .map(tracker -> TrackerHandlerFactory.create(torrent, tracker))
