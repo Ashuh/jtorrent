@@ -79,6 +79,32 @@ public class NodeId extends Bit160Value {
         return xor(other).toBigInteger();
     }
 
+    /**
+     * Creates a {@link NodeIdPrefix} from this {@link NodeId} and bitLength.
+     *
+     * @param bitLength The number of bits to include in the prefix. Must be between 0 and 160 (inclusive).
+     * @return the {@link NodeIdPrefix} of this {@link NodeId} with the given bitLength.
+     */
+    public NodeIdPrefix getPrefix(int bitLength) {
+        if (bitLength < 0) {
+            throw new IllegalArgumentException("Length cannot be negative");
+        }
+
+        if (bitLength > Bit160Value.SIZE_BITS) {
+            throw new IllegalArgumentException("Length cannot be greater than " + Bit160Value.SIZE_BITS + " bits");
+        }
+
+        int numFullBytes = bitLength / Byte.SIZE;
+        int numTrailingBits = bitLength % Byte.SIZE;
+        int numBytesToCopy = numFullBytes + (numTrailingBits > 0 ? 1 : 0);
+        byte[] bytes = Arrays.copyOf(getBytes(), numBytesToCopy);
+        // Clear the trailing bits
+        if (numTrailingBits > 0) {
+            bytes[numFullBytes] &= (byte) (0xFF << (Byte.SIZE - numTrailingBits));
+        }
+        return new NodeIdPrefix(bytes, bitLength);
+    }
+
     @Override
     public String toString() {
         return toBigInteger().toString(2);

@@ -10,7 +10,6 @@ import java.util.stream.Collectors;
 import jtorrent.domain.manager.dht.node.Node;
 import jtorrent.domain.manager.dht.util.DistanceToTargetComparator;
 import jtorrent.domain.model.dht.node.NodeId;
-import jtorrent.domain.model.dht.node.NodeIdPrefix;
 import jtorrent.domain.util.Bit160Value;
 
 public class RoutingTable {
@@ -22,7 +21,7 @@ public class RoutingTable {
 
     public RoutingTable() {
         for (int i = 0; i < NUM_BUCKETS; i++) {
-            buckets[i] = new Bucket(NodeIdPrefix.fromNodeId(NodeId.LOCAL, i));
+            buckets[i] = new Bucket(NodeId.LOCAL.getPrefix(i));
         }
     }
 
