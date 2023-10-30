@@ -4,7 +4,6 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 public class BencodedList extends ArrayList<Object> {
@@ -44,18 +43,6 @@ public class BencodedList extends ArrayList<Object> {
 
     public Optional<Long> getOptionalLong(int index) {
         return getOptional(index, Long.class);
-    }
-
-    public BencodedMap getMap(int index) {
-        try {
-            return new BencodedMap(get(index, Map.class));
-        } catch (ClassCastException e) {
-            throw new IllegalArgumentException("Value at index " + index + " is not a map");
-        }
-    }
-
-    public BencodedList getList(int index) {
-        return new BencodedList(get(index, List.class));
     }
 
     private <T> T get(int index, Class<T> clazz) {
