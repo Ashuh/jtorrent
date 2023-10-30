@@ -1,4 +1,4 @@
-package jtorrent.domain.model.dht.routingtable;
+package jtorrent.domain.manager.dht.routingtable;
 
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
@@ -7,7 +7,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
-import jtorrent.domain.manager.dht.Node;
+import jtorrent.domain.manager.dht.node.Node;
 import jtorrent.domain.model.dht.node.NodeId;
 import jtorrent.domain.model.dht.node.NodeIdPrefix;
 import jtorrent.domain.util.Bit160Value;

@@ -22,10 +22,11 @@ import java.util.concurrent.TimeUnit;
 
 import jtorrent.domain.Constants;
 import jtorrent.domain.manager.dht.lookup.GetPeersLookup;
+import jtorrent.domain.manager.dht.node.Node;
+import jtorrent.domain.manager.dht.routingtable.Bucket;
+import jtorrent.domain.manager.dht.routingtable.RoutingTable;
 import jtorrent.domain.manager.dht.task.BootstrapTask;
 import jtorrent.domain.manager.dht.task.RefreshBucketTask;
-import jtorrent.domain.model.dht.routingtable.Bucket;
-import jtorrent.domain.model.dht.routingtable.RoutingTable;
 import jtorrent.domain.model.peer.PeerContactInfo;
 import jtorrent.domain.socket.DhtSocket;
 import jtorrent.domain.util.Sha1Hash;

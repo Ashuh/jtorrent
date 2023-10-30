@@ -1,4 +1,4 @@
-package jtorrent.domain.manager.dht;
+package jtorrent.domain.manager.dht.node;
 
 import static jtorrent.domain.util.ValidationUtil.requireNonNull;
 

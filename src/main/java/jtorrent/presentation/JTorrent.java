@@ -14,7 +14,7 @@ import jtorrent.domain.manager.LocalServiceDiscoveryManager;
 import jtorrent.domain.manager.dht.DhtManager;
 import jtorrent.domain.manager.dht.DhtQueryHandler;
 import jtorrent.domain.manager.dht.PeerContactInfoStore;
-import jtorrent.domain.model.dht.routingtable.RoutingTable;
+import jtorrent.domain.manager.dht.routingtable.RoutingTable;
 import jtorrent.domain.repository.TorrentRepository;
 import jtorrent.domain.socket.DhtSocket;
 import jtorrent.presentation.manager.UiManager;

@@ -19,7 +19,7 @@ import java.util.concurrent.PriorityBlockingQueue;
 import java.util.stream.Collectors;
 
 import jtorrent.domain.manager.dht.DhtManager;
-import jtorrent.domain.manager.dht.Node;
+import jtorrent.domain.manager.dht.node.Node;
 import jtorrent.domain.model.dht.message.response.DefinedResponse;
 import jtorrent.domain.model.dht.node.NodeContactInfo;
 import jtorrent.domain.util.Bit160Value;

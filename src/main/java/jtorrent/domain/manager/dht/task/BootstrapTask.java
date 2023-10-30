@@ -7,10 +7,10 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.function.BooleanSupplier;
 
-import jtorrent.domain.manager.dht.Node;
 import jtorrent.domain.manager.dht.lookup.FindNodeLookup;
+import jtorrent.domain.manager.dht.node.Node;
+import jtorrent.domain.manager.dht.routingtable.RoutingTable;
 import jtorrent.domain.model.dht.node.NodeId;
-import jtorrent.domain.model.dht.routingtable.RoutingTable;
 
 public class BootstrapTask implements BooleanSupplier {
 

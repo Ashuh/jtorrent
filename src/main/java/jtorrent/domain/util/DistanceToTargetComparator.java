@@ -5,7 +5,7 @@ import static jtorrent.domain.util.ValidationUtil.requireNonNull;
 import java.math.BigInteger;
 import java.util.Comparator;
 
-import jtorrent.domain.manager.dht.Node;
+import jtorrent.domain.manager.dht.node.Node;
 import jtorrent.domain.model.dht.node.NodeId;
 
 /**

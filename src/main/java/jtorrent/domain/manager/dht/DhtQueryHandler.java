@@ -16,12 +16,13 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import jtorrent.domain.manager.dht.node.Node;
+import jtorrent.domain.manager.dht.routingtable.RoutingTable;
 import jtorrent.domain.model.dht.message.query.AnnouncePeer;
 import jtorrent.domain.model.dht.message.query.FindNode;
 import jtorrent.domain.model.dht.message.query.GetPeers;
 import jtorrent.domain.model.dht.message.query.Ping;
 import jtorrent.domain.model.dht.node.NodeContactInfo;
-import jtorrent.domain.model.dht.routingtable.RoutingTable;
 import jtorrent.domain.model.peer.PeerContactInfo;
 import jtorrent.domain.socket.DhtSocket;
 import jtorrent.domain.util.Bit160Value;
