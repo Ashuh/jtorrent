@@ -6,8 +6,8 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 
-import jtorrent.domain.model.dht.message.DhtDecodingException;
 import jtorrent.domain.model.dht.message.TransactionId;
+import jtorrent.domain.model.dht.message.decoder.DhtDecodingException;
 import jtorrent.domain.model.dht.message.query.Method;
 import jtorrent.domain.model.dht.node.NodeContactInfo;
 import jtorrent.domain.model.dht.node.NodeId;

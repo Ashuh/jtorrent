@@ -1,4 +1,4 @@
-package jtorrent.domain.model.dht.message;
+package jtorrent.domain.model.dht.message.decoder;
 
 import static java.util.Objects.requireNonNull;
 
@@ -6,6 +6,9 @@ import java.io.IOException;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
+import jtorrent.domain.model.dht.message.DhtMessage;
+import jtorrent.domain.model.dht.message.MessageType;
+import jtorrent.domain.model.dht.message.TransactionId;
 import jtorrent.domain.model.dht.message.error.Error;
 import jtorrent.domain.model.dht.message.query.AnnouncePeer;
 import jtorrent.domain.model.dht.message.query.FindNode;

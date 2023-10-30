@@ -1,4 +1,4 @@
-package jtorrent.domain.model.dht.message;
+package jtorrent.domain.model.dht.message.decoder;
 
 public class DhtDecodingException extends Exception {
 

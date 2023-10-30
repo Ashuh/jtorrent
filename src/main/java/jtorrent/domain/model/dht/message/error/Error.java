@@ -5,10 +5,10 @@ import static java.util.Objects.requireNonNull;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 
-import jtorrent.domain.model.dht.message.DhtDecodingException;
 import jtorrent.domain.model.dht.message.DhtMessage;
 import jtorrent.domain.model.dht.message.MessageType;
 import jtorrent.domain.model.dht.message.TransactionId;
+import jtorrent.domain.model.dht.message.decoder.DhtDecodingException;
 import jtorrent.domain.util.bencode.BencodedList;
 import jtorrent.domain.util.bencode.BencodedMap;
 

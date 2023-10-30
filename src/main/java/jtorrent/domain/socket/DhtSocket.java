@@ -14,10 +14,10 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
-import jtorrent.domain.model.dht.message.DhtDecodingException;
 import jtorrent.domain.model.dht.message.DhtMessage;
-import jtorrent.domain.model.dht.message.DhtMessageDecoder;
 import jtorrent.domain.model.dht.message.TransactionId;
+import jtorrent.domain.model.dht.message.decoder.DhtDecodingException;
+import jtorrent.domain.model.dht.message.decoder.DhtMessageDecoder;
 import jtorrent.domain.model.dht.message.error.Error;
 import jtorrent.domain.model.dht.message.query.AnnouncePeer;
 import jtorrent.domain.model.dht.message.query.FindNode;

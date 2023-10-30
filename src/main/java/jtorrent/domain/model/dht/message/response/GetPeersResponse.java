@@ -12,8 +12,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import jtorrent.domain.model.dht.message.DhtDecodingException;
 import jtorrent.domain.model.dht.message.TransactionId;
+import jtorrent.domain.model.dht.message.decoder.DhtDecodingException;
 import jtorrent.domain.model.dht.message.query.GetPeers;
 import jtorrent.domain.model.dht.message.query.Method;
 import jtorrent.domain.model.dht.node.NodeContactInfo;
