@@ -7,7 +7,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
-import jtorrent.domain.model.dht.node.Node;
+import jtorrent.domain.manager.dht.Node;
 import jtorrent.domain.model.dht.node.NodeId;
 import jtorrent.domain.model.dht.node.NodeIdPrefix;
 import jtorrent.domain.util.Bit160Value;

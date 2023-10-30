@@ -24,7 +24,6 @@ import jtorrent.domain.Constants;
 import jtorrent.domain.manager.dht.lookup.GetPeersLookup;
 import jtorrent.domain.manager.dht.task.BootstrapTask;
 import jtorrent.domain.manager.dht.task.RefreshBucketTask;
-import jtorrent.domain.model.dht.node.Node;
 import jtorrent.domain.model.dht.routingtable.Bucket;
 import jtorrent.domain.model.dht.routingtable.RoutingTable;
 import jtorrent.domain.model.peer.PeerContactInfo;

@@ -14,7 +14,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import jtorrent.domain.manager.dht.DhtManager;
-import jtorrent.domain.model.dht.node.Node;
+import jtorrent.domain.manager.dht.Node;
 import jtorrent.domain.model.dht.node.NodeIdPrefix;
 
 public class Bucket {

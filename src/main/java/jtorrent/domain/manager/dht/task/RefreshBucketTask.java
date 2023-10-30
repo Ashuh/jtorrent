@@ -8,8 +8,8 @@ import java.lang.System.Logger.Level;
 import java.util.Collection;
 
 import jtorrent.domain.manager.dht.DhtManager;
+import jtorrent.domain.manager.dht.Node;
 import jtorrent.domain.manager.dht.lookup.FindNodeLookup;
-import jtorrent.domain.model.dht.node.Node;
 import jtorrent.domain.model.dht.node.NodeId;
 import jtorrent.domain.model.dht.routingtable.Bucket;
 import jtorrent.domain.model.dht.routingtable.RoutingTable;

@@ -20,7 +20,6 @@ import jtorrent.domain.model.dht.message.query.AnnouncePeer;
 import jtorrent.domain.model.dht.message.query.FindNode;
 import jtorrent.domain.model.dht.message.query.GetPeers;
 import jtorrent.domain.model.dht.message.query.Ping;
-import jtorrent.domain.model.dht.node.Node;
 import jtorrent.domain.model.dht.node.NodeContactInfo;
 import jtorrent.domain.model.dht.routingtable.RoutingTable;
 import jtorrent.domain.model.peer.PeerContactInfo;
@@ -43,63 +42,66 @@ public class DhtQueryHandler implements DhtSocket.QueryHandler {
     }
 
     @Override
-    public void handle(Ping ping, Node node) {
-        LOGGER.log(Level.DEBUG, "[DHT] Handling ping from {0}", node);
+    public void handle(Ping ping, NodeContactInfo nodeContactInfo) {
+        LOGGER.log(Level.DEBUG, "[DHT] Handling ping from {0}", nodeContactInfo);
+        Node node = Node.seenNowWithContactInfo(nodeContactInfo);
         try {
             node.sendPingResponse();
-            LOGGER.log(Level.DEBUG, "[DHT] Sent ping response to {0}", node);
+            LOGGER.log(Level.DEBUG, "[DHT] Sent ping response to {0}", nodeContactInfo);
         } catch (IOException e) {
-            LOGGER.log(Level.ERROR, "[DHT] Failed to send ping response to {0}", node);
+            LOGGER.log(Level.ERROR, "[DHT] Failed to send ping response to {0}", nodeContactInfo);
         }
     }
 
     @Override
-    public void handle(FindNode findNode, Node node) {
-        LOGGER.log(Level.DEBUG, "[DHT] Handling find node from {0}", node);
+    public void handle(FindNode findNode, NodeContactInfo nodeContactInfo) {
+        LOGGER.log(Level.DEBUG, "[DHT] Handling find node from {0}", nodeContactInfo);
+        Node node = Node.seenNowWithContactInfo(nodeContactInfo);
         Collection<NodeContactInfo> closestNodes = getClosestNodes(findNode.getTarget());
         try {
             node.sendFindNodeResponse(closestNodes);
-            LOGGER.log(Level.DEBUG, "[DHT] Sent find node response to {0}", node);
+            LOGGER.log(Level.DEBUG, "[DHT] Sent find node response to {0}", nodeContactInfo);
         } catch (IOException e) {
-            LOGGER.log(Level.ERROR, "[DHT] Failed to send find node response to {0}", node);
+            LOGGER.log(Level.ERROR, "[DHT] Failed to send find node response to {0}", nodeContactInfo);
         }
     }
 
     @Override
-    public void handle(GetPeers getPeers, Node node) {
-        LOGGER.log(Level.DEBUG, "[DHT] Handling get peers from {0}", node);
-
+    public void handle(GetPeers getPeers, NodeContactInfo nodeContactInfo) {
+        LOGGER.log(Level.DEBUG, "[DHT] Handling get peers from {0}", nodeContactInfo);
+        Node node = Node.seenNowWithContactInfo(nodeContactInfo);
         Collection<PeerContactInfo> peers = peerContactInfoStore.getPeerContactInfos(getPeers.getInfoHash());
         byte[] token = generateToken();
-        tokenStore.add(node.getNodeContactInfo(), token, TOKEN_EXPIRATION_MINS, TimeUnit.MINUTES);
+        tokenStore.add(nodeContactInfo, token, TOKEN_EXPIRATION_MINS, TimeUnit.MINUTES);
 
         if (!peers.isEmpty()) {
             LOGGER.log(Level.DEBUG, "[DHT] Found peers for info hash {0}", getPeers.getInfoHash());
             try {
                 node.sendGetPeersResponseWithPeers(token, peers);
-                LOGGER.log(Level.DEBUG, "[DHT] Sent get peers response to {0}", node);
+                LOGGER.log(Level.DEBUG, "[DHT] Sent get peers response to {0}", nodeContactInfo);
             } catch (IOException e) {
-                LOGGER.log(Level.ERROR, "[DHT] Failed to send get peers response to {0}", node);
+                LOGGER.log(Level.ERROR, "[DHT] Failed to send get peers response to {0}", nodeContactInfo);
             }
         } else {
             LOGGER.log(Level.DEBUG, "[DHT] No peers found for info hash {0}", getPeers.getInfoHash());
             Collection<NodeContactInfo> closestNodes = getClosestNodes(getPeers.getInfoHash());
             try {
                 node.sendGetPeersResponseWithNodes(token, closestNodes);
-                LOGGER.log(Level.DEBUG, "[DHT] Sent get peers response to {0}", node);
+                LOGGER.log(Level.DEBUG, "[DHT] Sent get peers response to {0}", nodeContactInfo);
             } catch (IOException e) {
-                LOGGER.log(Level.ERROR, "[DHT] Failed to send get peers response to {0}", node);
+                LOGGER.log(Level.ERROR, "[DHT] Failed to send get peers response to {0}", nodeContactInfo);
             }
         }
     }
 
     @Override
-    public void handle(AnnouncePeer announcePeer, Node node) {
-        LOGGER.log(Level.DEBUG, "[DHT] Handling announce peer from {0}", node);
+    public void handle(AnnouncePeer announcePeer, NodeContactInfo nodeContactInfo) {
+        LOGGER.log(Level.DEBUG, "[DHT] Handling announce peer from {0}", nodeContactInfo);
+        Node node = Node.seenNowWithContactInfo(nodeContactInfo);
 
-        byte[] token = tokenStore.getToken(node.getNodeContactInfo());
+        byte[] token = tokenStore.getToken(nodeContactInfo);
         if (token == null || !Arrays.equals(token, announcePeer.getToken())) {
-            LOGGER.log(Level.ERROR, "[DHT] Invalid token for announce peer from {0}", node);
+            LOGGER.log(Level.ERROR, "[DHT] Invalid token for announce peer from {0}", nodeContactInfo);
             return;
         }
 
@@ -111,7 +113,7 @@ public class DhtQueryHandler implements DhtSocket.QueryHandler {
         try {
             node.sendAnnouncePeerResponse();
         } catch (IOException e) {
-            LOGGER.log(Level.ERROR, "[DHT] Failed to send announce peer response to {0}", node);
+            LOGGER.log(Level.ERROR, "[DHT] Failed to send announce peer response to {0}", nodeContactInfo);
         }
     }
 

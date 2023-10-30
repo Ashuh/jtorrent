@@ -1,7 +1,6 @@
 package jtorrent.domain.manager.dht.lookup;
 
 import java.lang.System.Logger;
-import java.lang.System.Logger.Level;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -12,8 +11,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import jtorrent.domain.manager.dht.Node;
 import jtorrent.domain.model.dht.message.response.GetPeersResponse;
-import jtorrent.domain.model.dht.node.Node;
 import jtorrent.domain.model.peer.PeerContactInfo;
 import jtorrent.domain.util.Sha1Hash;
 

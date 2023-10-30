@@ -30,7 +30,6 @@ import jtorrent.domain.model.dht.message.response.DefinedResponse;
 import jtorrent.domain.model.dht.message.response.FindNodeResponse;
 import jtorrent.domain.model.dht.message.response.GetPeersResponse;
 import jtorrent.domain.model.dht.message.response.PingResponse;
-import jtorrent.domain.model.dht.node.Node;
 import jtorrent.domain.model.dht.node.NodeContactInfo;
 import jtorrent.domain.util.BackgroundTask;
 
@@ -131,13 +130,13 @@ public class DhtSocket {
 
     public interface QueryHandler {
 
-        void handle(Ping ping, Node node);
+        void handle(Ping ping, NodeContactInfo nodeContactInfo);
 
-        void handle(FindNode findNode, Node node);
+        void handle(FindNode findNode, NodeContactInfo nodeContactInfo);
 
-        void handle(GetPeers getPeers, Node node);
+        void handle(GetPeers getPeers, NodeContactInfo nodeContactInfo);
 
-        void handle(AnnouncePeer announcePeer, Node node);
+        void handle(AnnouncePeer announcePeer, NodeContactInfo nodeContactInfo);
     }
 
     private class HandleIncomingMessagesTask extends BackgroundTask {
@@ -198,19 +197,18 @@ public class DhtSocket {
         private void handleQuery(Query query, InetSocketAddress address) {
             LOGGER.log(Level.DEBUG, "[DHT] Received {0} query: {1}", query.getMethod(), query);
             NodeContactInfo nodeContactInfo = new NodeContactInfo(query.getId(), address);
-            Node node = Node.seenNowWithContactInfo(nodeContactInfo);
             switch (query.getMethod()) {
             case PING:
-                queryHandler.handle((Ping) query, node);
+                queryHandler.handle((Ping) query, nodeContactInfo);
                 break;
             case FIND_NODE:
-                queryHandler.handle((FindNode) query, node);
+                queryHandler.handle((FindNode) query, nodeContactInfo);
                 break;
             case ANNOUNCE_PEER:
-                queryHandler.handle((AnnouncePeer) query, node);
+                queryHandler.handle((AnnouncePeer) query, nodeContactInfo);
                 break;
             case GET_PEERS:
-                queryHandler.handle((GetPeers) query, node);
+                queryHandler.handle((GetPeers) query, nodeContactInfo);
                 break;
             default:
                 throw new AssertionError(String.format(FORMAT_UNKNOWN_METHOD, query.getMethod()));

@@ -1,4 +1,4 @@
-package jtorrent.domain.model.dht.node;
+package jtorrent.domain.manager.dht;
 
 import static jtorrent.domain.util.ValidationUtil.requireNonNull;
 
@@ -27,6 +27,8 @@ import jtorrent.domain.model.dht.message.response.DefinedResponse;
 import jtorrent.domain.model.dht.message.response.FindNodeResponse;
 import jtorrent.domain.model.dht.message.response.GetPeersResponse;
 import jtorrent.domain.model.dht.message.response.PingResponse;
+import jtorrent.domain.model.dht.node.NodeContactInfo;
+import jtorrent.domain.model.dht.node.NodeId;
 import jtorrent.domain.model.peer.PeerContactInfo;
 import jtorrent.domain.socket.DhtSocket;
 import jtorrent.domain.util.Sha1Hash;
