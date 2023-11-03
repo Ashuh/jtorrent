@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Predicate;
 
 import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.core.Observable;
@@ -43,6 +44,15 @@ public abstract class RxObservableCollectionBase<E, T extends Collection<E>, V> 
 
     public boolean containsItem(E item) {
         return collection.contains(item);
+    }
+
+    public boolean anyMatch(Predicate<E> predicate) {
+        try {
+            rLock.lock();
+            return collection.stream().anyMatch(predicate);
+        } finally {
+            rLock.unlock();
+        }
     }
 
     protected void emitEvent(V event) {

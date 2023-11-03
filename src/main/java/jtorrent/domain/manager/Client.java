@@ -98,12 +98,12 @@ public class Client implements IncomingConnectionManager.Listener, LocalServiceD
     @Override
     public void onIncomingPeerConnection(PeerSocket peerSocket, Sha1Hash infoHash) {
         if (!infoHashToTorrentHandler.containsKey(infoHash)) {
-            LOGGER.log(Level.INFO, "No torrent found for infohash " + infoHash);
+            LOGGER.log(Level.ERROR, "No torrent found for infohash " + infoHash);
             return;
         }
 
         TorrentHandler torrentHandler = infoHashToTorrentHandler.get(infoHash);
-        torrentHandler.addPeer(peerSocket);
+        torrentHandler.handleIncomingPeerConnection(peerSocket);
     }
 
     public RxObservableList<Torrent> getTorrents() {
@@ -117,7 +117,7 @@ public class Client implements IncomingConnectionManager.Listener, LocalServiceD
                 .map(infoHashToTorrentHandler::get)
                 .forEach(torrentHandler -> {
                     PeerContactInfo peerContactInfo = new PeerContactInfo(sourceAddress, announce.getPort());
-                    torrentHandler.addPeer(peerContactInfo);
+                    torrentHandler.handleDiscoveredPeerContact(peerContactInfo);
                 });
     }
 
@@ -136,6 +136,6 @@ public class Client implements IncomingConnectionManager.Listener, LocalServiceD
         }
 
         TorrentHandler torrentHandler = infoHashToTorrentHandler.get(infoHash);
-        peers.forEach(torrentHandler::addPeer);
+        peers.forEach(torrentHandler::handleDiscoveredPeerContact);
     }
 }

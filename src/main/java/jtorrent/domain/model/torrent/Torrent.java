@@ -245,10 +245,7 @@ public class Torrent {
     }
 
     public boolean hasPeer(PeerContactInfo peerContactInfo) {
-        return peers.getCollection()
-                .stream()
-                .map(Peer::getPeerContactInfo)
-                .anyMatch(peerContactInfo::equals);
+        return peers.anyMatch(peer -> peer.getPeerContactInfo().equals(peerContactInfo));
     }
 
     public Observable<Boolean> getIsActiveObservable() {

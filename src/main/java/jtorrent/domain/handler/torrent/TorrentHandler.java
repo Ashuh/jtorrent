@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
@@ -41,6 +42,7 @@ import jtorrent.domain.util.Sha1Hash;
 public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Listener {
 
     private static final Logger LOGGER = getLogger(TorrentHandler.class.getName());
+    private static final ExecutorService PEER_CONNECTION_EXECUTOR = Executors.newCachedThreadPool();
 
     private final Torrent torrent;
     private final Set<TrackerHandler> trackerHandlers;
@@ -78,39 +80,48 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.List
         torrent.clearPeers();
     }
 
-    public void addPeer(PeerSocket peerSocket) {
-        PeerContactInfo peerContactInfo =
-                new PeerContactInfo(peerSocket.getRemoteAddress(), peerSocket.getRemotePort());
+    public void handleIncomingPeerConnection(PeerSocket peerSocket) {
+        PeerContactInfo peerContactInfo = peerSocket.getPeerContactInfo();
 
         if (torrent.hasPeer(peerContactInfo)) {
             return;
         }
 
-        Peer peer = new Peer(peerContactInfo);
+        PEER_CONNECTION_EXECUTOR.execute(() -> {
+            try {
+                peerSocket.connect(torrent.getInfoHash(), true);
+                LOGGER.log(Level.INFO, "Connected to {0}", peerContactInfo);
+                addNewPeerConnection(peerSocket);
+            } catch (IOException e) {
+                LOGGER.log(Level.ERROR, "Failed to connect to peer: {0}", peerContactInfo);
+            }
+        });
+    }
+
+    public void handleDiscoveredPeerContact(PeerContactInfo peerContactInfo) {
+        if (torrent.hasPeer(peerContactInfo)) {
+            return;
+        }
+
+        PEER_CONNECTION_EXECUTOR.execute(() -> {
+            try {
+                PeerSocket peerSocket = new PeerSocket(peerContactInfo);
+                LOGGER.log(Level.INFO, "Connected to {0}", peerContactInfo);
+                peerSocket.connect(torrent.getInfoHash(), true);
+                addNewPeerConnection(peerSocket);
+            } catch (IOException e) {
+                LOGGER.log(Level.ERROR, "Failed to connect to peer: {0}", peerContactInfo);
+            }
+        });
+    }
+
+    private void addNewPeerConnection(PeerSocket peerSocket) {
+        Peer peer = new Peer(peerSocket.getPeerContactInfo());
         torrent.addPeer(peer);
         PeerHandler peerHandler = new PeerHandler(peer, peerSocket, torrent);
         peerHandler.addListener(this);
         peerHandlers.add(peerHandler);
         peerHandler.start();
-    }
-
-    public void addPeer(PeerContactInfo peerContactInfo) {
-        if (torrent.hasPeer(peerContactInfo)) {
-            return;
-        }
-
-        Peer peer = new Peer(peerContactInfo);
-        torrent.addPeer(peer);
-
-        try {
-            PeerSocket peerSocket = new PeerSocket(peerContactInfo);
-            PeerHandler peerHandler = new PeerHandler(peer, peerSocket, torrent);
-            peerHandler.addListener(this);
-            peerHandlers.add(peerHandler);
-            peerHandler.start();
-        } catch (IOException e) {
-            LOGGER.log(Level.ERROR, "Failed to connect to peer: {0}", peerContactInfo);
-        }
     }
 
     public void addListener(Listener listener) {
@@ -196,8 +207,7 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.List
     public void onAnnounceResponse(List<PeerResponse> peerResponses) {
         peerResponses.stream()
                 .map(PeerResponse::toPeerContactInfo)
-                .filter(Predicate.not(torrent::hasPeer))
-                .forEach(this::addPeer);
+                .forEach(this::handleDiscoveredPeerContact);
     }
 
     public interface Listener {

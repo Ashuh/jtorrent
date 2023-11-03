@@ -35,6 +35,13 @@ public class PeerSocket {
         this.socket = requireNonNull(socket);
     }
 
+    public PeerContactInfo getPeerContactInfo() {
+        if (!socket.isConnected()) {
+            throw new IllegalStateException("Socket is not connected");
+        }
+        return new PeerContactInfo(getRemoteAddress(), getRemotePort());
+    }
+
     public InetAddress getRemoteAddress() {
         return socket.getInetAddress();
     }
