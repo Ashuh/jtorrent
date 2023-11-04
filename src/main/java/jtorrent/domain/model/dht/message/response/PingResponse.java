@@ -8,7 +8,7 @@ import jtorrent.domain.model.dht.message.query.Method;
 import jtorrent.domain.model.dht.node.NodeId;
 import jtorrent.domain.util.bencode.BencodedMap;
 
-public class PingResponse extends DefinedResponse {
+public class PingResponse extends Response {
 
     public PingResponse(NodeId id) {
         super(id);

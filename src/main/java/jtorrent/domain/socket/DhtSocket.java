@@ -26,10 +26,10 @@ import jtorrent.domain.model.dht.message.query.Method;
 import jtorrent.domain.model.dht.message.query.Ping;
 import jtorrent.domain.model.dht.message.query.Query;
 import jtorrent.domain.model.dht.message.response.AnnouncePeerResponse;
-import jtorrent.domain.model.dht.message.response.DefinedResponse;
 import jtorrent.domain.model.dht.message.response.FindNodeResponse;
 import jtorrent.domain.model.dht.message.response.GetPeersResponse;
 import jtorrent.domain.model.dht.message.response.PingResponse;
+import jtorrent.domain.model.dht.message.response.Response;
 import jtorrent.domain.model.dht.node.NodeContactInfo;
 import jtorrent.domain.util.BackgroundTask;
 
@@ -41,7 +41,7 @@ public class DhtSocket {
     private final DatagramSocket socket;
     private final HandleIncomingMessagesTask handleIncomingMessagesTask;
     private final Map<TransactionId, Method> txIdToMethod = new ConcurrentHashMap<>();
-    private final Map<TransactionId, CompletableFuture<? extends DefinedResponse>> txIdToFuture =
+    private final Map<TransactionId, CompletableFuture<? extends Response>> txIdToFuture =
             new ConcurrentHashMap<>();
     private final DhtMessageDecoder dhtMessageDecoder = new DhtMessageDecoder(this::getTransactionId);
 
@@ -82,7 +82,7 @@ public class DhtSocket {
         return sendQuery(announcePeer, address);
     }
 
-    private <T extends Query, R extends DefinedResponse> CompletableFuture<R> sendQuery(T query,
+    private <T extends Query, R extends Response> CompletableFuture<R> sendQuery(T query,
             InetSocketAddress address) {
         CompletableFuture<R> completableFuture = completableFutureWithTimeout(TIMEOUT_SECS);
         txIdToMethod.put(query.getTransactionId(), query.getMethod());
@@ -101,7 +101,7 @@ public class DhtSocket {
         return completableFuture;
     }
 
-    public void sendResponse(DefinedResponse response, InetSocketAddress address) throws IOException {
+    public void sendResponse(Response response, InetSocketAddress address) throws IOException {
         sendMessage(response, address);
     }
 
@@ -184,7 +184,7 @@ public class DhtSocket {
                 handleQuery((Query) message, address);
                 break;
             case RESPONSE:
-                handleResponse((DefinedResponse) message);
+                handleResponse((Response) message);
                 break;
             case ERROR:
                 handleError((Error) message);
@@ -216,7 +216,7 @@ public class DhtSocket {
         }
 
         @SuppressWarnings("unchecked")
-        private <T extends DefinedResponse> void handleResponse(T response) {
+        private <T extends Response> void handleResponse(T response) {
             LOGGER.log(Level.DEBUG, "[DHT] Received {0} response: {1}", response.getMethod(), response);
 
             TransactionId transactionId = response.getTransactionId();
@@ -236,7 +236,7 @@ public class DhtSocket {
 
             TransactionId transactionId = error.getTransactionId();
             txIdToMethod.remove(transactionId);
-            CompletableFuture<? extends DefinedResponse> future = txIdToFuture.get(transactionId);
+            CompletableFuture<? extends Response> future = txIdToFuture.get(transactionId);
 
             if (future == null) {
                 logNoOutstandingQueryFound(transactionId);

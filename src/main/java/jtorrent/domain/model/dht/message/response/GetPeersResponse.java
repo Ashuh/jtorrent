@@ -25,7 +25,7 @@ import jtorrent.domain.util.bencode.BencodedMap;
  * info hash.
  * Otherwise, the response contains the K closest {@link NodeContactInfo Nodes} to the requested info hash.
  */
-public class GetPeersResponse extends DefinedResponse {
+public class GetPeersResponse extends Response {
 
     private static final String KEY_NODES = "nodes";
     private static final String KEY_TOKEN = "token";

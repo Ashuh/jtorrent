@@ -11,7 +11,7 @@ import jtorrent.domain.model.dht.node.NodeContactInfo;
 import jtorrent.domain.model.dht.node.NodeId;
 import jtorrent.domain.util.bencode.BencodedMap;
 
-public class FindNodeResponse extends DefinedResponse {
+public class FindNodeResponse extends Response {
 
     private static final String KEY_NODES = "nodes";
 

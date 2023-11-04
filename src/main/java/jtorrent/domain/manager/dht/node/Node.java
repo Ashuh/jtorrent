@@ -23,10 +23,10 @@ import jtorrent.domain.model.dht.message.query.GetPeers;
 import jtorrent.domain.model.dht.message.query.Method;
 import jtorrent.domain.model.dht.message.query.Ping;
 import jtorrent.domain.model.dht.message.response.AnnouncePeerResponse;
-import jtorrent.domain.model.dht.message.response.DefinedResponse;
 import jtorrent.domain.model.dht.message.response.FindNodeResponse;
 import jtorrent.domain.model.dht.message.response.GetPeersResponse;
 import jtorrent.domain.model.dht.message.response.PingResponse;
+import jtorrent.domain.model.dht.message.response.Response;
 import jtorrent.domain.model.dht.node.NodeContactInfo;
 import jtorrent.domain.model.dht.node.NodeId;
 import jtorrent.domain.model.peer.PeerContactInfo;
@@ -246,7 +246,7 @@ public class Node {
         BAD
     }
 
-    private class FutureHandler<R extends DefinedResponse> implements BiConsumer<R, Throwable> {
+    private class FutureHandler<R extends Response> implements BiConsumer<R, Throwable> {
 
         private final Method queryMethod;
 

@@ -21,11 +21,11 @@ import java.util.stream.Collectors;
 import jtorrent.domain.manager.dht.DhtManager;
 import jtorrent.domain.manager.dht.node.Node;
 import jtorrent.domain.manager.dht.util.DistanceToTargetComparator;
-import jtorrent.domain.model.dht.message.response.DefinedResponse;
+import jtorrent.domain.model.dht.message.response.Response;
 import jtorrent.domain.model.dht.node.NodeContactInfo;
 import jtorrent.domain.util.Bit160Value;
 
-public abstract class IterativeLookup<T extends DefinedResponse, U extends Bit160Value, R> {
+public abstract class IterativeLookup<T extends Response, U extends Bit160Value, R> {
 
     private static final Logger LOGGER = System.getLogger(IterativeLookup.class.getName());
 

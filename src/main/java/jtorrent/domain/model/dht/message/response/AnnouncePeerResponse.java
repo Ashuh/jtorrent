@@ -8,7 +8,7 @@ import jtorrent.domain.model.dht.message.query.Method;
 import jtorrent.domain.model.dht.node.NodeId;
 import jtorrent.domain.util.bencode.BencodedMap;
 
-public class AnnouncePeerResponse extends DefinedResponse {
+public class AnnouncePeerResponse extends Response {
 
     public AnnouncePeerResponse(NodeId id) {
         super(id);
