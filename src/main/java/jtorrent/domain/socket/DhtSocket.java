@@ -8,6 +8,7 @@ import java.lang.System.Logger.Level;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
+import java.net.SocketException;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -155,12 +156,23 @@ public class DhtSocket {
                 LOGGER.log(Level.DEBUG, "[DHT] Waiting for message");
                 IncomingMessage incomingMessage = receiveMessage();
                 handleMessage(incomingMessage.getMessage(), incomingMessage.getAddress());
+            } catch (SocketException e) {
+                if (isStopping()) {
+                    LOGGER.log(Level.DEBUG, "[DHT] Interrupted while waiting for message");
+                } else {
+                    LOGGER.log(Level.ERROR, "[DHT] Error receiving message: " + e.getMessage(), e);
+                }
             } catch (IOException e) {
                 LOGGER.log(Level.ERROR, "[DHT] Error receiving message: " + e.getMessage(), e);
                 HandleIncomingMessagesTask.this.stop();
             } catch (DhtDecodingException e) {
                 LOGGER.log(Level.ERROR, "[DHT] Error decoding message: " + e.getMessage(), e);
             }
+        }
+
+        @Override
+        protected void doOnStop() {
+            socket.close();
         }
 
         /**

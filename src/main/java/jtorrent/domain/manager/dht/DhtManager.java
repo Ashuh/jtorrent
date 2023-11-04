@@ -55,6 +55,7 @@ public class DhtManager {
     }
 
     public void stop() {
+        scheduledThreadPool.shutdownNow();
     }
 
     public void addPeerDiscoveryListener(PeerDiscoveryListener peerDiscoveryListener) {

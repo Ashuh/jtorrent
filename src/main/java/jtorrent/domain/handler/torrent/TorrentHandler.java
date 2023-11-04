@@ -78,6 +78,7 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.List
         executorService.shutdownNow();
         peerHandlers.forEach(PeerHandler::stop);
         torrent.clearPeers();
+        PEER_CONNECTION_EXECUTOR.shutdownNow();
     }
 
     public void handleIncomingPeerConnection(PeerSocket peerSocket) {

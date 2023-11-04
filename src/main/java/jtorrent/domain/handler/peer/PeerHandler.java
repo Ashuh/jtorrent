@@ -51,6 +51,11 @@ public class PeerHandler {
     }
 
     public void stop() {
+        try {
+            peerSocket.close();
+        } catch (IOException e) {
+            LOGGER.log(Level.ERROR, "Error while closing socket", e);
+        }
         handlePeerTask.stop();
     }
 
