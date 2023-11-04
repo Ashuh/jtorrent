@@ -28,7 +28,6 @@ import jtorrent.domain.manager.dht.routingtable.RoutingTable;
 import jtorrent.domain.manager.dht.task.BootstrapTask;
 import jtorrent.domain.manager.dht.task.RefreshBucketTask;
 import jtorrent.domain.model.peer.PeerContactInfo;
-import jtorrent.domain.socket.DhtSocket;
 import jtorrent.domain.util.Sha1Hash;
 
 public class DhtManager {
@@ -38,7 +37,6 @@ public class DhtManager {
     private static final Duration REFRESH_INTERVAL = Duration.ofMinutes(15);
     private static final Logger LOGGER = System.getLogger(DhtManager.class.getName());
 
-    private final DhtSocket socket;
     private final RoutingTable routingTable;
     private final ExecutorService cachedThreadPool = Executors.newCachedThreadPool();
     private final ScheduledExecutorService scheduledThreadPool = Executors.newScheduledThreadPool(1);
@@ -49,19 +47,14 @@ public class DhtManager {
     private final Map<Sha1Hash, PeriodicFindPeersTask> infoHashToFindPeersTask = new ConcurrentHashMap<>();
     private final List<PeerDiscoveryListener> peerDiscoveryListeners = new ArrayList<>();
 
-    public DhtManager(DhtSocket socket, RoutingTable routingTable) {
-        this.socket = requireNonNull(socket);
+    public DhtManager(RoutingTable routingTable) {
         this.routingTable = requireNonNull(routingTable);
-        Node.setDhtSocket(socket);
     }
 
     public void start() {
-        LOGGER.log(Level.INFO, "[DHT] Starting DHT node handler");
-        socket.start();
     }
 
     public void stop() {
-        socket.stop();
     }
 
     public void addPeerDiscoveryListener(PeerDiscoveryListener peerDiscoveryListener) {

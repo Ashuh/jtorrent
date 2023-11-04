@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import jtorrent.domain.handler.torrent.TorrentHandler;
+import jtorrent.domain.manager.dht.DhtClient;
 import jtorrent.domain.manager.dht.DhtManager;
 import jtorrent.domain.model.localservicediscovery.Announce;
 import jtorrent.domain.model.peer.PeerContactInfo;
@@ -26,14 +27,14 @@ public class Client implements IncomingConnectionManager.Listener, LocalServiceD
 
     private final IncomingConnectionManager incomingConnectionManager;
     private final LocalServiceDiscoveryManager localServiceDiscoveryManager;
-    private final DhtManager dhtManager;
+    private final DhtClient dhtManager;
     private final Map<Sha1Hash, TorrentHandler> infoHashToTorrentHandler = new HashMap<>();
     private final TorrentRepository torrentRepository;
     private final PieceRepository pieceRepository;
 
     public Client(TorrentRepository torrentRepository, PieceRepository pieceRepository,
             IncomingConnectionManager incomingConnectionManager,
-            LocalServiceDiscoveryManager localServiceDiscoveryManager, DhtManager dhtManager) {
+            LocalServiceDiscoveryManager localServiceDiscoveryManager, DhtClient dhtClient) {
         this.torrentRepository = torrentRepository;
         this.pieceRepository = pieceRepository;
 
@@ -45,7 +46,7 @@ public class Client implements IncomingConnectionManager.Listener, LocalServiceD
         this.localServiceDiscoveryManager.addListener(this);
         this.localServiceDiscoveryManager.start();
 
-        this.dhtManager = dhtManager;
+        this.dhtManager = dhtClient;
         this.dhtManager.addPeerDiscoveryListener(this);
         this.dhtManager.start();
 

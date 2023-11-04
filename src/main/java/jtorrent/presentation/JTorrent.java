@@ -1,7 +1,6 @@
 package jtorrent.presentation;
 
 import java.lang.System.Logger.Level;
-import java.net.DatagramSocket;
 import java.net.ServerSocket;
 
 import javafx.application.Application;
@@ -12,13 +11,9 @@ import jtorrent.domain.Constants;
 import jtorrent.domain.manager.Client;
 import jtorrent.domain.manager.IncomingConnectionManager;
 import jtorrent.domain.manager.LocalServiceDiscoveryManager;
-import jtorrent.domain.manager.dht.DhtManager;
-import jtorrent.domain.manager.dht.DhtQueryHandler;
-import jtorrent.domain.manager.dht.PeerContactInfoStore;
-import jtorrent.domain.manager.dht.routingtable.RoutingTable;
+import jtorrent.domain.manager.dht.DhtClient;
 import jtorrent.domain.repository.PieceRepository;
 import jtorrent.domain.repository.TorrentRepository;
-import jtorrent.domain.socket.DhtSocket;
 import jtorrent.presentation.manager.UiManager;
 import jtorrent.presentation.viewmodel.ViewModel;
 
@@ -34,16 +29,12 @@ public class JTorrent extends Application {
         ServerSocket serverSocket = new ServerSocket(Constants.PORT);
         IncomingConnectionManager incomingConnectionManager = new IncomingConnectionManager(serverSocket);
 
-        RoutingTable routingTable = new RoutingTable();
-        PeerContactInfoStore peerContactInfoStore = new PeerContactInfoStore();
-        DhtSocket.QueryHandler queryHandler = new DhtQueryHandler(routingTable, peerContactInfoStore);
-        DhtSocket dhtSocket = new DhtSocket(new DatagramSocket(Constants.PORT), queryHandler);
-        DhtManager dhtManager = new DhtManager(dhtSocket, routingTable);
+        DhtClient dhtClient = new DhtClient(Constants.PORT);
 
         TorrentRepository repository = new FileTorrentRepository();
         PieceRepository pieceRepository = new FilePieceRepository();
         client = new Client(repository, pieceRepository, incomingConnectionManager, new LocalServiceDiscoveryManager(),
-                dhtManager);
+                dhtClient);
     }
 
     @Override
