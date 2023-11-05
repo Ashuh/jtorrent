@@ -97,6 +97,7 @@ public class PeerSocket {
     }
 
     public void close() throws IOException {
+        LOGGER.log(Level.DEBUG, "Closing PeerSocket {0}", socket.getRemoteSocketAddress());
         socket.close();
     }
 
