@@ -51,6 +51,10 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.List
     private final WorkDispatcher workDispatcher = new WorkDispatcher();
     private final PieceRepository repository;
     private final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1);
+    /**
+     * Set of peer contacts that are currently being connected to.
+     */
+    private final AtomicCheckAndAddSet<PeerContactInfo> pendingContacts = new AtomicCheckAndAddSet<>();
     private final List<Listener> listeners = new ArrayList<>();
 
     public TorrentHandler(Torrent torrent, PieceRepository pieceRepository) {
@@ -88,6 +92,10 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.List
             return;
         }
 
+        if (!pendingContacts.checkAndAdd(peerContactInfo)) {
+            return;
+        }
+
         PEER_CONNECTION_EXECUTOR.execute(() -> {
             try {
                 peerSocket.connect(torrent.getInfoHash(), true);
@@ -95,12 +103,18 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.List
                 addNewPeerConnection(peerSocket);
             } catch (IOException e) {
                 LOGGER.log(Level.ERROR, "Failed to connect to peer: {0}", peerContactInfo);
+            } finally {
+                pendingContacts.remove(peerContactInfo);
             }
         });
     }
 
     public void handleDiscoveredPeerContact(PeerContactInfo peerContactInfo) {
         if (torrent.hasPeer(peerContactInfo)) {
+            return;
+        }
+
+        if (!pendingContacts.checkAndAdd(peerContactInfo)) {
             return;
         }
 
@@ -112,11 +126,17 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.List
                 addNewPeerConnection(peerSocket);
             } catch (IOException e) {
                 LOGGER.log(Level.ERROR, "Failed to connect to peer: {0}", peerContactInfo);
+            } finally {
+                pendingContacts.remove(peerContactInfo);
             }
         });
     }
 
     private void addNewPeerConnection(PeerSocket peerSocket) {
+        if (torrent.hasPeer(peerSocket.getPeerContactInfo())) {
+            return;
+        }
+
         Peer peer = new Peer(peerSocket.getPeerContactInfo());
         torrent.addPeer(peer);
         PeerHandler peerHandler = new PeerHandler(peer, peerSocket, torrent);
@@ -341,6 +361,23 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.List
 
             optimisticUnchokedPeerHandler = peerHandler;
             optimisticUnchokedPeerHandler.unchoke();
+        }
+    }
+
+    public static class AtomicCheckAndAddSet<E> {
+
+        private final Set<E> set = new HashSet<>();
+
+        public synchronized boolean checkAndAdd(E element) {
+            if (set.contains(element)) {
+                return false;
+            }
+            return set.add(element);
+
+        }
+
+        public synchronized boolean remove(E element) {
+            return set.remove(element);
         }
     }
 }
