@@ -158,7 +158,7 @@ public class PeerHandler {
                 handleMessage(message);
             } catch (IOException e) {
                 if (!isStopping()) {
-                    LOGGER.log(Level.ERROR, "Error while communicating with peer {0}", peer);
+                    LOGGER.log(Level.ERROR, "Error while communicating with peer" + peer, e);
                     HandlePeerTask.this.stop();
                 }
             }
