@@ -117,13 +117,13 @@ public class DhtManager {
         LOGGER.log(Level.DEBUG, "[DHT] Registered info hash {0}", infoHash);
     }
 
-    public void unregisterInfoHash(Sha1Hash infoHash) {
+    public void deregisterInfoHash(Sha1Hash infoHash) {
         PeriodicFindPeersTask periodicFindPeersTask = infoHashToFindPeersTask.remove(infoHash);
         if (periodicFindPeersTask != null) {
             LOGGER.log(Level.DEBUG, "[DHT] Stopping periodic find peers task for info hash {0}", infoHash);
             periodicFindPeersTask.stop();
         }
-        LOGGER.log(Level.DEBUG, "[DHT] Unregistered info hash {0}", infoHash);
+        LOGGER.log(Level.DEBUG, "[DHT] Deregistered info hash {0}", infoHash);
     }
 
     public interface PeerDiscoveryListener {
