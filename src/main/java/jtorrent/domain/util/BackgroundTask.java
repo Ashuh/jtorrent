@@ -2,13 +2,23 @@ package jtorrent.domain.util;
 
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
+import java.util.Optional;
 
 public abstract class BackgroundTask implements Runnable {
 
     private static final Logger LOGGER = System.getLogger(BackgroundTask.class.getName());
 
-    private final Thread thread = new Thread(this);
+    private final Thread thread;
     private volatile State state = State.IDLE;
+
+    protected BackgroundTask() {
+        thread = new Thread(this);
+        getThreadName().ifPresent(thread::setName);
+    }
+
+    protected Optional<String> getThreadName() {
+        return Optional.empty();
+    }
 
     @Override
     public final void run() {
@@ -36,6 +46,12 @@ public abstract class BackgroundTask implements Runnable {
 
     protected abstract void execute() throws InterruptedException;
 
+    protected void doOnStarted() {
+    }
+
+    protected void doOnStopped() {
+    }
+
     public final synchronized void start() {
         if (state != State.IDLE) {
             boolean isStopRequested = state == State.STOPPING || state == State.STOPPED;
@@ -53,6 +69,9 @@ public abstract class BackgroundTask implements Runnable {
         thread.start();
     }
 
+    protected void doOnStart() {
+    }
+
     public final synchronized void stop() {
         if (state != State.STARTING && state != State.STARTED) {
             LOGGER.log(Level.DEBUG, "Task: {0} is not running or is already stopping", getClass().getName());
@@ -65,20 +84,11 @@ public abstract class BackgroundTask implements Runnable {
         thread.interrupt();
     }
 
-    public boolean isStopping() {
-        return state == State.STOPPING;
-    }
-
-    protected void doOnStart() {
-    }
-
-    protected void doOnStarted() {
-    }
-
     protected void doOnStop() {
     }
 
-    protected void doOnStopped() {
+    public boolean isStopping() {
+        return state == State.STOPPING;
     }
 
     private enum State {

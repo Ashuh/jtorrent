@@ -22,7 +22,6 @@ import java.util.stream.Collectors;
 
 import com.dampcake.bencode.BencodeInputStream;
 
-import jtorrent.data.model.BencodedObject;
 import jtorrent.data.model.exception.MappingException;
 import jtorrent.data.model.torrent.info.BencodedFile;
 import jtorrent.data.model.torrent.info.BencodedInfo;
@@ -32,6 +31,7 @@ import jtorrent.domain.model.torrent.Torrent;
 import jtorrent.domain.model.tracker.Tracker;
 import jtorrent.domain.model.tracker.factory.TrackerFactory;
 import jtorrent.domain.util.Sha1Hash;
+import jtorrent.domain.util.bencode.BencodedObject;
 
 public class BencodedTorrent extends BencodedObject {
 
@@ -68,8 +68,8 @@ public class BencodedTorrent extends BencodedObject {
     public static BencodedTorrent fromMap(Map<String, Object> map) {
         String announce = getValueAsString(map, KEY_ANNOUNCE).orElseThrow();
 
-        List<List<ByteBuffer>> annouceListRaw = getValueAsList(map, KEY_ANNOUNCE_LIST);
-        List<List<String>> announceList = annouceListRaw.stream()
+        List<List<ByteBuffer>> announceListRaw = getValueAsList(map, KEY_ANNOUNCE_LIST);
+        List<List<String>> announceList = announceListRaw.stream()
                 .map(buffers -> buffers.stream()
                         .map(buffer -> new String(buffer.array()))
                         .collect(Collectors.toList()))

@@ -3,30 +3,40 @@ package jtorrent.domain.manager;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
 import jtorrent.domain.handler.torrent.TorrentHandler;
+import jtorrent.domain.manager.dht.DhtClient;
+import jtorrent.domain.manager.dht.DhtManager;
 import jtorrent.domain.model.localservicediscovery.Announce;
-import jtorrent.domain.model.peer.OutgoingPeer;
-import jtorrent.domain.model.peer.Peer;
+import jtorrent.domain.model.peer.PeerContactInfo;
 import jtorrent.domain.model.torrent.Torrent;
+import jtorrent.domain.repository.PieceRepository;
 import jtorrent.domain.repository.TorrentRepository;
+import jtorrent.domain.socket.PeerSocket;
 import jtorrent.domain.util.RxObservableList;
 import jtorrent.domain.util.Sha1Hash;
 
-public class TorrentManager implements IncomingConnectionManager.Listener, LocalServiceDiscoveryManager.Listener {
+public class Client implements IncomingConnectionManager.Listener, LocalServiceDiscoveryManager.Listener,
+        TorrentHandler.Listener, DhtManager.PeerDiscoveryListener {
 
-    private static final Logger LOGGER = System.getLogger(TorrentManager.class.getName());
+    private static final Logger LOGGER = System.getLogger(Client.class.getName());
 
     private final IncomingConnectionManager incomingConnectionManager;
     private final LocalServiceDiscoveryManager localServiceDiscoveryManager;
+    private final DhtClient dhtManager;
     private final Map<Sha1Hash, TorrentHandler> infoHashToTorrentHandler = new HashMap<>();
     private final TorrentRepository torrentRepository;
+    private final PieceRepository pieceRepository;
 
-    public TorrentManager(TorrentRepository torrentRepository, IncomingConnectionManager incomingConnectionManager,
-            LocalServiceDiscoveryManager localServiceDiscoveryManager) {
+    public Client(TorrentRepository torrentRepository, PieceRepository pieceRepository,
+            IncomingConnectionManager incomingConnectionManager,
+            LocalServiceDiscoveryManager localServiceDiscoveryManager, DhtClient dhtClient) {
         this.torrentRepository = torrentRepository;
+        this.pieceRepository = pieceRepository;
 
         this.incomingConnectionManager = incomingConnectionManager;
         this.incomingConnectionManager.addListener(this);
@@ -35,6 +45,10 @@ public class TorrentManager implements IncomingConnectionManager.Listener, Local
         this.localServiceDiscoveryManager = localServiceDiscoveryManager;
         this.localServiceDiscoveryManager.addListener(this);
         this.localServiceDiscoveryManager.start();
+
+        this.dhtManager = dhtClient;
+        this.dhtManager.addPeerDiscoveryListener(this);
+        this.dhtManager.start();
 
         torrentRepository.getTorrents().subscribe(event -> {
             switch (event.getType()) {
@@ -57,6 +71,7 @@ public class TorrentManager implements IncomingConnectionManager.Listener, Local
     public void shutdown() {
         incomingConnectionManager.stop();
         localServiceDiscoveryManager.stop();
+        dhtManager.stop();
         infoHashToTorrentHandler.values().forEach(TorrentHandler::stop);
     }
 
@@ -66,28 +81,31 @@ public class TorrentManager implements IncomingConnectionManager.Listener, Local
 
     public void startTorrent(Torrent torrent) {
         LOGGER.log(Level.INFO, "Starting torrent " + torrent.getName());
-        TorrentHandler torrentHandler = new TorrentHandler(torrent);
+        TorrentHandler torrentHandler = new TorrentHandler(torrent, pieceRepository);
         infoHashToTorrentHandler.put(torrent.getInfoHash(), torrentHandler);
+        torrentHandler.addListener(this);
         torrentHandler.start();
         localServiceDiscoveryManager.addInfoHash(torrent.getInfoHash());
+        dhtManager.registerInfoHash(torrent.getInfoHash());
     }
 
     public void stopTorrent(Torrent torrent) {
         LOGGER.log(Level.INFO, "Stopping torrent " + torrent.getName());
         TorrentHandler torrentHandler = infoHashToTorrentHandler.remove(torrent.getInfoHash());
         torrentHandler.stop();
+        dhtManager.deregisterInfoHash(torrent.getInfoHash());
         // TODO: remove from local service discovery
     }
 
     @Override
-    public void onIncomingPeerConnection(Peer peer, Sha1Hash infoHash) {
+    public void onIncomingPeerConnection(PeerSocket peerSocket, Sha1Hash infoHash) {
         if (!infoHashToTorrentHandler.containsKey(infoHash)) {
-            LOGGER.log(Level.INFO, "No torrent found for infohash " + infoHash);
+            LOGGER.log(Level.ERROR, "No torrent found for infohash " + infoHash);
             return;
         }
 
         TorrentHandler torrentHandler = infoHashToTorrentHandler.get(infoHash);
-        torrentHandler.addPeer(peer);
+        torrentHandler.handleIncomingPeerConnection(peerSocket);
     }
 
     public RxObservableList<Torrent> getTorrents() {
@@ -100,8 +118,26 @@ public class TorrentManager implements IncomingConnectionManager.Listener, Local
                 .filter(infoHashToTorrentHandler::containsKey)
                 .map(infoHashToTorrentHandler::get)
                 .forEach(torrentHandler -> {
-                    OutgoingPeer peer = new OutgoingPeer(sourceAddress, announce.getPort());
-                    torrentHandler.addPeer(peer);
+                    PeerContactInfo peerContactInfo = new PeerContactInfo(sourceAddress, announce.getPort());
+                    torrentHandler.handleDiscoveredPeerContact(peerContactInfo);
                 });
+    }
+
+    @Override
+    public void onDhtNodeDiscovered(InetSocketAddress address) {
+        LOGGER.log(Level.DEBUG, "DHT node discovered: " + address);
+        dhtManager.addBootstrapNodeAddress(address);
+    }
+
+    @Override
+    public void onPeersDiscovered(Sha1Hash infoHash, Collection<PeerContactInfo> peers) {
+        LOGGER.log(Level.INFO, "Discovered " + peers.size() + " peers for info hash " + infoHash);
+        if (!infoHashToTorrentHandler.containsKey(infoHash)) {
+            LOGGER.log(Level.ERROR, "No torrent found for infohash " + infoHash);
+            return;
+        }
+
+        TorrentHandler torrentHandler = infoHashToTorrentHandler.get(infoHash);
+        peers.forEach(torrentHandler::handleDiscoveredPeerContact);
     }
 }

@@ -7,6 +7,7 @@ import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -17,39 +18,48 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import jtorrent.data.repository.FilePieceRepository;
 import jtorrent.domain.handler.peer.PeerHandler;
 import jtorrent.domain.handler.tracker.TrackerHandler;
 import jtorrent.domain.handler.tracker.factory.TrackerHandlerFactory;
 import jtorrent.domain.model.peer.Peer;
+import jtorrent.domain.model.peer.PeerContactInfo;
 import jtorrent.domain.model.peer.message.typed.Piece;
 import jtorrent.domain.model.torrent.Block;
 import jtorrent.domain.model.torrent.Torrent;
 import jtorrent.domain.model.tracker.PeerResponse;
 import jtorrent.domain.repository.PieceRepository;
+import jtorrent.domain.socket.PeerSocket;
 import jtorrent.domain.util.BackgroundTask;
 import jtorrent.domain.util.Sha1Hash;
 
 public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Listener {
 
     private static final Logger LOGGER = getLogger(TorrentHandler.class.getName());
+    private static final ExecutorService PEER_CONNECTION_EXECUTOR = Executors.newCachedThreadPool();
 
     private final Torrent torrent;
     private final Set<TrackerHandler> trackerHandlers;
     private final Set<PeerHandler> peerHandlers = new HashSet<>();
     private final Map<Integer, Set<PeerHandler>> pieceIndexToAvailablePeerHandlers = new HashMap<>();
     private final WorkDispatcher workDispatcher = new WorkDispatcher();
-    private final PieceRepository repository = new FilePieceRepository();
+    private final PieceRepository repository;
     private final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1);
+    /**
+     * Set of peer contacts that are currently being connected to.
+     */
+    private final AtomicCheckAndAddSet<PeerContactInfo> pendingContacts = new AtomicCheckAndAddSet<>();
+    private final List<Listener> listeners = new ArrayList<>();
 
-    public TorrentHandler(Torrent torrent) {
+    public TorrentHandler(Torrent torrent, PieceRepository pieceRepository) {
         this.torrent = requireNonNull(torrent);
+        this.repository = requireNonNull(pieceRepository);
 
         trackerHandlers = torrent.getTrackers().stream()
                 .map(tracker -> TrackerHandlerFactory.create(torrent, tracker))
@@ -72,14 +82,71 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.List
         executorService.shutdownNow();
         peerHandlers.forEach(PeerHandler::stop);
         torrent.clearPeers();
+        PEER_CONNECTION_EXECUTOR.shutdownNow();
     }
 
-    public void addPeer(Peer peer) {
+    public void handleIncomingPeerConnection(PeerSocket peerSocket) {
+        PeerContactInfo peerContactInfo = peerSocket.getPeerContactInfo();
+
+        if (torrent.hasPeer(peerContactInfo)) {
+            return;
+        }
+
+        if (!pendingContacts.checkAndAdd(peerContactInfo)) {
+            return;
+        }
+
+        PEER_CONNECTION_EXECUTOR.execute(() -> {
+            try {
+                peerSocket.connect(torrent.getInfoHash(), true);
+                LOGGER.log(Level.INFO, "Connected to {0}", peerContactInfo);
+                addNewPeerConnection(peerSocket);
+            } catch (IOException e) {
+                LOGGER.log(Level.ERROR, "Failed to connect to peer: {0}", peerContactInfo);
+            } finally {
+                pendingContacts.remove(peerContactInfo);
+            }
+        });
+    }
+
+    public void handleDiscoveredPeerContact(PeerContactInfo peerContactInfo) {
+        if (torrent.hasPeer(peerContactInfo)) {
+            return;
+        }
+
+        if (!pendingContacts.checkAndAdd(peerContactInfo)) {
+            return;
+        }
+
+        PEER_CONNECTION_EXECUTOR.execute(() -> {
+            try {
+                PeerSocket peerSocket = new PeerSocket(peerContactInfo);
+                LOGGER.log(Level.INFO, "Connected to {0}", peerContactInfo);
+                peerSocket.connect(torrent.getInfoHash(), true);
+                addNewPeerConnection(peerSocket);
+            } catch (IOException e) {
+                LOGGER.log(Level.ERROR, "Failed to connect to peer: {0}", peerContactInfo);
+            } finally {
+                pendingContacts.remove(peerContactInfo);
+            }
+        });
+    }
+
+    private void addNewPeerConnection(PeerSocket peerSocket) {
+        if (torrent.hasPeer(peerSocket.getPeerContactInfo())) {
+            return;
+        }
+
+        Peer peer = new Peer(peerSocket.getPeerContactInfo());
         torrent.addPeer(peer);
-        PeerHandler peerHandler = new PeerHandler(peer, torrent);
+        PeerHandler peerHandler = new PeerHandler(peer, peerSocket, torrent);
         peerHandler.addListener(this);
         peerHandlers.add(peerHandler);
         peerHandler.start();
+    }
+
+    public void addListener(Listener listener) {
+        listeners.add(listener);
     }
 
     @Override
@@ -152,11 +219,21 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.List
     }
 
     @Override
+    public void onPortReceived(PeerHandler peerHandler, int port) {
+        InetSocketAddress address = new InetSocketAddress(peerHandler.getAddress(), port);
+        listeners.forEach(listener -> listener.onDhtNodeDiscovered(address));
+    }
+
+    @Override
     public void onAnnounceResponse(List<PeerResponse> peerResponses) {
         peerResponses.stream()
-                .map(PeerResponse::toPeer)
-                .filter(Predicate.not(torrent::hasPeer))
-                .forEach(this::addPeer);
+                .map(PeerResponse::toPeerContactInfo)
+                .forEach(this::handleDiscoveredPeerContact);
+    }
+
+    public interface Listener {
+
+        void onDhtNodeDiscovered(InetSocketAddress address);
     }
 
     private class WorkDispatcher extends BackgroundTask {
@@ -284,6 +361,23 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.List
 
             optimisticUnchokedPeerHandler = peerHandler;
             optimisticUnchokedPeerHandler.unchoke();
+        }
+    }
+
+    public static class AtomicCheckAndAddSet<E> {
+
+        private final Set<E> set = new HashSet<>();
+
+        public synchronized boolean checkAndAdd(E element) {
+            if (set.contains(element)) {
+                return false;
+            }
+            return set.add(element);
+
+        }
+
+        public synchronized boolean remove(E element) {
+            return set.remove(element);
         }
     }
 }

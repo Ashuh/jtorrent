@@ -7,7 +7,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-import jtorrent.data.model.BencodedObject;
+import jtorrent.domain.util.bencode.BencodedObject;
 
 public abstract class BencodedInfo extends BencodedObject {
 

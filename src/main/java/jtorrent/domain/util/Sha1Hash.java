@@ -2,11 +2,10 @@ package jtorrent.domain.util;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
 
 import jtorrent.domain.util.exception.Sha1AlgorithmUnavailableException;
 
-public class Sha1Hash {
+public class Sha1Hash extends Bit160Value {
 
     public static final int HASH_SIZE = 20;
 
@@ -20,13 +19,8 @@ public class Sha1Hash {
         }
     }
 
-    private final byte[] bytes;
-
     public Sha1Hash(byte[] hash) {
-        if (hash.length != HASH_SIZE) {
-            throw new IllegalArgumentException("SHA1 hash must be 20 bytes long");
-        }
-        this.bytes = hash;
+        super(hash);
     }
 
     /**
@@ -51,27 +45,6 @@ public class Sha1Hash {
             hash[i] = (byte) Integer.parseInt(hexString.substring(i * 2, i * 2 + 2), 16);
         }
         return new Sha1Hash(hash);
-    }
-
-    public byte[] getBytes() {
-        return bytes;
-    }
-
-    @Override
-    public int hashCode() {
-        return Arrays.hashCode(bytes);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        Sha1Hash sha1Hash = (Sha1Hash) o;
-        return Arrays.equals(bytes, sha1Hash.bytes);
     }
 
     @Override
