@@ -47,6 +47,10 @@ public class DhtClient {
         dhtManager.registerInfoHash(infoHash);
     }
 
+    public void deregisterInfoHash(Sha1Hash infoHash) {
+        dhtManager.deregisterInfoHash(infoHash);
+    }
+
     public void addBootstrapNodeAddress(InetSocketAddress address) {
         dhtManager.addBootstrapNodeAddress(address);
     }

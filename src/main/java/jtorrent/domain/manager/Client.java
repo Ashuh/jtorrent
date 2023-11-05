@@ -93,6 +93,7 @@ public class Client implements IncomingConnectionManager.Listener, LocalServiceD
         LOGGER.log(Level.INFO, "Stopping torrent " + torrent.getName());
         TorrentHandler torrentHandler = infoHashToTorrentHandler.remove(torrent.getInfoHash());
         torrentHandler.stop();
+        dhtManager.deregisterInfoHash(torrent.getInfoHash());
         // TODO: remove from local service discovery
     }
 
