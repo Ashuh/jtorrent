@@ -7,6 +7,7 @@ import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import jtorrent.domain.model.peer.Peer;
@@ -36,7 +37,7 @@ public class PeerHandler {
     private final Torrent torrent;
     private final List<Listener> listeners = new ArrayList<>();
     private final Set<Integer> availablePieces = new HashSet<>();
-    private final HandlePeerTask handlePeerTask = new HandlePeerTask();
+    private final HandlePeerTask handlePeerTask;
 
     private boolean isBusy = false;
 
@@ -44,6 +45,7 @@ public class PeerHandler {
         this.peerSocket = peerSocket;
         this.peer = peer;
         this.torrent = torrent;
+        handlePeerTask = new HandlePeerTask();
     }
 
     public void start() {
@@ -150,6 +152,11 @@ public class PeerHandler {
     }
 
     private class HandlePeerTask extends BackgroundTask {
+
+        @Override
+        protected Optional<String> getThreadName() {
+            return Optional.of("PeerHandler-" + peer.getPeerContactInfo());
+        }
 
         @Override
         protected void execute() {
