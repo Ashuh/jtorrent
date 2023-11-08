@@ -6,8 +6,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
-import jtorrent.tracker.domain.model.Event;
 import jtorrent.common.domain.util.Sha1Hash;
+import jtorrent.tracker.domain.model.Event;
 
 public class HttpAnnounceRequest {
 

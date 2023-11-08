@@ -5,11 +5,11 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
 
+import jtorrent.common.domain.util.bencode.BencodedMap;
 import jtorrent.dht.domain.model.message.TransactionId;
 import jtorrent.dht.domain.model.message.query.Method;
 import jtorrent.dht.domain.model.node.NodeContactInfo;
 import jtorrent.dht.domain.model.node.NodeId;
-import jtorrent.common.domain.util.bencode.BencodedMap;
 
 public class FindNodeResponse extends Response {
 

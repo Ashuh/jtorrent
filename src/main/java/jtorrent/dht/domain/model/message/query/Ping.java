@@ -3,10 +3,10 @@ package jtorrent.dht.domain.model.message.query;
 import java.util.Collections;
 import java.util.Map;
 
+import jtorrent.common.domain.util.bencode.BencodedMap;
 import jtorrent.dht.domain.model.message.DhtMessage;
 import jtorrent.dht.domain.model.message.TransactionId;
 import jtorrent.dht.domain.model.node.NodeId;
-import jtorrent.common.domain.util.bencode.BencodedMap;
 
 public class Ping extends Query {
 

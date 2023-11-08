@@ -7,10 +7,10 @@ import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.stream.IntStream;
 
+import jtorrent.common.domain.util.RangeList;
 import jtorrent.torrent.domain.model.File;
 import jtorrent.torrent.domain.model.Torrent;
 import jtorrent.torrent.domain.repository.PieceRepository;
-import jtorrent.common.domain.util.RangeList;
 
 public class FilePieceRepository implements PieceRepository {
 

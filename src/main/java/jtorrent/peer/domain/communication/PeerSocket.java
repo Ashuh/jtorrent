@@ -10,13 +10,13 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 
+import jtorrent.common.domain.util.Sha1Hash;
 import jtorrent.peer.domain.model.PeerContactInfo;
 import jtorrent.peer.domain.model.exception.InfoHashMismatchException;
 import jtorrent.peer.domain.model.exception.UnexpectedEndOfStreamException;
 import jtorrent.peer.domain.model.message.Handshake;
 import jtorrent.peer.domain.model.message.PeerMessage;
 import jtorrent.peer.domain.model.message.PeerMessageUnpacker;
-import jtorrent.common.domain.util.Sha1Hash;
 
 public class PeerSocket {
 

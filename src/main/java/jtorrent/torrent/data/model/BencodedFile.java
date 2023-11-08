@@ -10,8 +10,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import jtorrent.torrent.domain.model.File;
 import jtorrent.common.domain.util.bencode.BencodedObject;
+import jtorrent.torrent.domain.model.File;
 
 public class BencodedFile extends BencodedObject {
 

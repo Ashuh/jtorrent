@@ -18,12 +18,12 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.stream.Collectors;
 
+import jtorrent.common.domain.util.Bit160Value;
 import jtorrent.dht.domain.handler.DhtManager;
 import jtorrent.dht.domain.handler.node.Node;
 import jtorrent.dht.domain.handler.util.DistanceToTargetComparator;
 import jtorrent.dht.domain.model.message.response.Response;
 import jtorrent.dht.domain.model.node.NodeContactInfo;
-import jtorrent.common.domain.util.Bit160Value;
 
 public abstract class IterativeLookup<T extends Response, U extends Bit160Value, R> {
 

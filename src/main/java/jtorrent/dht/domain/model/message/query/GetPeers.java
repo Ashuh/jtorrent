@@ -6,10 +6,10 @@ import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.Objects;
 
-import jtorrent.dht.domain.model.message.TransactionId;
-import jtorrent.dht.domain.model.node.NodeId;
 import jtorrent.common.domain.util.Sha1Hash;
 import jtorrent.common.domain.util.bencode.BencodedMap;
+import jtorrent.dht.domain.model.message.TransactionId;
+import jtorrent.dht.domain.model.node.NodeId;
 
 public class GetPeers extends Query {
 

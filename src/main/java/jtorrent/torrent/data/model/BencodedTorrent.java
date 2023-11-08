@@ -22,13 +22,13 @@ import java.util.stream.Collectors;
 
 import com.dampcake.bencode.BencodeInputStream;
 
+import jtorrent.common.domain.util.Sha1Hash;
+import jtorrent.common.domain.util.bencode.BencodedObject;
+import jtorrent.torrent.data.model.exception.MappingException;
 import jtorrent.torrent.domain.model.File;
 import jtorrent.torrent.domain.model.Torrent;
 import jtorrent.tracker.domain.model.Tracker;
 import jtorrent.tracker.domain.model.factory.TrackerFactory;
-import jtorrent.common.domain.util.Sha1Hash;
-import jtorrent.common.domain.util.bencode.BencodedObject;
-import jtorrent.torrent.data.model.exception.MappingException;
 
 public class BencodedTorrent extends BencodedObject {
 

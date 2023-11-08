@@ -14,12 +14,12 @@ import java.util.stream.Collectors;
 import com.dampcake.bencode.BencodeInputStream;
 
 import jtorrent.common.domain.Constants;
+import jtorrent.common.domain.util.Sha1Hash;
 import jtorrent.tracker.domain.model.AnnounceResponse;
 import jtorrent.tracker.domain.model.Event;
 import jtorrent.tracker.domain.model.Tracker;
 import jtorrent.tracker.domain.model.http.request.HttpAnnounceRequest;
 import jtorrent.tracker.domain.model.http.response.HttpAnnounceResponse;
-import jtorrent.common.domain.util.Sha1Hash;
 
 public class HttpTracker implements Tracker {
 

@@ -6,13 +6,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
+import jtorrent.common.domain.util.bencode.BencodedMap;
 import jtorrent.dht.domain.model.message.DhtMessage;
 import jtorrent.dht.domain.model.message.MessageType;
 import jtorrent.dht.domain.model.message.TransactionId;
 import jtorrent.dht.domain.model.message.query.Method;
 import jtorrent.dht.domain.model.message.query.Query;
 import jtorrent.dht.domain.model.node.NodeId;
-import jtorrent.common.domain.util.bencode.BencodedMap;
 
 public abstract class Response extends DhtMessage {
 

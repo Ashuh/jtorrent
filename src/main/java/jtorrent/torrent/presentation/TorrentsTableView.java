@@ -12,7 +12,6 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.ProgressBarTableCell;
 import jtorrent.common.presentation.UiComponent;
-import jtorrent.torrent.presentation.UiTorrent;
 
 public class TorrentsTableView extends UiComponent {
 

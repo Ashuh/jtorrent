@@ -17,9 +17,9 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import jtorrent.common.domain.Constants;
-import jtorrent.lsd.domain.model.Announce;
 import jtorrent.common.domain.util.BackgroundTask;
 import jtorrent.common.domain.util.Sha1Hash;
+import jtorrent.lsd.domain.model.Announce;
 
 public class LocalServiceDiscoveryManager {
 

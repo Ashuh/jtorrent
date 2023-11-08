@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
+import jtorrent.common.domain.util.bencode.BencodedMap;
 import jtorrent.dht.domain.model.message.DhtMessage;
 import jtorrent.dht.domain.model.message.MessageType;
 import jtorrent.dht.domain.model.message.TransactionId;
@@ -14,14 +15,13 @@ import jtorrent.dht.domain.model.message.query.AnnouncePeer;
 import jtorrent.dht.domain.model.message.query.FindNode;
 import jtorrent.dht.domain.model.message.query.GetPeers;
 import jtorrent.dht.domain.model.message.query.Method;
-import jtorrent.dht.domain.model.message.query.Query;
 import jtorrent.dht.domain.model.message.query.Ping;
+import jtorrent.dht.domain.model.message.query.Query;
 import jtorrent.dht.domain.model.message.response.AnnouncePeerResponse;
 import jtorrent.dht.domain.model.message.response.FindNodeResponse;
 import jtorrent.dht.domain.model.message.response.GetPeersResponse;
 import jtorrent.dht.domain.model.message.response.PingResponse;
 import jtorrent.dht.domain.model.message.response.Response;
-import jtorrent.common.domain.util.bencode.BencodedMap;
 
 public class DhtMessageDecoder {
 

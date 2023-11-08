@@ -15,6 +15,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
+import jtorrent.common.domain.util.BackgroundTask;
 import jtorrent.dht.domain.model.message.DhtMessage;
 import jtorrent.dht.domain.model.message.TransactionId;
 import jtorrent.dht.domain.model.message.decoder.DhtDecodingException;
@@ -32,7 +33,6 @@ import jtorrent.dht.domain.model.message.response.GetPeersResponse;
 import jtorrent.dht.domain.model.message.response.PingResponse;
 import jtorrent.dht.domain.model.message.response.Response;
 import jtorrent.dht.domain.model.node.NodeContactInfo;
-import jtorrent.common.domain.util.BackgroundTask;
 
 public class DhtSocket {
 

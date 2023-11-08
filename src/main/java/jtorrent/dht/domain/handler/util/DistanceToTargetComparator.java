@@ -5,9 +5,9 @@ import static jtorrent.common.domain.util.ValidationUtil.requireNonNull;
 import java.math.BigInteger;
 import java.util.Comparator;
 
+import jtorrent.common.domain.util.Bit160Value;
 import jtorrent.dht.domain.handler.node.Node;
 import jtorrent.dht.domain.model.node.NodeId;
-import jtorrent.common.domain.util.Bit160Value;
 
 /**
  * Compares {@link Node}s by the distance of their {@link NodeId} to a {@link Bit160Value} target.

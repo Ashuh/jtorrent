@@ -7,9 +7,9 @@ import java.nio.ByteOrder;
 
 import org.junit.jupiter.api.Test;
 
+import jtorrent.common.domain.util.Sha1Hash;
 import jtorrent.tracker.domain.model.Event;
 import jtorrent.tracker.domain.model.udp.message.Action;
-import jtorrent.common.domain.util.Sha1Hash;
 
 class UdpAnnounceRequestTest {
 

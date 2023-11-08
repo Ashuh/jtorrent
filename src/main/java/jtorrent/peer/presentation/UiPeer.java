@@ -6,8 +6,8 @@ import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
-import jtorrent.peer.domain.model.Peer;
 import jtorrent.common.presentation.util.UpdatePropertyConsumer;
+import jtorrent.peer.domain.model.Peer;
 
 public class UiPeer {
 

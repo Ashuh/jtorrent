@@ -27,7 +27,6 @@ import java.util.stream.Collectors;
 
 import jtorrent.common.domain.util.BackgroundTask;
 import jtorrent.common.domain.util.Sha1Hash;
-import jtorrent.tracker.domain.model.PeerResponse;
 import jtorrent.peer.domain.communication.PeerSocket;
 import jtorrent.peer.domain.handler.PeerHandler;
 import jtorrent.peer.domain.model.Peer;
@@ -38,6 +37,7 @@ import jtorrent.torrent.domain.model.Torrent;
 import jtorrent.torrent.domain.repository.PieceRepository;
 import jtorrent.tracker.domain.handler.TrackerHandler;
 import jtorrent.tracker.domain.handler.factory.TrackerHandlerFactory;
+import jtorrent.tracker.domain.model.PeerResponse;
 
 public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Listener {
 

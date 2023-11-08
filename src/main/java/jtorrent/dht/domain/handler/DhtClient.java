@@ -6,10 +6,10 @@ import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
 
+import jtorrent.common.domain.util.Sha1Hash;
+import jtorrent.dht.domain.communication.DhtSocket;
 import jtorrent.dht.domain.handler.node.Node;
 import jtorrent.dht.domain.handler.routingtable.RoutingTable;
-import jtorrent.dht.domain.communication.DhtSocket;
-import jtorrent.common.domain.util.Sha1Hash;
 
 public class DhtClient {
 

@@ -17,6 +17,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 
+import jtorrent.common.domain.util.Sha1Hash;
+import jtorrent.dht.domain.communication.DhtSocket;
 import jtorrent.dht.domain.model.message.query.AnnouncePeer;
 import jtorrent.dht.domain.model.message.query.FindNode;
 import jtorrent.dht.domain.model.message.query.GetPeers;
@@ -30,8 +32,6 @@ import jtorrent.dht.domain.model.message.response.Response;
 import jtorrent.dht.domain.model.node.NodeContactInfo;
 import jtorrent.dht.domain.model.node.NodeId;
 import jtorrent.peer.domain.model.PeerContactInfo;
-import jtorrent.dht.domain.communication.DhtSocket;
-import jtorrent.common.domain.util.Sha1Hash;
 
 public class Node {
 

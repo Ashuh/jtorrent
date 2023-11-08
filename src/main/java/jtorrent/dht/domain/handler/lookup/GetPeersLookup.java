@@ -11,10 +11,10 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import jtorrent.common.domain.util.Sha1Hash;
 import jtorrent.dht.domain.handler.node.Node;
 import jtorrent.dht.domain.model.message.response.GetPeersResponse;
 import jtorrent.peer.domain.model.PeerContactInfo;
-import jtorrent.common.domain.util.Sha1Hash;
 
 public class GetPeersLookup extends IterativeLookup<GetPeersResponse, Sha1Hash, GetPeersLookup.Result> {
 

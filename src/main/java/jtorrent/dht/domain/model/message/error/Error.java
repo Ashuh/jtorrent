@@ -4,11 +4,11 @@ import static java.util.Objects.requireNonNull;
 
 import java.util.Objects;
 
+import jtorrent.common.domain.util.bencode.BencodedList;
+import jtorrent.common.domain.util.bencode.BencodedMap;
 import jtorrent.dht.domain.model.message.DhtMessage;
 import jtorrent.dht.domain.model.message.MessageType;
 import jtorrent.dht.domain.model.message.TransactionId;
-import jtorrent.common.domain.util.bencode.BencodedList;
-import jtorrent.common.domain.util.bencode.BencodedMap;
 
 public class Error extends DhtMessage {
 

@@ -1,12 +1,12 @@
 package jtorrent.tracker.domain.handler.factory;
 
-import jtorrent.tracker.domain.model.Tracker;
-import jtorrent.tracker.domain.model.http.HttpTracker;
-import jtorrent.tracker.domain.model.udp.UdpTracker;
 import jtorrent.torrent.domain.model.Torrent;
 import jtorrent.tracker.domain.handler.HttpTrackerHandler;
 import jtorrent.tracker.domain.handler.TrackerHandler;
 import jtorrent.tracker.domain.handler.UdpTrackerHandler;
+import jtorrent.tracker.domain.model.Tracker;
+import jtorrent.tracker.domain.model.http.HttpTracker;
+import jtorrent.tracker.domain.model.udp.UdpTracker;
 
 public class TrackerHandlerFactory {
 

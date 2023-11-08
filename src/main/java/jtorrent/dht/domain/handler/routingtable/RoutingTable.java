@@ -7,10 +7,10 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
+import jtorrent.common.domain.util.Bit160Value;
 import jtorrent.dht.domain.handler.node.Node;
 import jtorrent.dht.domain.handler.util.DistanceToTargetComparator;
 import jtorrent.dht.domain.model.node.NodeId;
-import jtorrent.common.domain.util.Bit160Value;
 
 public class RoutingTable {
 

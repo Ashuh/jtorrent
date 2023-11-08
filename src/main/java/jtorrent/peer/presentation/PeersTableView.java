@@ -6,7 +6,6 @@ import javafx.fxml.FXML;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import jtorrent.common.presentation.UiComponent;
-import jtorrent.peer.presentation.UiPeer;
 
 public class PeersTableView extends UiComponent {
 

@@ -16,6 +16,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import jtorrent.common.domain.util.Bit160Value;
+import jtorrent.dht.domain.communication.DhtSocket;
 import jtorrent.dht.domain.handler.node.Node;
 import jtorrent.dht.domain.handler.routingtable.RoutingTable;
 import jtorrent.dht.domain.model.message.query.AnnouncePeer;
@@ -24,8 +26,6 @@ import jtorrent.dht.domain.model.message.query.GetPeers;
 import jtorrent.dht.domain.model.message.query.Ping;
 import jtorrent.dht.domain.model.node.NodeContactInfo;
 import jtorrent.peer.domain.model.PeerContactInfo;
-import jtorrent.dht.domain.communication.DhtSocket;
-import jtorrent.common.domain.util.Bit160Value;
 
 public class DhtQueryHandler implements DhtSocket.QueryHandler {
 

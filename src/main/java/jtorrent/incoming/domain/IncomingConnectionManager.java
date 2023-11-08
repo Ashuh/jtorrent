@@ -14,10 +14,10 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import jtorrent.peer.domain.model.message.Handshake;
-import jtorrent.peer.domain.communication.PeerSocket;
 import jtorrent.common.domain.util.BackgroundTask;
 import jtorrent.common.domain.util.Sha1Hash;
+import jtorrent.peer.domain.communication.PeerSocket;
+import jtorrent.peer.domain.model.message.Handshake;
 
 public class IncomingConnectionManager {
 

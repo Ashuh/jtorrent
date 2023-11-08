@@ -15,10 +15,10 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import jtorrent.common.domain.util.BackgroundTask;
+import jtorrent.torrent.domain.model.Torrent;
 import jtorrent.tracker.domain.model.AnnounceResponse;
 import jtorrent.tracker.domain.model.Event;
 import jtorrent.tracker.domain.model.PeerResponse;
-import jtorrent.torrent.domain.model.Torrent;
 
 public abstract class TrackerHandler {
 

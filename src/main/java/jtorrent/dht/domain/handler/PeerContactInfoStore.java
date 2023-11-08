@@ -7,8 +7,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import jtorrent.peer.domain.model.PeerContactInfo;
 import jtorrent.common.domain.util.Sha1Hash;
+import jtorrent.peer.domain.model.PeerContactInfo;
 
 public class PeerContactInfoStore {
 

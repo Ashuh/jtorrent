@@ -11,13 +11,13 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import jtorrent.common.domain.util.bencode.BencodedMap;
 import jtorrent.dht.domain.model.message.TransactionId;
 import jtorrent.dht.domain.model.message.query.GetPeers;
 import jtorrent.dht.domain.model.message.query.Method;
 import jtorrent.dht.domain.model.node.NodeContactInfo;
 import jtorrent.dht.domain.model.node.NodeId;
 import jtorrent.peer.domain.model.PeerContactInfo;
-import jtorrent.common.domain.util.bencode.BencodedMap;
 
 /**
  * Represents a response to a {@link GetPeers} request.

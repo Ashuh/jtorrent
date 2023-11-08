@@ -3,10 +3,10 @@ package jtorrent.tracker.domain.handler;
 import static java.util.Objects.requireNonNull;
 
 import jtorrent.common.domain.util.Sha1Hash;
+import jtorrent.torrent.domain.model.Torrent;
 import jtorrent.tracker.domain.model.AnnounceResponse;
 import jtorrent.tracker.domain.model.Event;
 import jtorrent.tracker.domain.model.http.HttpTracker;
-import jtorrent.torrent.domain.model.Torrent;
 
 public class HttpTrackerHandler extends TrackerHandler {
 

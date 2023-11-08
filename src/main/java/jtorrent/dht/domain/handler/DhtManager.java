@@ -21,6 +21,7 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 import jtorrent.common.domain.Constants;
+import jtorrent.common.domain.util.Sha1Hash;
 import jtorrent.dht.domain.handler.lookup.GetPeersLookup;
 import jtorrent.dht.domain.handler.node.Node;
 import jtorrent.dht.domain.handler.routingtable.Bucket;
@@ -28,7 +29,6 @@ import jtorrent.dht.domain.handler.routingtable.RoutingTable;
 import jtorrent.dht.domain.handler.task.BootstrapTask;
 import jtorrent.dht.domain.handler.task.RefreshBucketTask;
 import jtorrent.peer.domain.model.PeerContactInfo;
-import jtorrent.common.domain.util.Sha1Hash;
 
 public class DhtManager {
 
