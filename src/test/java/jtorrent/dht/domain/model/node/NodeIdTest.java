@@ -1,4 +1,4 @@
-package jtorrent.domain.model.dht.node;
+package jtorrent.dht.domain.model.node;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -14,7 +14,6 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 import jtorrent.common.domain.util.Bit160Value;
-import jtorrent.dht.domain.model.node.NodeId;
 
 class NodeIdTest {
 
