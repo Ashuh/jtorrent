@@ -13,7 +13,8 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
-import jtorrent.domain.util.Bit160Value;
+import jtorrent.common.domain.util.Bit160Value;
+import jtorrent.dht.domain.model.node.NodeId;
 
 class NodeIdTest {
 

@@ -7,6 +7,8 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import jtorrent.common.domain.util.RangeList;
+
 class RangeListTest {
 
     private static final long RANGE_START = -10;

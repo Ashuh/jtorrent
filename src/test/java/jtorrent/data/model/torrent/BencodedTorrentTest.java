@@ -21,15 +21,16 @@ import org.junit.jupiter.api.Test;
 
 import com.dampcake.bencode.BencodeOutputStream;
 
-import jtorrent.data.model.torrent.info.BencodedFile;
-import jtorrent.data.model.torrent.info.BencodedInfo;
-import jtorrent.data.model.torrent.info.MultiFileInfo;
-import jtorrent.data.model.torrent.info.SingleFileInfo;
-import jtorrent.domain.model.torrent.File;
-import jtorrent.domain.model.torrent.Torrent;
-import jtorrent.domain.model.tracker.Tracker;
-import jtorrent.domain.model.tracker.udp.UdpTracker;
-import jtorrent.domain.util.Sha1Hash;
+import jtorrent.torrent.domain.model.File;
+import jtorrent.torrent.domain.model.Torrent;
+import jtorrent.tracker.domain.model.Tracker;
+import jtorrent.tracker.domain.model.udp.UdpTracker;
+import jtorrent.common.domain.util.Sha1Hash;
+import jtorrent.torrent.data.model.BencodedFile;
+import jtorrent.torrent.data.model.BencodedInfo;
+import jtorrent.torrent.data.model.BencodedTorrent;
+import jtorrent.torrent.data.model.MultiFileInfo;
+import jtorrent.torrent.data.model.SingleFileInfo;
 
 class BencodedTorrentTest {
 

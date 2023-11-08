@@ -10,8 +10,8 @@
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
-<?import jtorrent.presentation.view.PeersTableView?>
-<?import jtorrent.presentation.view.TorrentsTableView?>
+<?import jtorrent.peer.presentation.PeersTableView?>
+<?import jtorrent.torrent.presentation.TorrentsTableView?>
 
 <fx:root type="StackPane" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1">
     <BorderPane>
