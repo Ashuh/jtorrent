@@ -139,7 +139,7 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.List
 
         Peer peer = new Peer(peerSocket.getPeerContactInfo());
         torrent.addPeer(peer);
-        PeerHandler peerHandler = new PeerHandler(peer, peerSocket, torrent);
+        PeerHandler peerHandler = new PeerHandler(peer, peerSocket, torrent.getInfoHash());
         peerHandler.addListener(this);
         peerHandlers.add(peerHandler);
         peerHandler.start();

@@ -11,6 +11,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import jtorrent.common.domain.util.BackgroundTask;
+import jtorrent.common.domain.util.Sha1Hash;
 import jtorrent.peer.domain.communication.PeerSocket;
 import jtorrent.peer.domain.model.Peer;
 import jtorrent.peer.domain.model.message.KeepAlive;
@@ -26,7 +27,6 @@ import jtorrent.peer.domain.model.message.typed.Request;
 import jtorrent.peer.domain.model.message.typed.TypedPeerMessage;
 import jtorrent.peer.domain.model.message.typed.Unchoke;
 import jtorrent.torrent.domain.model.Block;
-import jtorrent.torrent.domain.model.Torrent;
 
 public class PeerHandler {
 
@@ -34,17 +34,17 @@ public class PeerHandler {
 
     private final Peer peer;
     private final PeerSocket peerSocket;
-    private final Torrent torrent;
+    private final Sha1Hash infoHash;
     private final List<Listener> listeners = new ArrayList<>();
     private final Set<Integer> availablePieces = new HashSet<>();
     private final HandlePeerTask handlePeerTask;
 
     private boolean isBusy = false;
 
-    public PeerHandler(Peer peer, PeerSocket peerSocket, Torrent torrent) {
+    public PeerHandler(Peer peer, PeerSocket peerSocket, Sha1Hash infoHash) {
         this.peerSocket = peerSocket;
         this.peer = peer;
-        this.torrent = torrent;
+        this.infoHash = infoHash;
         handlePeerTask = new HandlePeerTask();
     }
 
@@ -131,7 +131,7 @@ public class PeerHandler {
     public String toString() {
         return "PeerHandler{"
                 + "peer=" + peer
-                + ", torrent=" + torrent
+                + ", infoHash=" + infoHash
                 + ", isBusy=" + isBusy
                 + '}';
     }
@@ -175,7 +175,7 @@ public class PeerHandler {
         protected void doOnStarted() {
             try {
                 // TODO: hardcoded true for now
-                peerSocket.connect(torrent.getInfoHash(), true);
+                peerSocket.connect(infoHash, true);
                 sendInterested();
             } catch (IOException e) {
                 LOGGER.log(Level.ERROR, "Error while connecting to peer {0}", peer);
