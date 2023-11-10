@@ -13,51 +13,52 @@
 <fx:root type="StackPane" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1">
     <VBox>
         <ToolBar style="-fx-spacing: 4; -fx-padding: 0;">
-            <Button fx:id="addButton" mnemonicParsing="false" stylesheets="@button.css">
+            <Button fx:id="addButton" mnemonicParsing="false" stylesheets="@../../../presentation/view/button.css">
                 <tooltip>
                     <Tooltip text="Add Torrent" textAlignment="CENTER"/>
                 </tooltip>
                 <graphic>
                     <ImageView fitHeight="28.0" fitWidth="28.0" pickOnBounds="true" preserveRatio="true">
-                        <Image url="@outline_add_black_48dp.png"/>
+                        <Image url="@../../../presentation/view/outline_add_black_48dp.png"/>
                     </ImageView>
                 </graphic>
             </Button>
-            <Button fx:id="addUrlButton" mnemonicParsing="false" stylesheets="@button.css">
+            <Button fx:id="addUrlButton" mnemonicParsing="false" stylesheets="@../../../presentation/view/button.css">
                 <graphic>
                     <ImageView fitHeight="28.0" fitWidth="28.0" pickOnBounds="true" preserveRatio="true">
-                        <Image url="@outline_link_black_48dp.png"/>
-                    </ImageView>
-                </graphic>
-            </Button>
-            <Separator orientation="VERTICAL"/>
-            <Button fx:id="createFileButton" mnemonicParsing="false" stylesheets="@button.css">
-                <graphic>
-                    <ImageView fitHeight="28.0" fitWidth="28.0" pickOnBounds="true" preserveRatio="true">
-                        <Image url="@outline_insert_drive_file_black_48dp.png"/>
+                        <Image url="@../../../presentation/view/outline_link_black_48dp.png"/>
                     </ImageView>
                 </graphic>
             </Button>
             <Separator orientation="VERTICAL"/>
-            <Button fx:id="deleteButton" mnemonicParsing="false" stylesheets="@button.css">
+            <Button fx:id="createFileButton" mnemonicParsing="false"
+                    stylesheets="@../../../presentation/view/button.css">
                 <graphic>
                     <ImageView fitHeight="28.0" fitWidth="28.0" pickOnBounds="true" preserveRatio="true">
-                        <Image url="@outline_delete_black_48dp.png"/>
+                        <Image url="@../../../presentation/view/outline_insert_drive_file_black_48dp.png"/>
                     </ImageView>
                 </graphic>
             </Button>
             <Separator orientation="VERTICAL"/>
-            <Button fx:id="startButton" mnemonicParsing="false" stylesheets="@button.css">
+            <Button fx:id="deleteButton" mnemonicParsing="false" stylesheets="@../../../presentation/view/button.css">
                 <graphic>
                     <ImageView fitHeight="28.0" fitWidth="28.0" pickOnBounds="true" preserveRatio="true">
-                        <Image url="@outline_download_black_48dp.png"/>
+                        <Image url="@../../../presentation/view/outline_delete_black_48dp.png"/>
                     </ImageView>
                 </graphic>
             </Button>
-            <Button fx:id="stopButton" mnemonicParsing="false" stylesheets="@button.css">
+            <Separator orientation="VERTICAL"/>
+            <Button fx:id="startButton" mnemonicParsing="false" stylesheets="@../../../presentation/view/button.css">
                 <graphic>
                     <ImageView fitHeight="28.0" fitWidth="28.0" pickOnBounds="true" preserveRatio="true">
-                        <Image url="@outline_stop_black_48dp.png"/>
+                        <Image url="@../../../presentation/view/outline_download_black_48dp.png"/>
+                    </ImageView>
+                </graphic>
+            </Button>
+            <Button fx:id="stopButton" mnemonicParsing="false" stylesheets="@../../../presentation/view/button.css">
+                <graphic>
+                    <ImageView fitHeight="28.0" fitWidth="28.0" pickOnBounds="true" preserveRatio="true">
+                        <Image url="@../../../presentation/view/outline_stop_black_48dp.png"/>
                     </ImageView>
                 </graphic>
             </Button>
