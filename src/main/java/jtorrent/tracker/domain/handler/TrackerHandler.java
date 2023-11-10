@@ -77,16 +77,20 @@ public abstract class TrackerHandler {
         long getUploaded();
     }
 
+    protected abstract static class AnnounceTask implements Callable<AnnounceResponse> {
+
+        protected final Event event;
+
+        protected AnnounceTask(Event event) {
+            this.event = requireNonNull(event);
+        }
+    }
+
     private class PeriodicAnnounceTask extends BackgroundTask {
 
         private final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1);
 
         private ScheduledFuture<AnnounceResponse> scheduledFuture;
-
-        @Override
-        protected void doOnStarted() {
-            scheduleAnnounce(Event.STARTED, 0);
-        }
 
         @Override
         protected void execute() throws InterruptedException {
@@ -105,6 +109,11 @@ public abstract class TrackerHandler {
         }
 
         @Override
+        protected void doOnStarted() {
+            scheduleAnnounce(Event.STARTED, 0);
+        }
+
+        @Override
         protected void doOnStop() {
             cancelAnnounce();
             scheduleAnnounce(Event.STOPPED, 0);
@@ -114,6 +123,17 @@ public abstract class TrackerHandler {
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
+        }
+
+        /**
+         * Cancels the current announce task.
+         * <p>
+         * Note: This method should only be called when the task is being stopped, i.e., {@link #doOnStop()}.
+         * Otherwise, the thread will continuously try to get the result of the cancelled task.
+         */
+        private void cancelAnnounce() {
+            LOGGER.log(Level.DEBUG, "Cancelling announce");
+            scheduledFuture.cancel(true);
         }
 
         private void scheduleAnnounce(Event event, long delaySecs) {
@@ -130,26 +150,6 @@ public abstract class TrackerHandler {
             LOGGER.log(Level.DEBUG, "Handling announce response {0}", announceResponse);
             List<PeerResponse> peerResponses = announceResponse.getPeers();
             listeners.forEach(listener -> listener.onAnnounceResponse(peerResponses));
-        }
-
-        /**
-         * Cancels the current announce task.
-         * <p>
-         * Note: This method should only be called when the task is being stopped, i.e., {@link #doOnStop()}.
-         * Otherwise, the thread will continuously try to get the result of the cancelled task.
-         */
-        private void cancelAnnounce() {
-            LOGGER.log(Level.DEBUG, "Cancelling announce");
-            scheduledFuture.cancel(true);
-        }
-    }
-
-    protected abstract static class AnnounceTask implements Callable<AnnounceResponse> {
-
-        protected final Event event;
-
-        protected AnnounceTask(Event event) {
-            this.event = requireNonNull(event);
         }
     }
 }
