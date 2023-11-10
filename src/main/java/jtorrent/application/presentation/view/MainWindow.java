@@ -4,8 +4,8 @@ import javafx.fxml.FXML;
 import javafx.scene.control.MenuBar;
 import jtorrent.application.presentation.viewmodel.ViewModel;
 import jtorrent.common.presentation.UiComponent;
-import jtorrent.peer.presentation.PeersTableView;
-import jtorrent.torrent.presentation.TorrentsTableView;
+import jtorrent.peer.presentation.view.PeersTableView;
+import jtorrent.torrent.presentation.view.TorrentsTableView;
 
 public class MainWindow extends UiComponent {
 

@@ -1,4 +1,4 @@
-package jtorrent.torrent.presentation;
+package jtorrent.torrent.presentation.view;
 
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.ReadOnlyObjectProperty;
@@ -12,6 +12,7 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.ProgressBarTableCell;
 import jtorrent.common.presentation.UiComponent;
+import jtorrent.torrent.presentation.UiTorrent;
 
 public class TorrentsTableView extends UiComponent {
 

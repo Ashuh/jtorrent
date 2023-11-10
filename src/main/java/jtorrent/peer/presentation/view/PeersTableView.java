@@ -1,4 +1,4 @@
-package jtorrent.peer.presentation;
+package jtorrent.peer.presentation.view;
 
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.SortedList;
@@ -6,6 +6,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import jtorrent.common.presentation.UiComponent;
+import jtorrent.peer.presentation.UiPeer;
 
 public class PeersTableView extends UiComponent {
 
