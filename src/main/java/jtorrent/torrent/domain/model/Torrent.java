@@ -25,9 +25,10 @@ import jtorrent.common.domain.util.rx.MutableRxObservableSet;
 import jtorrent.common.domain.util.rx.RxObservableSet;
 import jtorrent.peer.domain.model.Peer;
 import jtorrent.peer.domain.model.PeerContactInfo;
+import jtorrent.tracker.domain.handler.TrackerHandler;
 import jtorrent.tracker.domain.model.Tracker;
 
-public class Torrent {
+public class Torrent implements TrackerHandler.TorrentProgressProvider {
 
     private static final int BLOCK_SIZE = 16384;
 
@@ -120,12 +121,24 @@ public class Torrent {
         return files;
     }
 
+    @Override
     public Sha1Hash getInfoHash() {
         return infoHash;
     }
 
+    @Override
     public long getDownloaded() {
         return downloaded.get();
+    }
+
+    @Override
+    public long getUploaded() {
+        return uploaded.get();
+    }
+
+    @Override
+    public long getLeft() {
+        return getTotalSize() - getVerifiedBytes();
     }
 
     public long getTotalSize() {
@@ -141,16 +154,8 @@ public class Torrent {
                 .sum();
     }
 
-    public long getRemainingBytes() {
-        return getTotalSize() - getVerifiedBytes();
-    }
-
     public int getNumPieces() {
         return pieceHashes.size();
-    }
-
-    public int getUploaded() {
-        return uploaded.get();
     }
 
     public RangeList getFileByteRanges() {

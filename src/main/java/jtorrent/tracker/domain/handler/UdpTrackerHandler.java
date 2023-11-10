@@ -8,7 +8,6 @@ import java.lang.System.Logger.Level;
 import java.net.SocketException;
 
 import jtorrent.common.domain.util.Sha1Hash;
-import jtorrent.torrent.domain.model.Torrent;
 import jtorrent.tracker.domain.handler.exception.ExceededMaxTriesException;
 import jtorrent.tracker.domain.model.Event;
 import jtorrent.tracker.domain.model.udp.UdpTracker;
@@ -22,8 +21,8 @@ public class UdpTrackerHandler extends TrackerHandler {
 
     private final UdpTracker tracker;
 
-    public UdpTrackerHandler(Torrent torrent, UdpTracker tracker) {
-        super(torrent);
+    public UdpTrackerHandler(TorrentProgressProvider torrentProgressProvider, UdpTracker tracker) {
+        super(torrentProgressProvider);
         this.tracker = requireNonNull(tracker);
         try {
             this.tracker.init();
@@ -75,10 +74,10 @@ public class UdpTrackerHandler extends TrackerHandler {
                 tracker.connect();
             }
 
-            Sha1Hash infoHash = torrent.getInfoHash();
-            long downloaded = torrent.getDownloaded();
-            long left = torrent.getRemainingBytes();
-            long uploaded = torrent.getUploaded();
+            Sha1Hash infoHash = torrentProgressProvider.getInfoHash();
+            long downloaded = torrentProgressProvider.getDownloaded();
+            long left = torrentProgressProvider.getLeft();
+            long uploaded = torrentProgressProvider.getUploaded();
             return tracker.announce(infoHash, downloaded, left, uploaded, event);
         }
     }

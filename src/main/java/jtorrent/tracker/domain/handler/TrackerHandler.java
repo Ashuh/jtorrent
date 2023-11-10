@@ -15,7 +15,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import jtorrent.common.domain.util.BackgroundTask;
-import jtorrent.torrent.domain.model.Torrent;
+import jtorrent.common.domain.util.Sha1Hash;
 import jtorrent.tracker.domain.model.AnnounceResponse;
 import jtorrent.tracker.domain.model.Event;
 import jtorrent.tracker.domain.model.PeerResponse;
@@ -24,12 +24,12 @@ public abstract class TrackerHandler {
 
     private static final Logger LOGGER = System.getLogger(TrackerHandler.class.getName());
 
-    protected final Torrent torrent;
+    protected final TorrentProgressProvider torrentProgressProvider;
     private final List<Listener> listeners = new ArrayList<>();
     private final PeriodicAnnounceTask periodicAnnounceTask = new PeriodicAnnounceTask();
 
-    protected TrackerHandler(Torrent torrent) {
-        this.torrent = requireNonNull(torrent);
+    protected TrackerHandler(TorrentProgressProvider torrentProgressProvider) {
+        this.torrentProgressProvider = requireNonNull(torrentProgressProvider);
     }
 
     public void addListener(Listener listener) {
@@ -51,6 +51,30 @@ public abstract class TrackerHandler {
     public interface Listener {
 
         void onAnnounceResponse(List<PeerResponse> peerResponses);
+    }
+
+
+    public interface TorrentProgressProvider {
+
+        /**
+         * Gets the info hash of the torrent.
+         */
+        Sha1Hash getInfoHash();
+
+        /**
+         * Gets the number of bytes downloaded.
+         */
+        long getDownloaded();
+
+        /**
+         * Gets the number of bytes left to download.
+         */
+        long getLeft();
+
+        /**
+         * Gets the number of bytes uploaded.
+         */
+        long getUploaded();
     }
 
     private class PeriodicAnnounceTask extends BackgroundTask {

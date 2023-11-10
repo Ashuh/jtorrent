@@ -3,7 +3,6 @@ package jtorrent.tracker.domain.handler;
 import static java.util.Objects.requireNonNull;
 
 import jtorrent.common.domain.util.Sha1Hash;
-import jtorrent.torrent.domain.model.Torrent;
 import jtorrent.tracker.domain.model.AnnounceResponse;
 import jtorrent.tracker.domain.model.Event;
 import jtorrent.tracker.domain.model.http.HttpTracker;
@@ -14,8 +13,8 @@ public class HttpTrackerHandler extends TrackerHandler {
 
     private final HttpTracker tracker;
 
-    public HttpTrackerHandler(Torrent torrent, HttpTracker tracker) {
-        super(torrent);
+    public HttpTrackerHandler(TorrentProgressProvider torrentProgressProvider, HttpTracker tracker) {
+        super(torrentProgressProvider);
         this.tracker = requireNonNull(tracker);
     }
 
@@ -32,10 +31,10 @@ public class HttpTrackerHandler extends TrackerHandler {
 
         @Override
         public AnnounceResponse call() throws Exception {
-            Sha1Hash infoHash = torrent.getInfoHash();
-            long downloaded = torrent.getDownloaded();
-            long left = torrent.getRemainingBytes();
-            long uploaded = torrent.getUploaded();
+            Sha1Hash infoHash = torrentProgressProvider.getInfoHash();
+            long downloaded = torrentProgressProvider.getDownloaded();
+            long left = torrentProgressProvider.getLeft();
+            long uploaded = torrentProgressProvider.getUploaded();
             return tracker.announce(infoHash, downloaded, left, uploaded, event);
         }
     }
