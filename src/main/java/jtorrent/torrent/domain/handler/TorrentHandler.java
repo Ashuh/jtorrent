@@ -3,8 +3,8 @@ package jtorrent.torrent.domain.handler;
 import static java.lang.System.Logger;
 import static java.lang.System.Logger.Level;
 import static java.lang.System.getLogger;
-import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static jtorrent.common.domain.util.ValidationUtil.requireNonNull;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;

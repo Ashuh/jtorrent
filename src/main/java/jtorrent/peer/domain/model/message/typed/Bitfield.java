@@ -1,6 +1,6 @@
 package jtorrent.peer.domain.model.message.typed;
 
-import static java.util.Objects.requireNonNull;
+import static jtorrent.common.domain.util.ValidationUtil.requireNonNull;
 
 import java.nio.ByteBuffer;
 import java.util.BitSet;

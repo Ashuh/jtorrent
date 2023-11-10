@@ -1,6 +1,6 @@
 package jtorrent.peer.presentation;
 
-import static java.util.Objects.requireNonNull;
+import static jtorrent.common.domain.util.ValidationUtil.requireNonNull;
 
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;

@@ -1,6 +1,6 @@
 package jtorrent.tracker.domain.handler;
 
-import static java.util.Objects.requireNonNull;
+import static jtorrent.common.domain.util.ValidationUtil.requireNonNull;
 
 import jtorrent.common.domain.util.Sha1Hash;
 import jtorrent.tracker.domain.model.AnnounceResponse;

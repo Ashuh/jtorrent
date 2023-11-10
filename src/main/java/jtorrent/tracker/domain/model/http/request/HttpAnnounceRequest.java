@@ -1,6 +1,6 @@
 package jtorrent.tracker.domain.model.http.request;
 
-import static java.util.Objects.requireNonNull;
+import static jtorrent.common.domain.util.ValidationUtil.requireNonNull;
 
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;

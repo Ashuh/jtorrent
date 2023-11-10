@@ -1,6 +1,6 @@
 package jtorrent.common.presentation.util;
 
-import static java.util.Objects.requireNonNull;
+import static jtorrent.common.domain.util.ValidationUtil.requireNonNull;
 
 import io.reactivex.rxjava3.functions.Consumer;
 import javafx.application.Platform;

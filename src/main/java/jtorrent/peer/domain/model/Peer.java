@@ -1,6 +1,6 @@
 package jtorrent.peer.domain.model;
 
-import static java.util.Objects.requireNonNull;
+import static jtorrent.common.domain.util.ValidationUtil.requireNonNull;
 
 import java.lang.System.Logger;
 import java.net.InetAddress;

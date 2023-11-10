@@ -1,6 +1,6 @@
 package jtorrent.dht.domain.communication;
 
-import static java.util.Objects.requireNonNull;
+import static jtorrent.common.domain.util.ValidationUtil.requireNonNull;
 
 import java.io.IOException;
 import java.lang.System.Logger;

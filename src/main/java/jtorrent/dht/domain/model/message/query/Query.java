@@ -1,6 +1,6 @@
 package jtorrent.dht.domain.model.message.query;
 
-import static java.util.Objects.requireNonNull;
+import static jtorrent.common.domain.util.ValidationUtil.requireNonNull;
 
 import java.nio.ByteBuffer;
 import java.util.HashMap;

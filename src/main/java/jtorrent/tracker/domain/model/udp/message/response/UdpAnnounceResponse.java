@@ -1,6 +1,6 @@
 package jtorrent.tracker.domain.model.udp.message.response;
 
-import static java.util.Objects.requireNonNull;
+import static jtorrent.common.domain.util.ValidationUtil.requireNonNull;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;

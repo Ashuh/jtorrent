@@ -1,6 +1,6 @@
 package jtorrent.common.domain.util.rx;
 
-import static java.util.Objects.requireNonNull;
+import static jtorrent.common.domain.util.ValidationUtil.requireNonNull;
 
 import java.util.Optional;
 

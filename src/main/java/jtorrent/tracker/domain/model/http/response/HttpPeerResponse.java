@@ -1,6 +1,6 @@
 package jtorrent.tracker.domain.model.http.response;
 
-import static java.util.Objects.requireNonNull;
+import static jtorrent.common.domain.util.ValidationUtil.requireNonNull;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;

@@ -1,6 +1,6 @@
 package jtorrent.lsd.domain.model;
 
-import static java.util.Objects.requireNonNull;
+import static jtorrent.common.domain.util.ValidationUtil.requireNonNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
