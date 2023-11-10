@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import jtorrent.common.domain.model.Block;
 import jtorrent.common.domain.util.BackgroundTask;
 import jtorrent.common.domain.util.Sha1Hash;
 import jtorrent.peer.domain.communication.PeerSocket;
@@ -26,7 +27,6 @@ import jtorrent.peer.domain.model.message.typed.Port;
 import jtorrent.peer.domain.model.message.typed.Request;
 import jtorrent.peer.domain.model.message.typed.TypedPeerMessage;
 import jtorrent.peer.domain.model.message.typed.Unchoke;
-import jtorrent.torrent.domain.model.Block;
 
 public class PeerHandler {
 

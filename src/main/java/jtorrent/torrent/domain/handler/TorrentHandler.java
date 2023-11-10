@@ -25,6 +25,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import jtorrent.common.domain.model.Block;
 import jtorrent.common.domain.util.BackgroundTask;
 import jtorrent.common.domain.util.Sha1Hash;
 import jtorrent.peer.domain.communication.PeerSocket;
@@ -32,7 +33,6 @@ import jtorrent.peer.domain.handler.PeerHandler;
 import jtorrent.peer.domain.model.Peer;
 import jtorrent.peer.domain.model.PeerContactInfo;
 import jtorrent.peer.domain.model.message.typed.Piece;
-import jtorrent.torrent.domain.model.Block;
 import jtorrent.torrent.domain.model.Torrent;
 import jtorrent.torrent.domain.repository.PieceRepository;
 import jtorrent.tracker.domain.handler.TrackerHandler;

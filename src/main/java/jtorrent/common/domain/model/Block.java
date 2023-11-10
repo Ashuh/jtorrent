@@ -1,4 +1,4 @@
-package jtorrent.torrent.domain.model;
+package jtorrent.common.domain.model;
 
 import java.util.Objects;
 

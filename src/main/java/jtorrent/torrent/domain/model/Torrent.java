@@ -17,6 +17,7 @@ import java.util.stream.IntStream;
 
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.subjects.BehaviorSubject;
+import jtorrent.common.domain.model.Block;
 import jtorrent.common.domain.util.RangeList;
 import jtorrent.common.domain.util.Sha1Hash;
 import jtorrent.common.domain.util.rx.CombinedDoubleSumObservable;
