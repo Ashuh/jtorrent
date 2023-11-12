@@ -35,6 +35,11 @@ public class Port extends TypedPeerMessage {
     }
 
     @Override
+    protected int getPayloadSize() {
+        return Short.BYTES;
+    }
+
+    @Override
     public MessageType getMessageType() {
         return MessageType.PORT;
     }
@@ -47,6 +52,11 @@ public class Port extends TypedPeerMessage {
     }
 
     @Override
+    public int hashCode() {
+        return Objects.hash(listenPort);
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) {
             return true;
@@ -56,11 +66,6 @@ public class Port extends TypedPeerMessage {
         }
         Port port = (Port) o;
         return listenPort == port.listenPort;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(listenPort);
     }
 
     @Override

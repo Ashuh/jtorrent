@@ -95,6 +95,11 @@ public class Handshake implements PeerMessage {
     }
 
     @Override
+    public int getMessageSize() {
+        return MESSAGE_SIZE_BYTES;
+    }
+
+    @Override
     public int hashCode() {
         int result = Objects.hash(infoHash);
         result = 31 * result + Arrays.hashCode(peerId);

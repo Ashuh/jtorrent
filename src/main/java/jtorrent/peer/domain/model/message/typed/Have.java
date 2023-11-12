@@ -21,6 +21,11 @@ public class Have extends TypedPeerMessage {
     }
 
     @Override
+    protected int getPayloadSize() {
+        return PAYLOAD_BYTES;
+    }
+
+    @Override
     public MessageType getMessageType() {
         return MessageType.HAVE;
     }

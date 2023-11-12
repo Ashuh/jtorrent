@@ -12,4 +12,9 @@ public class KeepAlive implements PeerMessage {
                 .putInt(0)
                 .array();
     }
+
+    @Override
+    public int getMessageSize() {
+        return BYTES;
+    }
 }

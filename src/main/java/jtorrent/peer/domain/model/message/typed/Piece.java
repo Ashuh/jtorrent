@@ -51,6 +51,11 @@ public class Piece extends TypedPeerMessage {
     }
 
     @Override
+    protected int getPayloadSize() {
+        return Integer.BYTES * 2 + block.length;
+    }
+
+    @Override
     public MessageType getMessageType() {
         return MessageType.PIECE;
     }

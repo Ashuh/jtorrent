@@ -67,6 +67,11 @@ public class Bitfield extends TypedPeerMessage {
     }
 
     @Override
+    public int getPayloadSize() {
+        return (bitSet.length() + 7) / Byte.SIZE;
+    }
+
+    @Override
     public MessageType getMessageType() {
         return MessageType.BITFIELD;
     }
