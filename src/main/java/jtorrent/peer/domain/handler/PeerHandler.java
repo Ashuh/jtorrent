@@ -191,6 +191,8 @@ public class PeerHandler {
         private void handleMessage(PeerMessage message) {
             LOGGER.log(Level.INFO, "Received message {0} from {1}", message, peer.getPeerContactInfo());
 
+            peer.addDownloadedBytes(message.getMessageSize());
+
             if (message instanceof KeepAlive) {
                 handleKeepAlive();
                 return;
@@ -292,7 +294,6 @@ public class PeerHandler {
             LOGGER.log(Level.DEBUG, "Handling piece: {0}", piece);
             isBusy = false;
             listeners.forEach(listener -> listener.onPieceReceived(piece));
-            peer.addDownloadedBytes(piece.getBlock().length);
             notifyIfReady();
         }
 
