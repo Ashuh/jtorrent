@@ -86,8 +86,8 @@ public class PeerSocket {
 
     public Handshake waitForHandshake() throws IOException {
         LOGGER.log(Level.DEBUG, "Waiting for handshake");
-        byte[] buffer = socket.getInputStream().readNBytes(Handshake.BYTES);
-        if (buffer.length != Handshake.BYTES) {
+        byte[] buffer = socket.getInputStream().readNBytes(Handshake.MESSAGE_SIZE_BYTES);
+        if (buffer.length != Handshake.MESSAGE_SIZE_BYTES) {
             throw new UnexpectedEndOfStreamException();
         }
         Handshake handshake = Handshake.unpack(buffer);

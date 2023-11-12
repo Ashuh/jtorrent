@@ -12,7 +12,7 @@ import jtorrent.common.domain.util.Sha1Hash;
 
 public class Handshake implements PeerMessage {
 
-    public static final int BYTES = 68;
+    public static final int MESSAGE_SIZE_BYTES = 68;
     private static final String PROTOCOL_IDENTIFIER = "BitTorrent protocol";
     private static final byte PROTOCOL_IDENTIFIER_LENGTH = (byte) PROTOCOL_IDENTIFIER.length();
 
@@ -83,7 +83,7 @@ public class Handshake implements PeerMessage {
 
     @Override
     public byte[] pack() {
-        return ByteBuffer.allocate(BYTES)
+        return ByteBuffer.allocate(MESSAGE_SIZE_BYTES)
                 .order(ByteOrder.BIG_ENDIAN)
                 .put(PROTOCOL_IDENTIFIER_LENGTH)
                 .put(PROTOCOL_IDENTIFIER.getBytes())
