@@ -7,7 +7,9 @@ import jtorrent.peer.domain.model.message.PeerMessage;
 
 public abstract class TypedPeerMessage implements PeerMessage {
 
-    protected static final int LENGTH_PREFIX_SIZE = Integer.BYTES;
+    private static final String TO_STRING_FORMAT_WITH_PAYLOAD = "[%s: [%s]]";
+    private static final String TO_STRING_FORMAT_WITHOUT_PAYLOAD = "[%s]";
+    private static final int LENGTH_PREFIX_SIZE = Integer.BYTES;
     private static final int MESSAGE_TYPE_SIZE = Byte.BYTES;
     /**
      * Size of the message header in bytes.
@@ -43,4 +45,15 @@ public abstract class TypedPeerMessage implements PeerMessage {
     public abstract MessageType getMessageType();
 
     protected abstract byte[] getPayload();
+
+    @Override
+    public final String toString() {
+        String payloadString = getPayloadString();
+        if (payloadString == null || payloadString.isEmpty()) {
+            return String.format(TO_STRING_FORMAT_WITHOUT_PAYLOAD, getMessageType());
+        }
+        return String.format(TO_STRING_FORMAT_WITH_PAYLOAD, getMessageType(), getPayloadString());
+    }
+
+    protected abstract String getPayloadString();
 }

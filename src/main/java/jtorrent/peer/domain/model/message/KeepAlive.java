@@ -17,4 +17,9 @@ public class KeepAlive implements PeerMessage {
     public int getMessageSize() {
         return BYTES;
     }
+
+    @Override
+    public String toString() {
+        return "[KEEP ALIVE]";
+    }
 }

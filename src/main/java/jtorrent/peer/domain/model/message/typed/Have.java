@@ -38,6 +38,11 @@ public class Have extends TypedPeerMessage {
                 .array();
     }
 
+    @Override
+    protected String getPayloadString() {
+        return String.format("pieceIndex=%d", pieceIndex);
+    }
+
     public int getPieceIndex() {
         return pieceIndex;
     }
@@ -57,12 +62,5 @@ public class Have extends TypedPeerMessage {
         }
         Have have = (Have) o;
         return pieceIndex == have.pieceIndex;
-    }
-
-    @Override
-    public String toString() {
-        return "Have{"
-                + "pieceIndex=" + pieceIndex
-                + '}';
     }
 }

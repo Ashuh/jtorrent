@@ -64,7 +64,7 @@ public class PeerSocket {
         }
 
         requireNonNull(infoHash);
-        LOGGER.log(Level.DEBUG, "Connecting to {0}", socket.getRemoteSocketAddress());
+        LOGGER.log(Level.INFO, "[{0}] Connecting", socket.getRemoteSocketAddress());
         Handshake handshake = new Handshake(infoHash, PEER_ID.getBytes(), isDhtSupported);
         sendMessage(handshake);
 
@@ -76,28 +76,30 @@ public class PeerSocket {
         }
 
         isConnected = true;
-        LOGGER.log(Level.DEBUG, "Sent handshake {0}", socket.getRemoteSocketAddress());
     }
 
     public void sendMessage(PeerMessage message) throws IOException {
-        LOGGER.log(Level.DEBUG, "Sending message: {0}", message);
         socket.getOutputStream().write(message.pack());
+        LOGGER.log(Level.INFO, "[{0}] Sent: {1}", getPeerContactInfo(), message);
+
     }
 
     public Handshake waitForHandshake() throws IOException {
-        LOGGER.log(Level.DEBUG, "Waiting for handshake");
+        LOGGER.log(Level.DEBUG, "[{0}] Waiting for handshake", getPeerContactInfo());
+
         byte[] buffer = socket.getInputStream().readNBytes(Handshake.MESSAGE_SIZE_BYTES);
         if (buffer.length != Handshake.MESSAGE_SIZE_BYTES) {
             throw new UnexpectedEndOfStreamException();
         }
         Handshake handshake = Handshake.unpack(buffer);
         isHandshakeReceived = true;
-        LOGGER.log(Level.DEBUG, "Received handshake " + handshake);
+        LOGGER.log(Level.INFO, "[{0}] Received: {1}", getPeerContactInfo(), handshake);
+
         return handshake;
     }
 
     public void close() throws IOException {
-        LOGGER.log(Level.DEBUG, "Closing PeerSocket {0}", socket.getRemoteSocketAddress());
+        LOGGER.log(Level.DEBUG, "[{0}] Closing PeerSocket", getPeerContactInfo());
         socket.close();
     }
 
@@ -111,7 +113,9 @@ public class PeerSocket {
         }
 
         byte[] messageBytes = readMessageBytes(lengthPrefix);
-        return peerMessageUnpacker.unpack(messageBytes);
+        PeerMessage peerMessage = peerMessageUnpacker.unpack(messageBytes);
+        LOGGER.log(Level.INFO, "[{0}] Received: {1}", getPeerContactInfo(), peerMessage);
+        return peerMessage;
     }
 
     private int readLengthPrefix() throws IOException {

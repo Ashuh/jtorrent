@@ -52,6 +52,11 @@ public class Port extends TypedPeerMessage {
     }
 
     @Override
+    protected String getPayloadString() {
+        return String.format("listenPort=%d", listenPort);
+    }
+
+    @Override
     public int hashCode() {
         return Objects.hash(listenPort);
     }
@@ -66,12 +71,5 @@ public class Port extends TypedPeerMessage {
         }
         Port port = (Port) o;
         return listenPort == port.listenPort;
-    }
-
-    @Override
-    public String toString() {
-        return "Port{"
-                + "listenPort=" + listenPort
-                + '}';
     }
 }

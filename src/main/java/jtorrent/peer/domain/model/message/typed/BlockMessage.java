@@ -45,6 +45,11 @@ public abstract class BlockMessage extends TypedPeerMessage {
     }
 
     @Override
+    protected String getPayloadString() {
+        return String.format("index=%d, begin=%d, length=%d", index, begin, length);
+    }
+
+    @Override
     public int hashCode() {
         return Objects.hash(index, begin, length);
     }

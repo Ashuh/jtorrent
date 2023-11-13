@@ -123,10 +123,7 @@ public class Handshake implements PeerMessage {
 
     @Override
     public String toString() {
-        return "Handshake{"
-                + "infoHash=" + infoHash
-                + ", peerId=" + Arrays.toString(peerId)
-                + ", flags=" + Arrays.toString(flags)
-                + '}';
+        return String.format("[[HANDSHAKE]: [infoHash=%s, peerId=%s, flags=%s]]",
+                infoHash, Arrays.toString(peerId), Arrays.toString(flags));
     }
 }

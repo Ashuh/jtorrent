@@ -5,6 +5,7 @@ import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
 import java.net.InetAddress;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -22,6 +23,7 @@ import jtorrent.peer.domain.model.message.typed.Cancel;
 import jtorrent.peer.domain.model.message.typed.Choke;
 import jtorrent.peer.domain.model.message.typed.Have;
 import jtorrent.peer.domain.model.message.typed.Interested;
+import jtorrent.peer.domain.model.message.typed.NotInterested;
 import jtorrent.peer.domain.model.message.typed.Piece;
 import jtorrent.peer.domain.model.message.typed.Port;
 import jtorrent.peer.domain.model.message.typed.Request;
@@ -56,7 +58,7 @@ public class PeerHandler {
         try {
             peerSocket.close();
         } catch (IOException e) {
-            LOGGER.log(Level.ERROR, "Error while closing socket", e);
+            LOGGER.log(Level.ERROR, "[{0}] Error while closing socket", peer.getPeerContactInfo());
         }
         handlePeerTask.stop();
     }
@@ -66,7 +68,7 @@ public class PeerHandler {
     }
 
     public void assignBlock(Block block) throws IOException {
-        LOGGER.log(Level.DEBUG, "Peer {0} assigned block {1}", peer, block);
+        LOGGER.log(Level.DEBUG, "[{0}] Assigned block", peer.getPeerContactInfo(), block);
 
         isBusy = true;
         int index = block.getIndex();
@@ -86,7 +88,8 @@ public class PeerHandler {
     }
 
     public void choke() {
-        LOGGER.log(Level.DEBUG, "Choking peer: " + peer.getPeerContactInfo());
+        LOGGER.log(Level.INFO, "[{0}] Choking remote", peer.getPeerContactInfo());
+
         Choke choke = new Choke();
         try {
             peerSocket.sendMessage(choke);
@@ -97,7 +100,8 @@ public class PeerHandler {
     }
 
     public void unchoke() {
-        LOGGER.log(Level.DEBUG, "Unchoking peer: " + peer.getPeerContactInfo());
+        LOGGER.log(Level.INFO, "[{0}] Unchoking remote", peer.getPeerContactInfo());
+
         Unchoke unchoke = new Unchoke();
         try {
             peerSocket.sendMessage(unchoke);
@@ -165,7 +169,7 @@ public class PeerHandler {
                 handleMessage(message);
             } catch (IOException e) {
                 if (!isStopping()) {
-                    LOGGER.log(Level.ERROR, "Error while communicating with peer" + peer, e);
+                    LOGGER.log(Level.ERROR, "[{0}] Error while communicating with peer", peer.getPeerContactInfo());
                     HandlePeerTask.this.stop();
                 }
             }
@@ -178,7 +182,7 @@ public class PeerHandler {
                 peerSocket.connect(infoHash, true);
                 sendInterested();
             } catch (IOException e) {
-                LOGGER.log(Level.ERROR, "Error while connecting to peer {0}", peer);
+                LOGGER.log(Level.ERROR, "[{0}] Error while connecting to peer", peer.getPeerContactInfo());
                 super.stop();
             }
         }
@@ -189,7 +193,7 @@ public class PeerHandler {
         }
 
         private void handleMessage(PeerMessage message) {
-            LOGGER.log(Level.INFO, "Received message {0} from {1}", message, peer.getPeerContactInfo());
+            LOGGER.log(Level.DEBUG, "[{0}] Handling {1}", peer.getPeerContactInfo(), message);
 
             peer.addDownloadedBytes(message.getMessageSize());
 
@@ -238,17 +242,14 @@ public class PeerHandler {
         }
 
         public void handleKeepAlive() {
-            LOGGER.log(Level.DEBUG, "Handling KeepAlive");
         }
 
         public void handleChoke() {
-            LOGGER.log(Level.DEBUG, "Handling Choke");
             peer.setLocalChoked(true);
             listeners.forEach(listener -> listener.onChokeReceived(PeerHandler.this));
         }
 
         public void handleUnchoke() {
-            LOGGER.log(Level.DEBUG, "Handling Unchoke");
             peer.setLocalChoked(false);
             listeners.forEach(listener -> listener.onUnchokeRecevied(PeerHandler.this));
             notifyIfReady();
@@ -263,22 +264,18 @@ public class PeerHandler {
         }
 
         public void handleInterested() {
-            LOGGER.log(Level.DEBUG, "Handling Interested");
         }
 
         public void handleNotInterested() {
-            LOGGER.log(Level.DEBUG, "Handling NotInterested");
         }
 
         public void handleHave(Have have) {
-            LOGGER.log(Level.DEBUG, "Handling Have: {0}", have);
             int pieceIndex = have.getPieceIndex();
             availablePieces.add(pieceIndex);
             listeners.forEach(listener -> listener.onPieceAvailable(PeerHandler.this, pieceIndex));
         }
 
         public void handleBitfield(Bitfield bitfield) {
-            LOGGER.log(Level.DEBUG, "Handling Bitfield: {0}", bitfield);
             bitfield.getBits()
                     .forEach(i -> {
                         availablePieces.add(i);
@@ -287,18 +284,15 @@ public class PeerHandler {
         }
 
         public void handleRequest(Request request) {
-            LOGGER.log(Level.DEBUG, "Handling Request: {0}", request);
         }
 
         public void handlePiece(Piece piece) {
-            LOGGER.log(Level.DEBUG, "Handling piece: {0}", piece);
             isBusy = false;
             listeners.forEach(listener -> listener.onPieceReceived(piece));
             notifyIfReady();
         }
 
         public void handleCancel(Cancel cancel) {
-            LOGGER.log(Level.DEBUG, "Handling Cancel: {0}", cancel);
         }
 
         public void handlePort(Port port) {

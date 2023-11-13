@@ -20,13 +20,4 @@ public class Cancel extends BlockMessage {
     public MessageType getMessageType() {
         return MessageType.CANCEL;
     }
-
-    @Override
-    public String toString() {
-        return "Cancel{"
-                + "index=" + index
-                + ", begin=" + begin
-                + ", length=" + length
-                + '}';
-    }
 }

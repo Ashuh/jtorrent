@@ -60,13 +60,6 @@ public class Bitfield extends TypedPeerMessage {
     }
 
     @Override
-    public String toString() {
-        return "Bitfield{"
-                + "bitSet=" + bitSet
-                + '}';
-    }
-
-    @Override
     public int getPayloadSize() {
         return (bitSet.length() + 7) / Byte.SIZE;
     }
@@ -79,5 +72,10 @@ public class Bitfield extends TypedPeerMessage {
     @Override
     protected byte[] getPayload() {
         return bitSet.toByteArray();
+    }
+
+    @Override
+    protected String getPayloadString() {
+        return String.format("bitSet=%s", bitSet);
     }
 }

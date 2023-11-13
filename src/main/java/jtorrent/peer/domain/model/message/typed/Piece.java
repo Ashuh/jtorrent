@@ -70,6 +70,11 @@ public class Piece extends TypedPeerMessage {
     }
 
     @Override
+    protected String getPayloadString() {
+        return String.format("index=%d, begin=%d, block=%s bytes", index, begin, block.length);
+    }
+
+    @Override
     public int hashCode() {
         int result = Objects.hash(index, begin);
         result = 31 * result + Arrays.hashCode(block);
@@ -86,13 +91,5 @@ public class Piece extends TypedPeerMessage {
         }
         Piece piece = (Piece) o;
         return index == piece.index && begin == piece.begin && Arrays.equals(block, piece.block);
-    }
-
-    @Override
-    public String toString() {
-        return "Piece{"
-                + "index=" + index
-                + ", begin=" + begin
-                + '}';
     }
 }
