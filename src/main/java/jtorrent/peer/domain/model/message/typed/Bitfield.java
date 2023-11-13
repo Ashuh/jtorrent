@@ -4,6 +4,7 @@ import static jtorrent.common.domain.util.ValidationUtil.requireNonNull;
 
 import java.nio.ByteBuffer;
 import java.util.BitSet;
+import java.util.Collection;
 import java.util.Objects;
 import java.util.stream.IntStream;
 
@@ -13,6 +14,12 @@ public class Bitfield extends TypedPeerMessage {
 
     public Bitfield(BitSet bitSet) {
         this.bitSet = requireNonNull(bitSet);
+    }
+
+    public static Bitfield forIndices(Collection<Integer> indices) {
+        BitSet bitSet = new BitSet();
+        indices.forEach(bitSet::set);
+        return new Bitfield(bitSet);
     }
 
     public static Bitfield unpack(byte[] payload) {
