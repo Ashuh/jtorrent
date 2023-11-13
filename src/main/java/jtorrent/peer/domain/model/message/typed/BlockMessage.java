@@ -35,7 +35,7 @@ public abstract class BlockMessage extends TypedPeerMessage {
     }
 
     @Override
-    protected byte[] getPayload() {
+    protected final byte[] getPayload() {
         return ByteBuffer.allocate(PAYLOAD_BYTES)
                 .order(ByteOrder.BIG_ENDIAN)
                 .putInt(index)
