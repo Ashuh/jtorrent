@@ -78,7 +78,15 @@ public class Bitfield extends TypedPeerMessage {
 
     @Override
     protected byte[] getPayload() {
-        return bitSet.toByteArray();
+        int numBytes = (bitSet.length() + Byte.SIZE - 1) / Byte.SIZE;
+        byte[] bytes = new byte[numBytes];
+        bitSet.stream().forEach(i -> {
+            int byteIndex = i / Byte.SIZE;
+            int bitIndex = i % Byte.SIZE;
+            int mask = 1 << (Byte.SIZE - 1 - bitIndex);
+            bytes[byteIndex] |= (byte) mask;
+        });
+        return bytes;
     }
 
     @Override
