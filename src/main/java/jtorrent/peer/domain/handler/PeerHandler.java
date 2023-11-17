@@ -4,10 +4,7 @@ import java.io.IOException;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
 import java.net.InetAddress;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -16,6 +13,7 @@ import jtorrent.common.domain.util.BackgroundTask;
 import jtorrent.common.domain.util.Sha1Hash;
 import jtorrent.peer.domain.communication.PeerSocket;
 import jtorrent.peer.domain.model.Peer;
+import jtorrent.peer.domain.model.PeerContactInfo;
 import jtorrent.peer.domain.model.message.KeepAlive;
 import jtorrent.peer.domain.model.message.PeerMessage;
 import jtorrent.peer.domain.model.message.typed.Bitfield;
@@ -23,7 +21,6 @@ import jtorrent.peer.domain.model.message.typed.Cancel;
 import jtorrent.peer.domain.model.message.typed.Choke;
 import jtorrent.peer.domain.model.message.typed.Have;
 import jtorrent.peer.domain.model.message.typed.Interested;
-import jtorrent.peer.domain.model.message.typed.NotInterested;
 import jtorrent.peer.domain.model.message.typed.Piece;
 import jtorrent.peer.domain.model.message.typed.Port;
 import jtorrent.peer.domain.model.message.typed.Request;
@@ -37,16 +34,17 @@ public class PeerHandler {
     private final Peer peer;
     private final PeerSocket peerSocket;
     private final Sha1Hash infoHash;
-    private final List<Listener> listeners = new ArrayList<>();
+    private final EventHandler eventHandler;
     private final Set<Integer> availablePieces = new HashSet<>();
     private final HandlePeerTask handlePeerTask;
 
     private boolean isBusy = false;
 
-    public PeerHandler(Peer peer, PeerSocket peerSocket, Sha1Hash infoHash) {
+    public PeerHandler(Peer peer, PeerSocket peerSocket, Sha1Hash infoHash, EventHandler eventHandler) {
         this.peerSocket = peerSocket;
         this.peer = peer;
         this.infoHash = infoHash;
+        this.eventHandler = eventHandler;
         handlePeerTask = new HandlePeerTask();
     }
 
@@ -61,10 +59,6 @@ public class PeerHandler {
             LOGGER.log(Level.ERROR, "[{0}] Error while closing socket", peer.getPeerContactInfo());
         }
         handlePeerTask.stop();
-    }
-
-    public void addListener(Listener listener) {
-        this.listeners.add(listener);
     }
 
     public void assignBlock(Block block) throws IOException {
@@ -131,6 +125,10 @@ public class PeerHandler {
         return peer.getAddress();
     }
 
+    public PeerContactInfo getPeerContactInfo() {
+        return peer.getPeerContactInfo();
+    }
+
     @Override
     public String toString() {
         return "PeerHandler{"
@@ -140,19 +138,33 @@ public class PeerHandler {
                 + '}';
     }
 
-    public interface Listener {
-
-        void onUnchokeRecevied(PeerHandler peerHandler);
-
-        void onChokeReceived(PeerHandler peerHandler);
+    public interface EventHandler {
 
         void onReady(PeerHandler peerHandler);
 
-        void onPieceReceived(Piece piece);
+        void handlePeerConnected(PeerHandler peerHandler);
 
-        void onPieceAvailable(PeerHandler peerHandler, int index);
+        void handlePeerDisconnected(PeerHandler peerHandler);
 
-        void onPortReceived(PeerHandler peerHandler, int port);
+        void handlePeerChoked(PeerHandler peerHandler);
+
+        void handlePeerUnchoked(PeerHandler peerHandler);
+
+        void handlePeerInterested(PeerHandler peerHandler);
+
+        void handlePeerNotInterested(PeerHandler peerHandler);
+
+        void handlePieceAvailable(PeerHandler peerHandler, int pieceIndex);
+
+        void handlePiecesAvailable(PeerHandler peerHandler, Set<Integer> pieceIndices);
+
+        void handleBlockReceived(PeerHandler peerHandler, int pieceIndex, int offset, byte[] data);
+
+        void handleBlockRequested(PeerHandler peerHandler, int pieceIndex, int offset, int length);
+
+        void handleBlockCancelled(PeerHandler peerHandler, int pieceIndex, int offset, int length);
+
+        void handleDhtPortReceived(PeerHandler peerHandler, int port);
     }
 
     private class HandlePeerTask extends BackgroundTask {
@@ -241,17 +253,17 @@ public class PeerHandler {
             }
         }
 
-        public void handleKeepAlive() {
+        private void handleKeepAlive() {
         }
 
-        public void handleChoke() {
+        private void handleChoke() {
             peer.setLocalChoked(true);
-            listeners.forEach(listener -> listener.onChokeReceived(PeerHandler.this));
+            eventHandler.handlePeerChoked(PeerHandler.this);
         }
 
-        public void handleUnchoke() {
+        private void handleUnchoke() {
             peer.setLocalChoked(false);
-            listeners.forEach(listener -> listener.onUnchokeRecevied(PeerHandler.this));
+            eventHandler.handlePeerUnchoked(PeerHandler.this);
             notifyIfReady();
         }
 
@@ -260,43 +272,47 @@ public class PeerHandler {
                 return;
             }
 
-            listeners.forEach(listener -> listener.onReady(PeerHandler.this));
+            eventHandler.handlePeerConnected(PeerHandler.this);
         }
 
-        public void handleInterested() {
+        private void handleInterested() {
+            eventHandler.handlePeerInterested(PeerHandler.this);
         }
 
-        public void handleNotInterested() {
+        private void handleNotInterested() {
+            eventHandler.handlePeerNotInterested(PeerHandler.this);
         }
 
-        public void handleHave(Have have) {
+        private void handleHave(Have have) {
             int pieceIndex = have.getPieceIndex();
             availablePieces.add(pieceIndex);
-            listeners.forEach(listener -> listener.onPieceAvailable(PeerHandler.this, pieceIndex));
+            eventHandler.handlePieceAvailable(PeerHandler.this, pieceIndex);
         }
 
-        public void handleBitfield(Bitfield bitfield) {
-            bitfield.getBits()
-                    .forEach(i -> {
-                        availablePieces.add(i);
-                        listeners.forEach(listener -> listener.onPieceAvailable(PeerHandler.this, i));
-                    });
+        private void handleBitfield(Bitfield bitfield) {
+            Set<Integer> availablePieces = new HashSet<>();
+            bitfield.getBits().forEach(availablePieces::add);
+            eventHandler.handlePiecesAvailable(PeerHandler.this, availablePieces);
         }
 
-        public void handleRequest(Request request) {
+        private void handleRequest(Request request) {
+            eventHandler.handleBlockRequested(PeerHandler.this, request.getIndex(), request.getBegin(),
+                    request.getLength());
         }
 
-        public void handlePiece(Piece piece) {
+        private void handlePiece(Piece piece) {
             isBusy = false;
-            listeners.forEach(listener -> listener.onPieceReceived(piece));
+            eventHandler.handleBlockReceived(PeerHandler.this, piece.getIndex(), piece.getBegin(), piece.getBlock());
             notifyIfReady();
         }
 
-        public void handleCancel(Cancel cancel) {
+        private void handleCancel(Cancel cancel) {
+            eventHandler.handleBlockCancelled(PeerHandler.this, cancel.getIndex(), cancel.getBegin(),
+                    cancel.getLength());
         }
 
-        public void handlePort(Port port) {
-            listeners.forEach(listener -> listener.onPortReceived(PeerHandler.this, port.getListenPort()));
+        private void handlePort(Port port) {
+            eventHandler.handleDhtPortReceived(PeerHandler.this, port.getListenPort());
         }
     }
 }

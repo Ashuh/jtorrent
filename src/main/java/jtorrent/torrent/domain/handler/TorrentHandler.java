@@ -32,14 +32,13 @@ import jtorrent.peer.domain.communication.PeerSocket;
 import jtorrent.peer.domain.handler.PeerHandler;
 import jtorrent.peer.domain.model.Peer;
 import jtorrent.peer.domain.model.PeerContactInfo;
-import jtorrent.peer.domain.model.message.typed.Piece;
 import jtorrent.torrent.domain.model.Torrent;
 import jtorrent.torrent.domain.repository.PieceRepository;
 import jtorrent.tracker.domain.handler.TrackerHandler;
 import jtorrent.tracker.domain.handler.factory.TrackerHandlerFactory;
 import jtorrent.tracker.domain.model.PeerResponse;
 
-public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Listener {
+public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.EventHandler {
 
     private static final Logger LOGGER = getLogger(TorrentHandler.class.getName());
     private static final ExecutorService PEER_CONNECTION_EXECUTOR = Executors.newCachedThreadPool();
@@ -139,8 +138,7 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.List
 
         Peer peer = new Peer(peerSocket.getPeerContactInfo());
         torrent.addPeer(peer);
-        PeerHandler peerHandler = new PeerHandler(peer, peerSocket, torrent.getInfoHash());
-        peerHandler.addListener(this);
+        PeerHandler peerHandler = new PeerHandler(peer, peerSocket, torrent.getInfoHash(), this);
         peerHandlers.add(peerHandler);
         peerHandler.start();
     }
@@ -150,17 +148,32 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.List
     }
 
     @Override
-    public void onUnchokeRecevied(PeerHandler peerHandler) {
-        LOGGER.log(Level.DEBUG, "Unchoked received: {0}", peerHandler);
-
-        peerHandler.getAvailablePieces().stream()
-                .map(pieceIndexToAvailablePeerHandlers::get)
-                .forEach(availablePeerHandlers -> availablePeerHandlers.add(peerHandler));
+    public void onAnnounceResponse(List<PeerResponse> peerResponses) {
+        peerResponses.stream()
+                .map(PeerResponse::toPeerContactInfo)
+                .forEach(this::handleDiscoveredPeerContact);
     }
 
     @Override
-    public void onChokeReceived(PeerHandler peerHandler) {
-        LOGGER.log(Level.DEBUG, "Choke received: {0}", peerHandler);
+    public void onReady(PeerHandler peerHandler) {
+        log(Level.DEBUG, String.format("Handling peer ready: %s", peerHandler.getPeerContactInfo()));
+        workDispatcher.addPeerHandler(peerHandler);
+    }
+
+    @Override
+    public void handlePeerConnected(PeerHandler peerHandler) {
+        log(Level.DEBUG, String.format("Handling peer connected: %s", peerHandler.getPeerContactInfo()));
+    }
+
+    @Override
+    public void handlePeerDisconnected(PeerHandler peerHandler) {
+        log(Level.DEBUG, String.format("Handling peer disconnected: %s", peerHandler.getPeerContactInfo()));
+    }
+
+
+    @Override
+    public void handlePeerChoked(PeerHandler peerHandler) {
+        log(Level.DEBUG, String.format("Handling choked by remote: %s", peerHandler.getPeerContactInfo()));
 
         peerHandler.getAvailablePieces().stream()
                 .map(pieceIndexToAvailablePeerHandlers::get)
@@ -168,19 +181,50 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.List
     }
 
     @Override
-    public void onReady(PeerHandler peerHandler) {
-        LOGGER.log(Level.DEBUG, "PeerHandler ready: {0}", peerHandler);
-        workDispatcher.addPeerHandler(peerHandler);
+    public void handlePeerUnchoked(PeerHandler peerHandler) {
+        log(Level.DEBUG, String.format("Handling unchoked by remote: %s", peerHandler.getPeerContactInfo()));
+
+        peerHandler.getAvailablePieces().stream()
+                .map(pieceIndexToAvailablePeerHandlers::get)
+                .forEach(availablePeerHandlers -> availablePeerHandlers.add(peerHandler));
     }
 
     @Override
-    public void onPieceReceived(Piece piece) {
-        LOGGER.log(Level.DEBUG, "Piece received: {0}", piece);
+    public void handlePeerInterested(PeerHandler peerHandler) {
+        log(Level.DEBUG, String.format("Handling peer interested: %s", peerHandler.getPeerContactInfo()));
+    }
 
-        int pieceIndex = piece.getIndex();
-        int blockIndex = piece.getBegin() / torrent.getBlockSize();
+    @Override
+    public void handlePeerNotInterested(PeerHandler peerHandler) {
+        log(Level.DEBUG, String.format("Handling peer not interested: %s", peerHandler.getPeerContactInfo()));
+    }
 
-        repository.storeBlock(torrent, pieceIndex, piece.getBegin(), piece.getBlock());
+    @Override
+    public void handlePieceAvailable(PeerHandler peerHandler, int pieceIndex) {
+        log(Level.DEBUG, String.format("Handling piece available: %s, pieceIndex=%d", peerHandler.getPeerContactInfo(),
+                pieceIndex));
+        pieceIndexToAvailablePeerHandlers
+                .computeIfAbsent(pieceIndex, key -> new HashSet<>())
+                .add(peerHandler);
+
+        if (peerHandler.isReady()) {
+            workDispatcher.addPeerHandler(peerHandler);
+        }
+    }
+
+    @Override
+    public void handlePiecesAvailable(PeerHandler peerHandler, Set<Integer> pieceIndices) {
+        pieceIndices.forEach(pieceIndex -> handlePieceAvailable(peerHandler, pieceIndex));
+    }
+
+    @Override
+    public void handleBlockReceived(PeerHandler peerHandler, int pieceIndex, int offset, byte[] data) {
+        log(Level.DEBUG, String.format("Handling %d bytes received for piece %d, offset %d", data.length, pieceIndex,
+                offset));
+
+        int blockIndex = offset / torrent.getBlockSize();
+
+        repository.storeBlock(torrent, pieceIndex, offset, data);
 
         torrent.setBlockReceived(pieceIndex, blockIndex);
 
@@ -199,7 +243,7 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.List
             }
         }
 
-        torrent.incrementDownloaded(piece.getBlock().length);
+        torrent.incrementDownloaded(data.length);
 
         if (torrent.isAllPiecesVerified()) {
             LOGGER.log(Level.DEBUG, "All pieces received");
@@ -208,27 +252,27 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.List
     }
 
     @Override
-    public void onPieceAvailable(PeerHandler peerHandler, int index) {
-        pieceIndexToAvailablePeerHandlers
-                .computeIfAbsent(index, key -> new HashSet<>())
-                .add(peerHandler);
-
-        if (peerHandler.isReady()) {
-            workDispatcher.addPeerHandler(peerHandler);
-        }
+    public void handleBlockRequested(PeerHandler peerHandler, int pieceIndex, int offset, int length) {
+        log(Level.DEBUG, String.format("Handling block requested (%d - %d) for piece %d", offset, offset + length,
+                pieceIndex));
     }
 
     @Override
-    public void onPortReceived(PeerHandler peerHandler, int port) {
+    public void handleBlockCancelled(PeerHandler peerHandler, int pieceIndex, int offset, int length) {
+        log(Level.DEBUG, String.format("Handling block cancelled (%d - %d) for piece %d", offset, offset + length,
+                pieceIndex));
+    }
+
+    @Override
+    public void handleDhtPortReceived(PeerHandler peerHandler, int port) {
+        log(Level.DEBUG, String.format("Handling DHT port received from %s: %d", peerHandler.getPeerContactInfo(),
+                port));
         InetSocketAddress address = new InetSocketAddress(peerHandler.getAddress(), port);
         listeners.forEach(listener -> listener.onDhtNodeDiscovered(address));
     }
 
-    @Override
-    public void onAnnounceResponse(List<PeerResponse> peerResponses) {
-        peerResponses.stream()
-                .map(PeerResponse::toPeerContactInfo)
-                .forEach(this::handleDiscoveredPeerContact);
+    private void log(Level level, String message) {
+        LOGGER.log(level, String.format("[%s] %s", torrent.getName(), message));
     }
 
     public interface Listener {
