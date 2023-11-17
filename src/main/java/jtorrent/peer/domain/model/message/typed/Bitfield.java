@@ -7,6 +7,27 @@ import java.util.Collection;
 import java.util.Objects;
 import java.util.stream.IntStream;
 
+/**
+ * The bitfield message may only be sent immediately after the handshaking sequence is completed, and before any other
+ * messages are sent. It is optional, and need not be sent if a client has no pieces.
+ * <p>
+ * <br>
+ * Expected BitTorrent message format: {@literal <len=0001+X><id=5><bitfield>}<br>
+ * <p>
+ * <br>
+ * The bitfield message is variable length, where X is the length of the bitfield. The payload is a bitfield
+ * representing the pieces that have been successfully downloaded. The first byte of the bitfield corresponds
+ * to indices 0 - 7 from high bit to low bit. The next one 8-15, etc.
+ * <p>
+ * Bits that are cleared indicated a missing piece, and set bits indicate a valid and available
+ * piece. Spare bits at the end are set to zero. The last byte should be extended to the right if necessary, i.e.
+ * if the length of the bitfield is not a multiple of 8 bits, the value of the low bits in the last byte should be
+ * zero.
+ *
+ * @see <a href="http://www.bittorrent.org/beps/bep_0003.html#peer-messages">
+ * BEP 3 - The BitTorrent Protocol Specification - Peer Messages</a>
+ * @see <a href="https://wiki.theory.org/BitTorrentSpecification">BitTorrentSpecification - TheoryOrg</a>
+ */
 public class Bitfield extends TypedPeerMessage {
 
     private final BitSet bitSet;
