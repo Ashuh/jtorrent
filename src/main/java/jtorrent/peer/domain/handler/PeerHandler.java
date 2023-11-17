@@ -272,7 +272,7 @@ public class PeerHandler {
                 return;
             }
 
-            eventHandler.handlePeerConnected(PeerHandler.this);
+            eventHandler.onReady(PeerHandler.this);
         }
 
         private void handleInterested() {
