@@ -2,7 +2,6 @@ package jtorrent.peer.domain.model.message.typed;
 
 import static jtorrent.common.domain.util.ValidationUtil.requireNonNull;
 
-import java.nio.ByteBuffer;
 import java.util.BitSet;
 import java.util.Collection;
 import java.util.Objects;
@@ -23,26 +22,31 @@ public class Bitfield extends TypedPeerMessage {
     }
 
     public static Bitfield unpack(byte[] payload) {
-        ByteBuffer buffer = ByteBuffer.wrap(payload);
-        byte[] block = new byte[buffer.remaining()];
-        buffer.get(block);
+        BitSet bitSet = new BitSet();
 
-        for (int i = 0; i < block.length; i++) {
-            block[i] = reverseBits(block[i]);
+        for (int i = 0; i < payload.length; i++) {
+            byte b = payload[i];
+            int startIndex = i * Byte.SIZE;
+            for (int j = 0; j < Byte.SIZE; j++) {
+                if (isBitSet(b, j)) {
+                    bitSet.set(startIndex + j);
+                }
+            }
         }
 
-        BitSet bitSet = BitSet.valueOf(block);
         return new Bitfield(bitSet);
     }
 
-    private static byte reverseBits(byte b) {
-        byte result = 0;
-        for (int i = 0; i < Byte.SIZE; i++) {
-            result <<= 1;
-            result |= (b & 1);
-            b >>= 1;
-        }
-        return result;
+    /**
+     * Checks whether the bit at the specified index is set.
+     *
+     * @param b        the byte to check
+     * @param bitIndex the index of the bit to check. 0 is the leftmost bit.
+     * @return true if the bit is set, false otherwise
+     */
+    private static boolean isBitSet(byte b, int bitIndex) {
+        int mask = 1 << (Byte.SIZE - 1 - bitIndex);
+        return (b & mask) != 0;
     }
 
     public IntStream getBits() {
