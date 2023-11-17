@@ -11,10 +11,6 @@ import java.util.stream.IntStream;
  * The bitfield message may only be sent immediately after the handshaking sequence is completed, and before any other
  * messages are sent. It is optional, and need not be sent if a client has no pieces.
  * <p>
- * <br>
- * Expected BitTorrent message format: {@literal <len=0001+X><id=5><bitfield>}<br>
- * <p>
- * <br>
  * The bitfield message is variable length, where X is the length of the bitfield. The payload is a bitfield
  * representing the pieces that have been successfully downloaded. The first byte of the bitfield corresponds
  * to indices 0 - 7 from high bit to low bit. The next one 8-15, etc.
@@ -23,6 +19,25 @@ import java.util.stream.IntStream;
  * piece. Spare bits at the end are set to zero. The last byte should be extended to the right if necessary, i.e.
  * if the length of the bitfield is not a multiple of 8 bits, the value of the low bits in the last byte should be
  * zero.
+ * <p>
+ * <table>
+ *     <caption>Payload Structure</caption>
+ *     <tr>
+ *         <th style="text-align: center">Field No.</th>
+ *         <th style="text-align: center">Field Name</th>
+ *         <th style="text-align: center">Size (Bytes)</th>
+ *         <th style="text-align: center">Description</th>
+ *         <th style="text-align: center">Position</th>
+ *     </tr>
+ *     <tr>
+ *         <td style="text-align: center">1</td>
+ *         <td style="text-align: center">bitfield</td>
+ *         <td style="text-align: center">X</td>
+ *         <td style="text-align: center">bitfield representing pieces that have been successfully downloaded</td>
+ *         <td style="text-align: center">5</td>
+ *     </tr>
+ * </table>
+ * Refer to {@link TypedPeerMessage} for the common header structure.
  *
  * @see <a href="http://www.bittorrent.org/beps/bep_0003.html#peer-messages">
  * BEP 3 - The BitTorrent Protocol Specification - Peer Messages</a>
