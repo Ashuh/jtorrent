@@ -29,6 +29,18 @@ public abstract class BlockMessage extends TypedPeerMessage {
         this.length = length;
     }
 
+    public int getIndex() {
+        return index;
+    }
+
+    public int getBegin() {
+        return begin;
+    }
+
+    public int getLength() {
+        return length;
+    }
+
     @Override
     protected final int getPayloadSize() {
         return PAYLOAD_BYTES;
