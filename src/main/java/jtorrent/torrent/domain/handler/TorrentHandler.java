@@ -41,7 +41,7 @@ import jtorrent.tracker.domain.model.PeerResponse;
 public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.EventHandler {
 
     private static final Logger LOGGER = getLogger(TorrentHandler.class.getName());
-    private static final ExecutorService PEER_CONNECTION_EXECUTOR = Executors.newCachedThreadPool();
+    private final ExecutorService peerConnectionExecutor = Executors.newCachedThreadPool();
 
     private final Torrent torrent;
     private final Set<TrackerHandler> trackerHandlers;
@@ -81,7 +81,7 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
         executorService.shutdownNow();
         peerHandlers.forEach(PeerHandler::stop);
         torrent.clearPeers();
-        PEER_CONNECTION_EXECUTOR.shutdownNow();
+        peerConnectionExecutor.shutdownNow();
     }
 
     public void handleIncomingPeerConnection(PeerSocket peerSocket) {
@@ -95,7 +95,7 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
             return;
         }
 
-        PEER_CONNECTION_EXECUTOR.execute(() -> {
+        peerConnectionExecutor.execute(() -> {
             try {
                 peerSocket.connect(torrent.getInfoHash(), true);
                 LOGGER.log(Level.INFO, "Connected to {0}", peerContactInfo);
@@ -117,7 +117,7 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
             return;
         }
 
-        PEER_CONNECTION_EXECUTOR.execute(() -> {
+        peerConnectionExecutor.execute(() -> {
             try {
                 PeerSocket peerSocket = new PeerSocket(peerContactInfo);
                 LOGGER.log(Level.INFO, "Connected to {0}", peerContactInfo);
