@@ -23,7 +23,6 @@ public class PeerSocket {
 
     private static final Logger LOGGER = System.getLogger(PeerSocket.class.getName());
 
-    private final PeerMessageUnpacker peerMessageUnpacker = new PeerMessageUnpacker();
     private final Socket socket;
     private boolean isConnected;
     private boolean isHandshakeReceived;
@@ -115,11 +114,11 @@ public class PeerSocket {
         int lengthPrefix = readLengthPrefix();
 
         if (lengthPrefix == 0) {
-            return peerMessageUnpacker.unpack(new byte[0]);
+            return PeerMessageUnpacker.unpack(new byte[0]);
         }
 
         byte[] messageBytes = readMessageBytes(lengthPrefix);
-        PeerMessage peerMessage = peerMessageUnpacker.unpack(messageBytes);
+        PeerMessage peerMessage = PeerMessageUnpacker.unpack(messageBytes);
         LOGGER.log(Level.INFO, "[{0}] Received: {1}", getPeerContactInfo(), peerMessage);
         return peerMessage;
     }
