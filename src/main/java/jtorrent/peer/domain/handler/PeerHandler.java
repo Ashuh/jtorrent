@@ -191,7 +191,7 @@ public class PeerHandler {
         protected void doOnStarted() {
             try {
                 // TODO: hardcoded true for now
-                peerSocket.connect(infoHash, true);
+                peerSocket.connect(peer.getSocketAddress(), infoHash, true);
                 sendInterested();
             } catch (IOException e) {
                 LOGGER.log(Level.ERROR, "[{0}] Error while connecting to peer", peer.getPeerContactInfo());

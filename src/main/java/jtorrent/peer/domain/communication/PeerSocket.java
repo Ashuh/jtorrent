@@ -8,6 +8,7 @@ import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 
 import jtorrent.common.domain.util.Sha1Hash;
@@ -27,8 +28,8 @@ public class PeerSocket {
     private boolean isConnected;
     private boolean isHandshakeReceived;
 
-    public PeerSocket(PeerContactInfo peerContactInfo) throws IOException {
-        this(new Socket(peerContactInfo.getAddress(), peerContactInfo.getPort()));
+    public PeerSocket() {
+        this(new Socket());
     }
 
     public PeerSocket(Socket socket) {
@@ -54,17 +55,22 @@ public class PeerSocket {
         return isConnected;
     }
 
-    public void connect(Sha1Hash infoHash, boolean isDhtSupported) throws IOException {
+    public void connect(SocketAddress address, Sha1Hash infoHash, boolean isDhtSupported) throws IOException {
+        LOGGER.log(Level.INFO, "[{0}] Connecting", socket.getRemoteSocketAddress());
+
         if (isConnected) {
+            LOGGER.log(Level.WARNING, "[{0}] Already connected", socket.getRemoteSocketAddress());
             return;
         }
 
-        if (!socket.isConnected()) {
-            throw new IllegalStateException("Socket is not connected");
+        if (socket.isConnected()) {
+            if (!socket.getRemoteSocketAddress().equals(address)) {
+                throw new IllegalStateException("Socket is already connected to a different address");
+            }
+        } else {
+            socket.connect(address);
         }
 
-        requireNonNull(infoHash);
-        LOGGER.log(Level.INFO, "[{0}] Connecting", socket.getRemoteSocketAddress());
         Handshake handshake = new Handshake(infoHash, PEER_ID.getBytes(), isDhtSupported);
         sendMessage(handshake);
 

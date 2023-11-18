@@ -4,6 +4,7 @@ import static jtorrent.common.domain.util.ValidationUtil.requireNonNull;
 
 import java.lang.System.Logger;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.time.Duration;
 import java.util.Objects;
 
@@ -27,16 +28,20 @@ public class Peer {
         durationWindow.close();
     }
 
-    public InetAddress getAddress() {
-        return getPeerContactInfo().getAddress();
-    }
-
     public PeerContactInfo getPeerContactInfo() {
         return peerContactInfo;
     }
 
+    public InetSocketAddress getSocketAddress() {
+        return peerContactInfo.toInetSocketAddress();
+    }
+
+    public InetAddress getAddress() {
+        return peerContactInfo.getAddress();
+    }
+
     public int getPort() {
-        return getPeerContactInfo().getPort();
+        return peerContactInfo.getPort();
     }
 
     public boolean isLocalChoked() {
