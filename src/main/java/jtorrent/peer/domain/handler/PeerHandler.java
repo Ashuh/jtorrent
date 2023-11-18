@@ -290,9 +290,10 @@ public class PeerHandler {
         }
 
         private void handleBitfield(Bitfield bitfield) {
-            Set<Integer> availablePieces = new HashSet<>();
-            bitfield.getBits().forEach(availablePieces::add);
-            eventHandler.handlePiecesAvailable(PeerHandler.this, availablePieces);
+            Set<Integer> newAvailablePieces = new HashSet<>();
+            bitfield.getBits().forEach(newAvailablePieces::add);
+            availablePieces.addAll(newAvailablePieces);
+            eventHandler.handlePiecesAvailable(PeerHandler.this, newAvailablePieces);
         }
 
         private void handleRequest(Request request) {
