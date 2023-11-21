@@ -24,14 +24,14 @@ public class IncomingConnectionListener {
     private static final Logger LOGGER = System.getLogger(IncomingConnectionListener.class.getName());
 
     private final ListenForIncomingConnectionsTask incomingConnectionsTask;
-    private final LinkedBlockingQueue<IncomingConnection> incomingConnectionQueue = new LinkedBlockingQueue<>();
+    private final LinkedBlockingQueue<InboundConnection> inboundConnections = new LinkedBlockingQueue<>();
 
     public IncomingConnectionListener(ServerSocket serverSocket) {
         incomingConnectionsTask = new ListenForIncomingConnectionsTask(serverSocket);
     }
 
-    public IncomingConnection waitForIncomingConnection() throws InterruptedException {
-        return incomingConnectionQueue.take();
+    public InboundConnection waitForIncomingConnection() throws InterruptedException {
+        return inboundConnections.take();
     }
 
     public void start() {
@@ -42,12 +42,12 @@ public class IncomingConnectionListener {
         incomingConnectionsTask.stop();
     }
 
-    public static class IncomingConnection {
+    public static class InboundConnection {
 
         private final PeerSocket peerSocket;
         private final Sha1Hash infoHash;
 
-        public IncomingConnection(PeerSocket peerSocket, Sha1Hash infoHash) {
+        public InboundConnection(PeerSocket peerSocket, Sha1Hash infoHash) {
             this.peerSocket = requireNonNull(peerSocket);
             this.infoHash = requireNonNull(infoHash);
         }
@@ -60,9 +60,7 @@ public class IncomingConnectionListener {
             return infoHash;
         }
 
-        public PeerSocket accept(boolean isDhtSupported) throws IOException {
-            Handshake handshake = new Handshake(infoHash, Constants.PEER_ID.getBytes(), isDhtSupported);
-            peerSocket.sendMessage(handshake);
+        public PeerSocket accept() {
             return peerSocket;
         }
 
@@ -102,8 +100,8 @@ public class IncomingConnectionListener {
                 try {
                     Handshake handshake = waitForHandshake(peerSocket);
                     Sha1Hash infoHash = handshake.getInfoHash();
-                    IncomingConnection incomingConnection = new IncomingConnection(peerSocket, infoHash);
-                    incomingConnectionQueue.add(incomingConnection);
+                    InboundConnection inboundConnection = new InboundConnection(peerSocket, infoHash);
+                    inboundConnections.add(inboundConnection);
                 } catch (IOException e) {
                     if (e instanceof SocketTimeoutException) {
                         LOGGER.log(Level.ERROR,

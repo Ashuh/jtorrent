@@ -140,27 +140,23 @@ public class Client implements LocalServiceDiscoveryManager.Listener, TorrentHan
 
         @Override
         protected void execute() throws InterruptedException {
-            IncomingConnectionListener.IncomingConnection incomingConnection =
+            IncomingConnectionListener.InboundConnection inboundConnection =
                     incomingConnectionListener.waitForIncomingConnection();
 
-            Sha1Hash infoHash = incomingConnection.getInfoHash();
+            Sha1Hash infoHash = inboundConnection.getInfoHash();
             if (!infoHashToTorrentHandler.containsKey(infoHash)) {
                 LOGGER.log(Level.ERROR, "No torrent found for infohash " + infoHash);
                 try {
-                    incomingConnection.reject();
+                    inboundConnection.reject();
                 } catch (IOException e) {
                     LOGGER.log(Level.ERROR, "Error rejecting incoming connection", e);
                 }
                 return;
             }
 
-            try {
-                PeerSocket peerSocket = incomingConnection.accept(true);
-                TorrentHandler torrentHandler = infoHashToTorrentHandler.get(infoHash);
-                torrentHandler.handleIncomingPeerConnection(peerSocket);
-            } catch (IOException e) {
-                LOGGER.log(Level.ERROR, "Error accepting incoming connection", e);
-            }
+            PeerSocket peerSocket = inboundConnection.accept();
+            TorrentHandler torrentHandler = infoHashToTorrentHandler.get(infoHash);
+            torrentHandler.handleInboundPeerConnection(peerSocket);
         }
     }
 }

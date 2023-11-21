@@ -10,7 +10,6 @@ import java.util.Set;
 
 import jtorrent.common.domain.model.Block;
 import jtorrent.common.domain.util.BackgroundTask;
-import jtorrent.common.domain.util.Sha1Hash;
 import jtorrent.peer.domain.communication.PeerSocket;
 import jtorrent.peer.domain.model.Peer;
 import jtorrent.peer.domain.model.PeerContactInfo;
@@ -33,17 +32,15 @@ public class PeerHandler {
 
     private final Peer peer;
     private final PeerSocket peerSocket;
-    private final Sha1Hash infoHash;
     private final EventHandler eventHandler;
     private final Set<Integer> availablePieces = new HashSet<>();
     private final HandlePeerTask handlePeerTask;
 
     private boolean isBusy = false;
 
-    public PeerHandler(Peer peer, PeerSocket peerSocket, Sha1Hash infoHash, EventHandler eventHandler) {
+    public PeerHandler(Peer peer, PeerSocket peerSocket, EventHandler eventHandler) {
         this.peerSocket = peerSocket;
         this.peer = peer;
-        this.infoHash = infoHash;
         this.eventHandler = eventHandler;
         handlePeerTask = new HandlePeerTask();
     }
@@ -190,11 +187,9 @@ public class PeerHandler {
         @Override
         protected void doOnStarted() {
             try {
-                // TODO: hardcoded true for now
-                peerSocket.connect(peer.getSocketAddress(), infoHash, true);
                 sendInterested();
             } catch (IOException e) {
-                LOGGER.log(Level.ERROR, "[{0}] Error while connecting to peer", peer.getPeerContactInfo());
+                LOGGER.log(Level.ERROR, "[{0}] Error sending Interested", peer.getPeerContactInfo());
                 super.stop();
             }
         }

@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
@@ -47,6 +48,7 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
     private final Map<Integer, Set<PeerHandler>> pieceIndexToAvailablePeerHandlers = new HashMap<>();
     private final WorkDispatcher workDispatcher = new WorkDispatcher();
     private final PieceRepository repository;
+    private final ExecutorService peerConnectionExecutor = Executors.newCachedThreadPool();
     private final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1);
     /**
      * Set of peer contacts that are currently being connected to.
@@ -77,33 +79,65 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
         workDispatcher.stop();
         trackerHandlers.forEach(TrackerHandler::stop);
         executorService.shutdownNow();
+        peerConnectionExecutor.shutdownNow();
         peerHandlers.forEach(PeerHandler::stop);
         torrent.clearPeers();
     }
 
-    public void handleIncomingPeerConnection(PeerSocket peerSocket) {
+    public void handleInboundPeerConnection(PeerSocket peerSocket) {
         PeerContactInfo peerContactInfo = peerSocket.getPeerContactInfo();
 
-        if (torrent.hasPeer(peerContactInfo)) {
+        if (isAlreadyConnectedOrPending(peerContactInfo)) {
             return;
         }
 
-        Peer peer = new Peer(peerContactInfo);
-        torrent.addPeer(peer);
-        PeerHandler peerHandler = new PeerHandler(peer, peerSocket, torrent.getInfoHash(), this);
-        peerHandlers.add(peerHandler);
-        peerHandler.start();
+        peerConnectionExecutor.execute(() -> {
+            try {
+                peerSocket.acceptInboundConnection(true);
+                LOGGER.log(Level.INFO, "Connected to {0}", peerContactInfo);
+                addNewPeerConnection(peerSocket);
+            } catch (IOException e) {
+                LOGGER.log(Level.ERROR, "Failed to connect to peer: {0}", peerContactInfo);
+            } finally {
+                pendingContacts.remove(peerContactInfo);
+            }
+        });
     }
 
     public void handleDiscoveredPeerContact(PeerContactInfo peerContactInfo) {
-        if (torrent.hasPeer(peerContactInfo)) {
+        if (isAlreadyConnectedOrPending(peerContactInfo)) {
             return;
         }
 
-        Peer peer = new Peer(peerContactInfo);
+        peerConnectionExecutor.execute(() -> {
+            try {
+                PeerSocket peerSocket = new PeerSocket();
+                peerSocket.connect(peerContactInfo.toInetSocketAddress(), torrent.getInfoHash(), true);
+                LOGGER.log(Level.INFO, "Connected to {0}", peerContactInfo);
+                addNewPeerConnection(peerSocket);
+            } catch (IOException e) {
+                LOGGER.log(Level.ERROR, "Failed to connect to peer: {0}", peerContactInfo);
+            } finally {
+                pendingContacts.remove(peerContactInfo);
+            }
+        });
+    }
+
+    /**
+     * Checks if the remote peer is already connected to or if a connection is pending.
+     *
+     * @param peerContactInfo the {@link PeerContactInfo} of the remote peer to check
+     * @return {@code true} if the remote peer is already connected to or if a connection is pending, {@code false}
+     * otherwise
+     */
+    private boolean isAlreadyConnectedOrPending(PeerContactInfo peerContactInfo) {
+        return torrent.hasPeer(peerContactInfo) || pendingContacts.checkAndAdd(peerContactInfo);
+    }
+
+    private void addNewPeerConnection(PeerSocket peerSocket) {
+        Peer peer = new Peer(peerSocket.getPeerContactInfo());
         torrent.addPeer(peer);
-        PeerSocket peerSocket = new PeerSocket();
-        PeerHandler peerHandler = new PeerHandler(peer, peerSocket, torrent.getInfoHash(), this);
+        PeerHandler peerHandler = new PeerHandler(peer, peerSocket, this);
         peerHandlers.add(peerHandler);
         peerHandler.start();
     }
