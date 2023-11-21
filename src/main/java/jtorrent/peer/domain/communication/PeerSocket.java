@@ -83,6 +83,25 @@ public class PeerSocket {
         isConnected = true;
     }
 
+    /**
+     * Sets the timeout for socket operations.
+     *
+     * @param timeout the timeout in milliseconds
+     * @throws IOException if an I/O error occurs when setting the timeout
+     */
+    public void setTimeout(int timeout) throws IOException {
+        socket.setSoTimeout(timeout);
+    }
+
+    /**
+     * Gets the timeout for socket operations.
+     *
+     * @throws IOException if an I/O error occurs when getting the timeout
+     */
+    public int getTimeout() throws IOException {
+        return socket.getSoTimeout();
+    }
+
     public void sendMessage(PeerMessage message) throws IOException {
         socket.getOutputStream().write(message.pack());
         LOGGER.log(Level.INFO, "[{0}] Sent: {1}", getPeerContactInfo(), message);

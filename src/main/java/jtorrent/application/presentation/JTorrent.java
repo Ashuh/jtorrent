@@ -9,7 +9,7 @@ import jtorrent.application.domain.Client;
 import jtorrent.application.presentation.viewmodel.ViewModel;
 import jtorrent.common.domain.Constants;
 import jtorrent.dht.domain.handler.DhtClient;
-import jtorrent.incoming.domain.IncomingConnectionManager;
+import jtorrent.incoming.domain.IncomingConnectionListener;
 import jtorrent.lsd.domain.handler.LocalServiceDiscoveryManager;
 import jtorrent.torrent.data.repository.FilePieceRepository;
 import jtorrent.torrent.data.repository.FileTorrentRepository;
@@ -26,13 +26,13 @@ public class JTorrent extends Application {
     @Override
     public void init() throws Exception {
         ServerSocket serverSocket = new ServerSocket(Constants.PORT);
-        IncomingConnectionManager incomingConnectionManager = new IncomingConnectionManager(serverSocket);
+        IncomingConnectionListener incomingConnectionListener = new IncomingConnectionListener(serverSocket);
 
         DhtClient dhtClient = new DhtClient(Constants.PORT);
 
         TorrentRepository repository = new FileTorrentRepository();
         PieceRepository pieceRepository = new FilePieceRepository();
-        client = new Client(repository, pieceRepository, incomingConnectionManager, new LocalServiceDiscoveryManager(),
+        client = new Client(repository, pieceRepository, incomingConnectionListener, new LocalServiceDiscoveryManager(),
                 dhtClient);
     }
 
