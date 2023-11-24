@@ -131,7 +131,7 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
      * otherwise
      */
     private boolean isAlreadyConnectedOrPending(PeerContactInfo peerContactInfo) {
-        return torrent.hasPeer(peerContactInfo) || pendingContacts.checkAndAdd(peerContactInfo);
+        return torrent.hasPeer(peerContactInfo) || !pendingContacts.checkAndAdd(peerContactInfo);
     }
 
     private void addNewPeerConnection(PeerSocket peerSocket) {
