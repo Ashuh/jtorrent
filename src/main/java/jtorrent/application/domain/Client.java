@@ -35,8 +35,7 @@ public class Client implements LocalServiceDiscoveryManager.Listener, TorrentHan
     private final Map<Sha1Hash, TorrentHandler> infoHashToTorrentHandler = new HashMap<>();
     private final TorrentRepository torrentRepository;
     private final PieceRepository pieceRepository;
-    private final HandleIncomingPeerConnectionsTask handleIncomingPeerConnectionsTask =
-            new HandleIncomingPeerConnectionsTask();
+    private final HandleInboundConnectionsTask handleInboundConnectionsTask = new HandleInboundConnectionsTask();
 
     public Client(TorrentRepository torrentRepository, PieceRepository pieceRepository,
             InboundConnectionListener inboundConnectionListener,
@@ -46,7 +45,7 @@ public class Client implements LocalServiceDiscoveryManager.Listener, TorrentHan
 
         this.inboundConnectionListener = inboundConnectionListener;
         this.inboundConnectionListener.start();
-        handleIncomingPeerConnectionsTask.start();
+        handleInboundConnectionsTask.start();
 
         this.localServiceDiscoveryManager = localServiceDiscoveryManager;
         this.localServiceDiscoveryManager.addListener(this);
@@ -136,7 +135,7 @@ public class Client implements LocalServiceDiscoveryManager.Listener, TorrentHan
         peers.forEach(torrentHandler::handleDiscoveredPeerContact);
     }
 
-    private class HandleIncomingPeerConnectionsTask extends BackgroundTask {
+    private class HandleInboundConnectionsTask extends BackgroundTask {
 
         @Override
         protected void execute() throws InterruptedException {
