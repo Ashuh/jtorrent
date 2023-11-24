@@ -47,7 +47,7 @@ public class PeerSocket {
     }
 
     public void connect(SocketAddress address, Sha1Hash infoHash, boolean isDhtSupported) throws IOException {
-        LOGGER.log(Level.INFO, "[{0}] Connecting", socket.getRemoteSocketAddress());
+        LOGGER.log(Level.INFO, "[{0}] Connecting", address);
 
         if (isConnected) {
             LOGGER.log(Level.WARNING, "[{0}] Already connected", socket.getRemoteSocketAddress());
