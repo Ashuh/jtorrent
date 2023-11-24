@@ -75,6 +75,7 @@ public class Client implements LocalServiceDiscoveryManager.Listener, TorrentHan
 
     public void shutdown() {
         inboundConnectionListener.stop();
+        handleInboundConnectionsTask.stop();
         localServiceDiscoveryManager.stop();
         dhtManager.stop();
         infoHashToTorrentHandler.values().forEach(TorrentHandler::stop);
