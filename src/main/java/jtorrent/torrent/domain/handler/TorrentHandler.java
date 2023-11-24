@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -53,7 +54,7 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
     /**
      * Set of peer contacts that are currently being connected to.
      */
-    private final AtomicCheckAndAddSet<PeerContactInfo> pendingContacts = new AtomicCheckAndAddSet<>();
+    private final Set<PeerContactInfo> pendingContacts = ConcurrentHashMap.newKeySet();
     private final List<Listener> listeners = new ArrayList<>();
 
     public TorrentHandler(Torrent torrent, PieceRepository pieceRepository) {
@@ -133,7 +134,7 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
      * otherwise
      */
     private boolean isAlreadyConnectedOrPending(PeerContactInfo peerContactInfo) {
-        return torrent.hasPeer(peerContactInfo) || !pendingContacts.checkAndAdd(peerContactInfo);
+        return torrent.hasPeer(peerContactInfo) || !pendingContacts.add(peerContactInfo);
     }
 
     private void addNewPeerConnection(PeerSocket peerSocket) {
@@ -340,23 +341,6 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
 
             optimisticUnchokedPeerHandler = peerHandler;
             optimisticUnchokedPeerHandler.unchoke();
-        }
-    }
-
-    public static class AtomicCheckAndAddSet<E> {
-
-        private final Set<E> set = new HashSet<>();
-
-        public synchronized boolean checkAndAdd(E element) {
-            if (set.contains(element)) {
-                return false;
-            }
-            return set.add(element);
-
-        }
-
-        public synchronized boolean remove(E element) {
-            return set.remove(element);
         }
     }
 
