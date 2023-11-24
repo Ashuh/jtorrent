@@ -14,7 +14,7 @@ import jtorrent.common.domain.util.Sha1Hash;
 import jtorrent.common.domain.util.rx.RxObservableList;
 import jtorrent.dht.domain.handler.DhtClient;
 import jtorrent.dht.domain.handler.DhtManager;
-import jtorrent.incoming.domain.IncomingConnectionListener;
+import jtorrent.incoming.domain.InboundConnectionListener;
 import jtorrent.lsd.domain.handler.LocalServiceDiscoveryManager;
 import jtorrent.lsd.domain.model.Announce;
 import jtorrent.peer.domain.communication.PeerSocket;
@@ -29,7 +29,7 @@ public class Client implements LocalServiceDiscoveryManager.Listener, TorrentHan
 
     private static final Logger LOGGER = System.getLogger(Client.class.getName());
 
-    private final IncomingConnectionListener incomingConnectionListener;
+    private final InboundConnectionListener inboundConnectionListener;
     private final LocalServiceDiscoveryManager localServiceDiscoveryManager;
     private final DhtClient dhtManager;
     private final Map<Sha1Hash, TorrentHandler> infoHashToTorrentHandler = new HashMap<>();
@@ -39,13 +39,13 @@ public class Client implements LocalServiceDiscoveryManager.Listener, TorrentHan
             new HandleIncomingPeerConnectionsTask();
 
     public Client(TorrentRepository torrentRepository, PieceRepository pieceRepository,
-            IncomingConnectionListener incomingConnectionListener,
+            InboundConnectionListener inboundConnectionListener,
             LocalServiceDiscoveryManager localServiceDiscoveryManager, DhtClient dhtClient) {
         this.torrentRepository = torrentRepository;
         this.pieceRepository = pieceRepository;
 
-        this.incomingConnectionListener = incomingConnectionListener;
-        this.incomingConnectionListener.start();
+        this.inboundConnectionListener = inboundConnectionListener;
+        this.inboundConnectionListener.start();
         handleIncomingPeerConnectionsTask.start();
 
         this.localServiceDiscoveryManager = localServiceDiscoveryManager;
@@ -75,7 +75,7 @@ public class Client implements LocalServiceDiscoveryManager.Listener, TorrentHan
     }
 
     public void shutdown() {
-        incomingConnectionListener.stop();
+        inboundConnectionListener.stop();
         localServiceDiscoveryManager.stop();
         dhtManager.stop();
         infoHashToTorrentHandler.values().forEach(TorrentHandler::stop);
@@ -140,8 +140,8 @@ public class Client implements LocalServiceDiscoveryManager.Listener, TorrentHan
 
         @Override
         protected void execute() throws InterruptedException {
-            IncomingConnectionListener.InboundConnection inboundConnection =
-                    incomingConnectionListener.waitForIncomingConnection();
+            InboundConnectionListener.InboundConnection inboundConnection =
+                    inboundConnectionListener.waitForIncomingConnection();
 
             Sha1Hash infoHash = inboundConnection.getInfoHash();
             if (!infoHashToTorrentHandler.containsKey(infoHash)) {

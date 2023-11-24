@@ -19,15 +19,15 @@ import jtorrent.peer.domain.communication.PeerSocket;
 import jtorrent.peer.domain.model.PeerContactInfo;
 import jtorrent.peer.domain.model.message.Handshake;
 
-public class IncomingConnectionListener {
+public class InboundConnectionListener {
 
-    private static final Logger LOGGER = System.getLogger(IncomingConnectionListener.class.getName());
+    private static final Logger LOGGER = System.getLogger(InboundConnectionListener.class.getName());
 
-    private final ListenForIncomingConnectionsTask incomingConnectionsTask;
+    private final ListenForInboundConnectionsTask listenForInboundConnectionsTask;
     private final LinkedBlockingQueue<InboundConnection> inboundConnections = new LinkedBlockingQueue<>();
 
-    public IncomingConnectionListener(ServerSocket serverSocket) {
-        incomingConnectionsTask = new ListenForIncomingConnectionsTask(serverSocket);
+    public InboundConnectionListener(ServerSocket serverSocket) {
+        listenForInboundConnectionsTask = new ListenForInboundConnectionsTask(serverSocket);
     }
 
     public InboundConnection waitForIncomingConnection() throws InterruptedException {
@@ -35,11 +35,11 @@ public class IncomingConnectionListener {
     }
 
     public void start() {
-        incomingConnectionsTask.start();
+        listenForInboundConnectionsTask.start();
     }
 
     public void stop() {
-        incomingConnectionsTask.stop();
+        listenForInboundConnectionsTask.stop();
     }
 
     public static class InboundConnection {
@@ -69,14 +69,14 @@ public class IncomingConnectionListener {
         }
     }
 
-    private class ListenForIncomingConnectionsTask extends BackgroundTask {
+    private class ListenForInboundConnectionsTask extends BackgroundTask {
 
         private static final int HANDSHAKE_TIMEOUT_MILLIS = 10000;
 
         private final ExecutorService executorService = Executors.newCachedThreadPool();
         private final ServerSocket serverSocket;
 
-        public ListenForIncomingConnectionsTask(ServerSocket serverSocket) {
+        public ListenForInboundConnectionsTask(ServerSocket serverSocket) {
             this.serverSocket = requireNonNull(serverSocket);
         }
 
@@ -89,7 +89,7 @@ public class IncomingConnectionListener {
             } catch (IOException e) {
                 if (!isStopping()) {
                     LOGGER.log(Level.ERROR, "Error accepting incoming connection", e);
-                    ListenForIncomingConnectionsTask.this.stop();
+                    ListenForInboundConnectionsTask.this.stop();
                 }
             }
         }
