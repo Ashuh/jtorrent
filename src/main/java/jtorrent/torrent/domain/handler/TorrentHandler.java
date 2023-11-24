@@ -88,6 +88,7 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
         PeerContactInfo peerContactInfo = peerSocket.getPeerContactInfo();
 
         if (isAlreadyConnectedOrPending(peerContactInfo)) {
+            LOGGER.log(Level.DEBUG, "[{0}] Already connected or pending connection {0}", peerContactInfo);
             return;
         }
 
@@ -106,6 +107,7 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
 
     public void handleDiscoveredPeerContact(PeerContactInfo peerContactInfo) {
         if (isAlreadyConnectedOrPending(peerContactInfo)) {
+            LOGGER.log(Level.DEBUG, "[{0}] Already connected or pending connection {0}", peerContactInfo);
             return;
         }
 
