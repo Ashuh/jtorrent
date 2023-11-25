@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
 import java.net.InetAddress;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -40,6 +42,7 @@ public class PeerHandler {
     private final Set<Integer> availablePieces = new HashSet<>();
     private final HandlePeerTask handlePeerTask;
     private final PeriodicKeepAliveTask periodicKeepAliveTask;
+    private final PeriodicCheckAliveTask periodicCheckAliveTask;
     private final ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
 
     private boolean isBusy = false;
@@ -50,11 +53,13 @@ public class PeerHandler {
         this.eventHandler = eventHandler;
         handlePeerTask = new HandlePeerTask();
         periodicKeepAliveTask = new PeriodicKeepAliveTask(scheduledExecutorService);
+        periodicCheckAliveTask = new PeriodicCheckAliveTask(scheduledExecutorService);
     }
 
     public void start() {
         handlePeerTask.start();
         periodicKeepAliveTask.scheduleAtFixedRate(2, TimeUnit.MINUTES);
+        periodicCheckAliveTask.scheduleAtFixedRate(2, TimeUnit.MINUTES);
     }
 
     public void stop() {
@@ -65,6 +70,7 @@ public class PeerHandler {
         }
         handlePeerTask.stop();
         periodicKeepAliveTask.stop();
+        periodicCheckAliveTask.stop();
         scheduledExecutorService.shutdownNow();
     }
 
@@ -185,6 +191,7 @@ public class PeerHandler {
             try {
                 PeerMessage message = peerSocket.receiveMessage();
                 handleMessage(message);
+                peer.setLastSeenNow();
             } catch (IOException e) {
                 if (!isStopping()) {
                     LOGGER.log(Level.ERROR, "[{0}] Error while communicating with peer", peer.getPeerContactInfo());
@@ -335,6 +342,27 @@ public class PeerHandler {
                 LOGGER.log(Level.ERROR, "[{0}] Error sending KeepAlive", peer.getPeerContactInfo());
                 PeriodicKeepAliveTask.this.stop();
             }
+        }
+    }
+
+    private class PeriodicCheckAliveTask extends PeriodicTask {
+
+        protected PeriodicCheckAliveTask(ScheduledExecutorService scheduledExecutorService) {
+            super(scheduledExecutorService);
+        }
+
+        @Override
+        public void run() {
+            if (isPeerAlive()) {
+                return;
+            }
+
+            LOGGER.log(Level.INFO, "[{0}] Peer is dead, stopping", peer.getPeerContactInfo());
+            PeerHandler.this.stop();
+        }
+
+        private boolean isPeerAlive() {
+            return peer.isLastSeenWithin(Duration.of(2, ChronoUnit.MINUTES));
         }
     }
 }

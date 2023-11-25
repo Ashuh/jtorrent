@@ -6,6 +6,7 @@ import java.lang.System.Logger;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.Objects;
 
 import io.reactivex.rxjava3.core.Observable;
@@ -15,10 +16,11 @@ public class Peer {
 
     private static final Logger LOGGER = System.getLogger(Peer.class.getName());
 
-    protected final PeerContactInfo peerContactInfo;
-    protected final DurationWindow durationWindow = new DurationWindow(Duration.ofSeconds(20));
-    protected boolean isLocalChoked = true;
-    protected boolean isRemoteChoked = true;
+    private final PeerContactInfo peerContactInfo;
+    private final DurationWindow durationWindow = new DurationWindow(Duration.ofSeconds(20));
+    private boolean isLocalChoked = true;
+    private boolean isRemoteChoked = true;
+    private LocalDateTime lastSeen = LocalDateTime.MIN;
 
     public Peer(PeerContactInfo peerContactInfo) {
         this.peerContactInfo = requireNonNull(peerContactInfo);
@@ -78,6 +80,14 @@ public class Peer {
 
     public Observable<Double> getUploadRateObservable() {
         return Observable.never(); // TODO: implement
+    }
+
+    public boolean isLastSeenWithin(Duration duration) {
+        return lastSeen.isAfter(LocalDateTime.now().minus(duration));
+    }
+
+    public void setLastSeenNow() {
+        lastSeen = LocalDateTime.now();
     }
 
     @Override
