@@ -23,13 +23,11 @@ import jtorrent.peer.domain.model.message.KeepAlive;
 import jtorrent.peer.domain.model.message.PeerMessage;
 import jtorrent.peer.domain.model.message.typed.Bitfield;
 import jtorrent.peer.domain.model.message.typed.Cancel;
-import jtorrent.peer.domain.model.message.typed.Choke;
 import jtorrent.peer.domain.model.message.typed.Have;
 import jtorrent.peer.domain.model.message.typed.Piece;
 import jtorrent.peer.domain.model.message.typed.Port;
 import jtorrent.peer.domain.model.message.typed.Request;
 import jtorrent.peer.domain.model.message.typed.TypedPeerMessage;
-import jtorrent.peer.domain.model.message.typed.Unchoke;
 
 public class PeerHandler {
 
@@ -86,9 +84,8 @@ public class PeerHandler {
     public void choke() {
         LOGGER.log(Level.INFO, "[{0}] Choking remote", peer.getPeerContactInfo());
 
-        Choke choke = new Choke();
         try {
-            peerSocket.sendMessage(choke);
+            peerSocket.sendChoke();
             peer.setRemoteChoked(true);
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -98,9 +95,8 @@ public class PeerHandler {
     public void unchoke() {
         LOGGER.log(Level.INFO, "[{0}] Unchoking remote", peer.getPeerContactInfo());
 
-        Unchoke unchoke = new Unchoke();
         try {
-            peerSocket.sendMessage(unchoke);
+            peerSocket.sendUnchoke();
             peer.setRemoteChoked(false);
         } catch (IOException e) {
             throw new RuntimeException(e);

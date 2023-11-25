@@ -20,8 +20,10 @@ import jtorrent.peer.domain.model.message.Handshake;
 import jtorrent.peer.domain.model.message.KeepAlive;
 import jtorrent.peer.domain.model.message.PeerMessage;
 import jtorrent.peer.domain.model.message.PeerMessageUnpacker;
+import jtorrent.peer.domain.model.message.typed.Choke;
 import jtorrent.peer.domain.model.message.typed.Interested;
 import jtorrent.peer.domain.model.message.typed.Request;
+import jtorrent.peer.domain.model.message.typed.Unchoke;
 
 public class PeerSocket {
 
@@ -110,6 +112,14 @@ public class PeerSocket {
 
     public void sendKeepAlive() throws IOException {
         sendMessage(new KeepAlive());
+    }
+
+    public void sendChoke() throws IOException {
+        sendMessage(new Choke());
+    }
+
+    public void sendUnchoke() throws IOException {
+        sendMessage(new Unchoke());
     }
 
     public void sendInterested() throws IOException {
