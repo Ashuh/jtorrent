@@ -20,7 +20,7 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 import jtorrent.common.domain.Constants;
-import jtorrent.common.domain.util.PeriodicFixedDelayTask;
+import jtorrent.common.domain.util.PeriodicTask;
 import jtorrent.common.domain.util.Sha1Hash;
 import jtorrent.dht.domain.handler.lookup.GetPeersLookup;
 import jtorrent.dht.domain.handler.node.Node;
@@ -169,7 +169,7 @@ public class DhtManager {
         }
     }
 
-    private class PeriodicFindPeersTask extends PeriodicFixedDelayTask {
+    private class PeriodicFindPeersTask extends PeriodicTask {
 
         private final Sha1Hash target;
 

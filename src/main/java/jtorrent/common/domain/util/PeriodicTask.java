@@ -4,14 +4,14 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-public abstract class PeriodicFixedDelayTask implements Runnable {
+public abstract class PeriodicTask implements Runnable {
 
     private final ScheduledExecutorService scheduledExecutorService;
     private final long interval;
     private final TimeUnit timeUnit;
     private ScheduledFuture<?> scheduledFuture;
 
-    protected PeriodicFixedDelayTask(ScheduledExecutorService scheduledExecutorService, long interval,
+    protected PeriodicTask(ScheduledExecutorService scheduledExecutorService, long interval,
             TimeUnit timeUnit) {
         this.scheduledExecutorService = scheduledExecutorService;
         this.interval = interval;
