@@ -16,11 +16,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 import jtorrent.common.domain.Constants;
+import jtorrent.common.domain.util.PeriodicFixedDelayTask;
 import jtorrent.common.domain.util.Sha1Hash;
 import jtorrent.dht.domain.handler.lookup.GetPeersLookup;
 import jtorrent.dht.domain.handler.node.Node;
@@ -129,29 +129,6 @@ public class DhtManager {
     public interface PeerDiscoveryListener {
 
         void onPeersDiscovered(Sha1Hash infoHash, Collection<PeerContactInfo> peers);
-    }
-
-    private abstract static class PeriodicFixedDelayTask implements Runnable {
-
-        private final ScheduledExecutorService scheduledExecutorService;
-        private final long interval;
-        private final TimeUnit timeUnit;
-        private ScheduledFuture<?> scheduledFuture;
-
-        private PeriodicFixedDelayTask(ScheduledExecutorService scheduledExecutorService, long interval,
-                TimeUnit timeUnit) {
-            this.scheduledExecutorService = scheduledExecutorService;
-            this.interval = interval;
-            this.timeUnit = timeUnit;
-        }
-
-        public void start() {
-            scheduledFuture = scheduledExecutorService.scheduleWithFixedDelay(this, 0, interval, timeUnit);
-        }
-
-        public void stop() {
-            scheduledFuture.cancel(true);
-        }
     }
 
     private class PeriodicRefreshBucketTask implements Runnable {
