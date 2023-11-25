@@ -21,6 +21,7 @@ import jtorrent.peer.domain.model.message.KeepAlive;
 import jtorrent.peer.domain.model.message.PeerMessage;
 import jtorrent.peer.domain.model.message.PeerMessageUnpacker;
 import jtorrent.peer.domain.model.message.typed.Interested;
+import jtorrent.peer.domain.model.message.typed.Request;
 
 public class PeerSocket {
 
@@ -113,6 +114,11 @@ public class PeerSocket {
 
     public void sendInterested() throws IOException {
         sendMessage(new Interested());
+    }
+
+    public void sendRequest(int index, int begin, int length) throws IOException {
+        Request request = new Request(index, begin, length);
+        sendMessage(request);
     }
 
     public void sendMessage(PeerMessage message) throws IOException {

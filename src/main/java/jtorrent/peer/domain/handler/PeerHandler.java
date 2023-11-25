@@ -80,12 +80,7 @@ public class PeerHandler {
         int index = block.getIndex();
         int offset = block.getOffset();
         int length = block.getLength();
-        sendRequest(index, offset, length);
-    }
-
-    private void sendRequest(int index, int begin, int length) throws IOException {
-        Request request = new Request(index, begin, length);
-        peerSocket.sendMessage(request);
+        peerSocket.sendRequest(index, offset, length);
     }
 
     public void choke() {
