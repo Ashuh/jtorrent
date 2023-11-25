@@ -176,7 +176,6 @@ public class PeerHandler {
             try {
                 PeerMessage message = peerSocket.receiveMessage();
                 handleMessage(message);
-                peer.setLastSeenNow();
             } catch (IOException e) {
                 if (!isStopping()) {
                     LOGGER.log(Level.ERROR, "[{0}] Error while communicating with peer", peer.getPeerContactInfo());
@@ -204,9 +203,9 @@ public class PeerHandler {
             LOGGER.log(Level.DEBUG, "[{0}] Handling {1}", peer.getPeerContactInfo(), message);
 
             peer.addDownloadedBytes(message.getMessageSize());
+            peer.setLastSeenNow();
 
             if (message instanceof KeepAlive) {
-                handleKeepAlive();
                 return;
             }
 
@@ -247,9 +246,6 @@ public class PeerHandler {
             default:
                 throw new AssertionError("Unknown message type: " + typedMessage.getMessageType());
             }
-        }
-
-        private void handleKeepAlive() {
         }
 
         private void handleChoke() {
