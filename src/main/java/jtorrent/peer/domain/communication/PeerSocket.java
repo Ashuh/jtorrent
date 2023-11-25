@@ -17,6 +17,7 @@ import jtorrent.peer.domain.model.PeerContactInfo;
 import jtorrent.peer.domain.model.exception.InfoHashMismatchException;
 import jtorrent.peer.domain.model.exception.UnexpectedEndOfStreamException;
 import jtorrent.peer.domain.model.message.Handshake;
+import jtorrent.peer.domain.model.message.KeepAlive;
 import jtorrent.peer.domain.model.message.PeerMessage;
 import jtorrent.peer.domain.model.message.PeerMessageUnpacker;
 
@@ -103,6 +104,10 @@ public class PeerSocket {
 
     private Optional<Sha1Hash> getReceivedHandshakeInfoHash() {
         return Optional.ofNullable(receivedHandshakeInfoHash);
+    }
+
+    public void sendKeepAlive() throws IOException {
+        sendMessage(new KeepAlive());
     }
 
     public void sendMessage(PeerMessage message) throws IOException {

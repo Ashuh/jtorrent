@@ -7,9 +7,13 @@ import java.net.InetAddress;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import jtorrent.common.domain.model.Block;
 import jtorrent.common.domain.util.BackgroundTask;
+import jtorrent.common.domain.util.PeriodicTask;
 import jtorrent.peer.domain.communication.PeerSocket;
 import jtorrent.peer.domain.model.Peer;
 import jtorrent.peer.domain.model.PeerContactInfo;
@@ -35,6 +39,8 @@ public class PeerHandler {
     private final EventHandler eventHandler;
     private final Set<Integer> availablePieces = new HashSet<>();
     private final HandlePeerTask handlePeerTask;
+    private final PeriodicKeepAliveTask periodicKeepAliveTask;
+    private final ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
 
     private boolean isBusy = false;
 
@@ -43,10 +49,12 @@ public class PeerHandler {
         this.peer = peer;
         this.eventHandler = eventHandler;
         handlePeerTask = new HandlePeerTask();
+        periodicKeepAliveTask = new PeriodicKeepAliveTask(scheduledExecutorService);
     }
 
     public void start() {
         handlePeerTask.start();
+        periodicKeepAliveTask.scheduleAtFixedRate(2, TimeUnit.MINUTES);
     }
 
     public void stop() {
@@ -56,6 +64,8 @@ public class PeerHandler {
             LOGGER.log(Level.ERROR, "[{0}] Error while closing socket", peer.getPeerContactInfo());
         }
         handlePeerTask.stop();
+        periodicKeepAliveTask.stop();
+        scheduledExecutorService.shutdownNow();
     }
 
     public void assignBlock(Block block) throws IOException {
@@ -309,6 +319,23 @@ public class PeerHandler {
 
         private void handlePort(Port port) {
             eventHandler.handleDhtPortReceived(PeerHandler.this, port.getListenPort());
+        }
+    }
+
+    private class PeriodicKeepAliveTask extends PeriodicTask {
+
+        protected PeriodicKeepAliveTask(ScheduledExecutorService scheduledExecutorService) {
+            super(scheduledExecutorService);
+        }
+
+        @Override
+        public void run() {
+            try {
+                peerSocket.sendKeepAlive();
+            } catch (IOException e) {
+                LOGGER.log(Level.ERROR, "[{0}] Error sending KeepAlive", peer.getPeerContactInfo());
+                PeriodicKeepAliveTask.this.stop();
+            }
         }
     }
 }
