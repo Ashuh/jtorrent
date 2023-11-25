@@ -25,7 +25,6 @@ import jtorrent.peer.domain.model.message.typed.Bitfield;
 import jtorrent.peer.domain.model.message.typed.Cancel;
 import jtorrent.peer.domain.model.message.typed.Choke;
 import jtorrent.peer.domain.model.message.typed.Have;
-import jtorrent.peer.domain.model.message.typed.Interested;
 import jtorrent.peer.domain.model.message.typed.Piece;
 import jtorrent.peer.domain.model.message.typed.Port;
 import jtorrent.peer.domain.model.message.typed.Request;
@@ -87,11 +86,6 @@ public class PeerHandler {
     private void sendRequest(int index, int begin, int length) throws IOException {
         Request request = new Request(index, begin, length);
         peerSocket.sendMessage(request);
-    }
-
-    private void sendInterested() throws IOException {
-        Interested interested = new Interested();
-        peerSocket.sendMessage(interested);
     }
 
     public void choke() {
@@ -203,7 +197,7 @@ public class PeerHandler {
         @Override
         protected void doOnStarted() {
             try {
-                sendInterested();
+                peerSocket.sendInterested();
             } catch (IOException e) {
                 LOGGER.log(Level.ERROR, "[{0}] Error sending Interested", peer.getPeerContactInfo());
                 super.stop();
