@@ -19,10 +19,22 @@ public abstract class PeriodicTask implements Runnable {
     }
 
     public void start() {
+        if (isRunning()) {
+            throw new IllegalStateException("Task already running");
+        }
+
         scheduledFuture = scheduledExecutorService.scheduleWithFixedDelay(this, 0, interval, timeUnit);
     }
 
     public void stop() {
+        if (!isRunning()) {
+            throw new IllegalStateException("Task not running");
+        }
+
         scheduledFuture.cancel(true);
+    }
+
+    private boolean isRunning() {
+        return scheduledFuture != null && !scheduledFuture.isCancelled();
     }
 }
