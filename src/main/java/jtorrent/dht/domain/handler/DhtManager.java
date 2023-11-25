@@ -113,7 +113,7 @@ public class DhtManager {
 
         PeriodicFindPeersTask periodicFindPeersTask = new PeriodicFindPeersTask(infoHash);
         infoHashToFindPeersTask.put(infoHash, periodicFindPeersTask);
-        periodicFindPeersTask.start();
+        periodicFindPeersTask.scheduleWithFixedDelay(1, TimeUnit.MINUTES);
         LOGGER.log(Level.DEBUG, "[DHT] Registered info hash {0}", infoHash);
     }
 
@@ -174,7 +174,7 @@ public class DhtManager {
         private final Sha1Hash target;
 
         private PeriodicFindPeersTask(Sha1Hash target) {
-            super(DhtManager.this.scheduledThreadPool, 1, TimeUnit.MINUTES);
+            super(DhtManager.this.scheduledThreadPool);
             this.target = target;
         }
 

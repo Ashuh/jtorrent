@@ -1,5 +1,7 @@
 package jtorrent.common.domain.util;
 
+import static jtorrent.common.domain.util.ValidationUtil.requireNonNull;
+
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -7,23 +9,34 @@ import java.util.concurrent.TimeUnit;
 public abstract class PeriodicTask implements Runnable {
 
     private final ScheduledExecutorService scheduledExecutorService;
-    private final long interval;
-    private final TimeUnit timeUnit;
     private ScheduledFuture<?> scheduledFuture;
 
-    protected PeriodicTask(ScheduledExecutorService scheduledExecutorService, long interval,
-            TimeUnit timeUnit) {
-        this.scheduledExecutorService = scheduledExecutorService;
-        this.interval = interval;
-        this.timeUnit = timeUnit;
+    protected PeriodicTask(ScheduledExecutorService scheduledExecutorService) {
+        this.scheduledExecutorService = requireNonNull(scheduledExecutorService);
     }
 
-    public void start() {
+    public void scheduleWithFixedDelay(long delay, TimeUnit timeUnit) {
+        scheduleWithFixedDelay(0, delay, timeUnit);
+    }
+
+    public void scheduleWithFixedDelay(long initialDelay, long delay, TimeUnit timeUnit) {
+        checkNotRunning();
+        scheduledFuture = scheduledExecutorService.scheduleWithFixedDelay(this, initialDelay, delay, timeUnit);
+    }
+
+    public void scheduleAtFixedRate(long period, TimeUnit timeUnit) {
+        scheduleAtFixedRate(0, period, timeUnit);
+    }
+
+    public void scheduleAtFixedRate(long initialDelay, long period, TimeUnit timeUnit) {
+        checkNotRunning();
+        scheduledFuture = scheduledExecutorService.scheduleAtFixedRate(this, initialDelay, period, timeUnit);
+    }
+
+    private void checkNotRunning() {
         if (isRunning()) {
             throw new IllegalStateException("Task already running");
         }
-
-        scheduledFuture = scheduledExecutorService.scheduleWithFixedDelay(this, 0, interval, timeUnit);
     }
 
     public void stop() {
