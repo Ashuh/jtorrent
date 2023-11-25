@@ -140,7 +140,6 @@ public class PeerHandler {
     public String toString() {
         return "PeerHandler{"
                 + "peer=" + peer
-                + ", infoHash=" + infoHash
                 + ", isBusy=" + isBusy
                 + '}';
     }
