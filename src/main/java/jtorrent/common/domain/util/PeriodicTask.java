@@ -41,7 +41,7 @@ public abstract class PeriodicTask implements Runnable {
 
     public void stop() {
         if (!isRunning()) {
-            throw new IllegalStateException("Task not running");
+            return;
         }
 
         scheduledFuture.cancel(true);
