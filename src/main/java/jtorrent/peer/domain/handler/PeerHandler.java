@@ -51,6 +51,7 @@ public class PeerHandler {
         handlePeerTask = new HandlePeerTask();
         periodicKeepAliveTask = new PeriodicKeepAliveTask(scheduledExecutorService);
         periodicCheckAliveTask = new PeriodicCheckAliveTask(scheduledExecutorService);
+        peer.setLastSeenNow();
     }
 
     public void start() {
