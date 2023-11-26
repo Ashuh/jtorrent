@@ -115,6 +115,11 @@ public class PeerHandler {
         return peer.isRemoteChoked();
     }
 
+    public boolean isRemoteInterested() {
+        return peer.isRemoteInterested();
+    }
+
+
     public boolean isReady() {
         return peerSocket.isConnected() && !peer.isLocalChoked() && !isBusy;
     }
@@ -188,6 +193,7 @@ public class PeerHandler {
         protected void doOnStarted() {
             try {
                 peerSocket.sendInterested();
+                peer.setLocalInterested(true);
             } catch (IOException e) {
                 LOGGER.log(Level.ERROR, "[{0}] Error sending Interested", peer.getPeerContactInfo());
                 super.stop();
@@ -268,10 +274,12 @@ public class PeerHandler {
         }
 
         private void handleInterested() {
+            peer.setRemoteInterested(true);
             eventHandler.handlePeerInterested(PeerHandler.this);
         }
 
         private void handleNotInterested() {
+            peer.setRemoteInterested(false);
             eventHandler.handlePeerNotInterested(PeerHandler.this);
         }
 

@@ -20,6 +20,8 @@ public class Peer {
     private final DurationWindow durationWindow = new DurationWindow(Duration.ofSeconds(20));
     private boolean isLocalChoked = true;
     private boolean isRemoteChoked = true;
+    private boolean isLocalInterested = false;
+    private boolean isRemoteInterested = false;
     private LocalDateTime lastSeen = LocalDateTime.MIN;
 
     public Peer(PeerContactInfo peerContactInfo) {
@@ -60,6 +62,22 @@ public class Peer {
 
     public void setRemoteChoked(boolean remoteChoked) {
         isRemoteChoked = remoteChoked;
+    }
+
+    public boolean isLocalInterested() {
+        return isLocalInterested;
+    }
+
+    public void setLocalInterested(boolean isLocalInterested) {
+        this.isLocalInterested = isLocalInterested;
+    }
+
+    public boolean isRemoteInterested() {
+        return isRemoteInterested;
+    }
+
+    public void setRemoteInterested(boolean isRemoteInterested) {
+        this.isRemoteInterested = isRemoteInterested;
     }
 
     public double getDownloadRate() {

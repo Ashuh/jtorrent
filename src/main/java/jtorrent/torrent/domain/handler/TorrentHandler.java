@@ -297,6 +297,7 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
         @Override
         public void run() {
             Set<PeerHandler> toUnchoke = peerHandlers.stream()
+                    .filter(PeerHandler::isRemoteInterested)
                     .sorted(Comparator.comparingDouble(PeerHandler::getDownloadRate).reversed())
                     .limit(MAX_UNCHOKED_PEERS)
                     .collect(Collectors.toSet());
