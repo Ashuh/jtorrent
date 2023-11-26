@@ -219,8 +219,7 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
         pieceIndices.forEach(pieceIndex -> handlePieceAvailable(peerHandler, pieceIndex));
     }
 
-    @Override
-    public void handleBlockReceived(PeerHandler peerHandler, int pieceIndex, int offset, byte[] data) {
+    public void handleBlockReceived(int pieceIndex, int offset, byte[] data) {
         log(Level.DEBUG, String.format("Handling %d bytes received for piece %d, offset %d", data.length, pieceIndex,
                 offset));
 
@@ -360,7 +359,8 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
                 int blockIndex = torrent.getmissingBlockIndices(pieceIndex).iterator().next();
                 Block block = createBlock(pieceIndex, blockIndex);
                 try {
-                    peerHandler.assignBlock(block);
+                    peerHandler.assignBlock(block)
+                            .thenAccept(data -> handleBlockReceived(pieceIndex, block.getOffset(), data));
                     torrent.setBlockRequested(pieceIndex, blockIndex);
                 } catch (IOException e) {
                     WorkDispatcher.this.stop();

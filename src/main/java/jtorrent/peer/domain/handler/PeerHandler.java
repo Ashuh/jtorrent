@@ -6,9 +6,12 @@ import java.lang.System.Logger.Level;
 import java.net.InetAddress;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -41,6 +44,7 @@ public class PeerHandler {
     private final PeriodicKeepAliveTask periodicKeepAliveTask;
     private final PeriodicCheckAliveTask periodicCheckAliveTask;
     private final ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
+    private final Map<Block, CompletableFuture<byte[]>> blockToFuture = new HashMap<>();
 
     private boolean isBusy = false;
 
@@ -72,14 +76,17 @@ public class PeerHandler {
         scheduledExecutorService.shutdownNow();
     }
 
-    public void assignBlock(Block block) throws IOException {
+    public CompletableFuture<byte[]> assignBlock(Block block) throws IOException {
         LOGGER.log(Level.DEBUG, "[{0}] Assigned block", peer.getPeerContactInfo(), block);
 
+        CompletableFuture<byte[]> future = new CompletableFuture<>();
+        blockToFuture.put(block, future);
         isBusy = true;
         int index = block.getIndex();
         int offset = block.getOffset();
         int length = block.getLength();
         peerSocket.sendRequest(index, offset, length);
+        return future;
     }
 
     public void choke() {
@@ -160,8 +167,6 @@ public class PeerHandler {
         void handlePieceAvailable(PeerHandler peerHandler, int pieceIndex);
 
         void handlePiecesAvailable(PeerHandler peerHandler, Set<Integer> pieceIndices);
-
-        void handleBlockReceived(PeerHandler peerHandler, int pieceIndex, int offset, byte[] data);
 
         void handleBlockRequested(PeerHandler peerHandler, int pieceIndex, int offset, int length);
 
@@ -304,7 +309,15 @@ public class PeerHandler {
 
         private void handlePiece(Piece piece) {
             isBusy = false;
-            eventHandler.handleBlockReceived(PeerHandler.this, piece.getIndex(), piece.getBegin(), piece.getBlock());
+            Block block = new Block(piece.getIndex(), piece.getBegin(), piece.getBlock().length);
+            CompletableFuture<byte[]> future = blockToFuture.remove(block);
+
+            if (future == null) {
+                LOGGER.log(Level.ERROR, "[{0}] Received block that was not requested", peer.getPeerContactInfo());
+                return;
+            }
+
+            future.complete(piece.getBlock());
             notifyIfReady();
         }
 
