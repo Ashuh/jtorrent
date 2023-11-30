@@ -432,8 +432,8 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
                     peerHandlerToShouldEnqueueOnCompletion.put(peerHandler, true);
                 }
             } catch (IOException e) {
-                LOGGER.log(Level.ERROR, "Error occurred while assigning work", e);
-                WorkDispatcher.this.stop();
+                log(Level.ERROR, String.format("Failed to assign work to %s", peerHandler.getPeerContactInfo()), e);
+                peerHandler.stop();
             }
         }
 
