@@ -143,6 +143,7 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
         PeerHandler peerHandler = new PeerHandler(peer, peerSocket, this);
         peerHandlers.add(peerHandler);
         peerHandler.start();
+        workDispatcher.addPeerHandler(peerHandler);
     }
 
     public void addListener(Listener listener) {
@@ -154,12 +155,6 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
         peerResponses.stream()
                 .map(PeerResponse::toPeerContactInfo)
                 .forEach(this::handleDiscoveredPeerContact);
-    }
-
-    @Override
-    public void onReady(PeerHandler peerHandler) {
-        log(Level.DEBUG, String.format("Handling peer ready: %s", peerHandler.getPeerContactInfo()));
-        workDispatcher.addPeerHandler(peerHandler);
     }
 
     @Override
@@ -180,6 +175,8 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
         peerHandler.getAvailablePieces().stream()
                 .map(pieceIndexToAvailablePeerHandlers::get)
                 .forEach(availablePeerHandlers -> availablePeerHandlers.remove(peerHandler));
+
+        workDispatcher.handlePeerChoked(peerHandler);
     }
 
     @Override
@@ -189,6 +186,8 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
         peerHandler.getAvailablePieces().stream()
                 .map(pieceIndexToAvailablePeerHandlers::get)
                 .forEach(availablePeerHandlers -> availablePeerHandlers.add(peerHandler));
+
+        workDispatcher.handlePeerUnchoked(peerHandler);
     }
 
     @Override
@@ -202,21 +201,12 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
     }
 
     @Override
-    public void handlePieceAvailable(PeerHandler peerHandler, int pieceIndex) {
-        log(Level.DEBUG, String.format("Handling piece available: %s, pieceIndex=%d", peerHandler.getPeerContactInfo(),
-                pieceIndex));
-        pieceIndexToAvailablePeerHandlers
-                .computeIfAbsent(pieceIndex, key -> new HashSet<>())
-                .add(peerHandler);
-
-        if (peerHandler.isReady()) {
-            workDispatcher.addPeerHandler(peerHandler);
-        }
-    }
-
-    @Override
     public void handlePiecesAvailable(PeerHandler peerHandler, Set<Integer> pieceIndices) {
-        pieceIndices.forEach(pieceIndex -> handlePieceAvailable(peerHandler, pieceIndex));
+        log(Level.DEBUG, String.format("Handling %d pieces available", pieceIndices.size()));
+        pieceIndices.forEach(pieceIndex -> pieceIndexToAvailablePeerHandlers
+                .computeIfAbsent(pieceIndex, key -> new HashSet<>())
+                .add(peerHandler));
+        workDispatcher.handlePieceAvailable(peerHandler);
     }
 
     public void handleBlockReceived(int pieceIndex, int offset, byte[] data) {
@@ -347,36 +337,125 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
     private class WorkDispatcher extends BackgroundTask {
 
         private final LinkedBlockingQueue<PeerHandler> peerHandlersQueue = new LinkedBlockingQueue<>();
+        private final Map<PeerHandler, Boolean> peerHandlerToShouldEnqueueOnCompletion = new HashMap<>();
+        private final Set<PeerHandler> chokedPeerHandlers = new HashSet<>();
+        private final Set<PeerHandler> noPieceToAssignPeerHandlers = new HashSet<>();
 
         @Override
         protected void execute() throws InterruptedException {
             PeerHandler peerHandler = peerHandlersQueue.take();
-            assignBlock(peerHandler);
+            assignWork(peerHandler);
         }
 
-        private void assignBlock(PeerHandler peerHandler) {
-            getPieceIndexToAssign(peerHandler).ifPresentOrElse(pieceIndex -> {
-                int blockIndex = torrent.getmissingBlockIndices(pieceIndex).iterator().next();
-                Block block = createBlock(pieceIndex, blockIndex);
-                try {
-                    peerHandler.assignBlock(block)
-                            .thenAccept(data -> handleBlockReceived(pieceIndex, block.getOffset(), data));
-                    torrent.setBlockRequested(pieceIndex, blockIndex);
-                } catch (IOException e) {
-                    WorkDispatcher.this.stop();
+        public synchronized void addPeerHandler(PeerHandler peerHandler) {
+            peerHandlerToShouldEnqueueOnCompletion.computeIfAbsent(peerHandler, key -> {
+                chokedPeerHandlers.add(peerHandler);
+                return false;
+            });
+        }
+
+        public synchronized void removePeerHandler(PeerHandler peerHandler) {
+            LOGGER.log(Level.ERROR, "Removing peer handler from queue: {0}", peerHandler);
+            peerHandlerToShouldEnqueueOnCompletion.remove(peerHandler);
+            noPieceToAssignPeerHandlers.remove(peerHandler);
+            chokedPeerHandlers.remove(peerHandler);
+            peerHandlersQueue.remove(peerHandler);
+        }
+
+        public synchronized void handlePeerUnchoked(PeerHandler peerHandler) {
+            if (!isPeerHandlerRegistered(peerHandler)) {
+                return;
+            }
+            chokedPeerHandlers.remove(peerHandler);
+
+            if (noPieceToAssignPeerHandlers.contains(peerHandler)) {
+                return;
+            }
+            enqueuePeerHandler(peerHandler);
+        }
+
+        public synchronized void handlePeerChoked(PeerHandler peerHandler) {
+            if (isPeerHandlerRegistered(peerHandler)) {
+                removePeerHandler(peerHandler);
+                chokedPeerHandlers.add(peerHandler);
+            }
+        }
+
+        public synchronized void handlePieceAvailable(PeerHandler peerHandler) {
+            if (!isPeerHandlerRegistered(peerHandler)) {
+                return;
+            }
+
+            if (!noPieceToAssignPeerHandlers.contains(peerHandler)) {
+                return;
+            }
+
+            noPieceToAssignPeerHandlers.remove(peerHandler);
+
+            if (chokedPeerHandlers.contains(peerHandler)) {
+                return;
+            }
+
+            enqueuePeerHandler(peerHandler);
+        }
+
+        private boolean isPeerHandlerRegistered(PeerHandler peerHandler) {
+            return peerHandlerToShouldEnqueueOnCompletion.containsKey(peerHandler);
+        }
+
+        private void assignWork(PeerHandler peerHandler) {
+            Optional<Integer> pieceIndexToAssignOpt;
+
+            synchronized (this) {
+                pieceIndexToAssignOpt = getPieceIndexToAssign(peerHandler);
+                if (pieceIndexToAssignOpt.isEmpty()) {
+                    LOGGER.log(Level.DEBUG, "No piece to assign to {0}", peerHandler);
+                    noPieceToAssignPeerHandlers.add(peerHandler);
+                    return;
                 }
-            }, () -> LOGGER.log(Level.DEBUG, "No block to assign to {0}", peerHandler));
+            }
+
+            int pieceIndex = pieceIndexToAssignOpt.get();
+            LOGGER.log(Level.DEBUG, "Assigning piece to {0}", peerHandler);
+            int blockIndex = torrent.getmissingBlockIndices(pieceIndex).iterator().next();
+            try {
+                assignWork(peerHandler, pieceIndex, blockIndex);
+
+                if (!peerHandler.isRequestQueueFull()) {
+                    enqueuePeerHandler(peerHandler);
+                } else {
+                    peerHandlerToShouldEnqueueOnCompletion.put(peerHandler, true);
+                }
+            } catch (IOException e) {
+                LOGGER.log(Level.ERROR, "Error occurred while assigning work", e);
+                WorkDispatcher.this.stop();
+            }
+        }
+
+        private void assignWork(PeerHandler peerHandler, int pieceIndex, int blockIndex) throws IOException {
+            Block block = createBlock(pieceIndex, blockIndex);
+            peerHandler.assignBlock(block)
+                    .thenAccept(data -> handleBlockReceived(pieceIndex, block.getOffset(), data))
+                    .whenComplete((unused, throwable) -> {
+                        if (throwable != null) {
+                            LOGGER.log(Level.ERROR, "Error occurred while assigning block", throwable);
+                            torrent.setBlockMissing(pieceIndex, blockIndex);
+                        }
+                        if (shouldEnqueueOnCompletion(peerHandler)) {
+                            peerHandlerToShouldEnqueueOnCompletion.put(peerHandler, false);
+                            enqueuePeerHandler(peerHandler);
+                        }
+                    });
+            torrent.setBlockRequested(pieceIndex, blockIndex);
+        }
+
+        private boolean shouldEnqueueOnCompletion(PeerHandler peerHandler) {
+            return peerHandlerToShouldEnqueueOnCompletion.getOrDefault(peerHandler, false);
         }
 
         public Optional<Integer> getPieceIndexToAssign(PeerHandler peerHandler) {
-            Optional<Integer> rarestPartiallyMissingPieceIndex =
-                    getRarestPartiallyMissingPieceIndexFromPeer(peerHandler);
-
-            if (rarestPartiallyMissingPieceIndex.isPresent()) {
-                return rarestPartiallyMissingPieceIndex;
-            }
-
-            return getRarestCompletelyMissingPieceIndexFromPeer(peerHandler);
+            return getRarestPartiallyMissingPieceIndexFromPeer(peerHandler)
+                    .or(() -> getRarestCompletelyMissingPieceIndexFromPeer(peerHandler));
         }
 
         private Optional<Integer> getRarestPartiallyMissingPieceIndexFromPeer(PeerHandler peerHandler) {
@@ -403,10 +482,8 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
             return new Block(pieceIndex, blockOffset, blockSize);
         }
 
-        public void addPeerHandler(PeerHandler peerHandler) {
-            if (peerHandlersQueue.contains(peerHandler)) {
-                return;
-            }
+        private void enqueuePeerHandler(PeerHandler peerHandler) {
+            LOGGER.log(Level.ERROR, "Adding peer handler to queue: {0}", peerHandler);
             peerHandlersQueue.add(peerHandler);
         }
     }

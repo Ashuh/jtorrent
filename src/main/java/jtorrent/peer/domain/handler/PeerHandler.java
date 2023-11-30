@@ -6,12 +6,12 @@ import java.lang.System.Logger.Level;
 import java.net.InetAddress;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -35,6 +35,7 @@ import jtorrent.peer.domain.model.message.typed.TypedPeerMessage;
 public class PeerHandler {
 
     private static final Logger LOGGER = System.getLogger(PeerHandler.class.getName());
+    private static final int MAX_REQUESTS = 5;
 
     private final Peer peer;
     private final PeerSocket peerSocket;
@@ -44,9 +45,7 @@ public class PeerHandler {
     private final PeriodicKeepAliveTask periodicKeepAliveTask;
     private final PeriodicCheckAliveTask periodicCheckAliveTask;
     private final ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
-    private final Map<Block, CompletableFuture<byte[]>> blockToFuture = new HashMap<>();
-
-    private boolean isBusy = false;
+    private final Map<Block, CompletableFuture<byte[]>> blockToFuture = new ConcurrentHashMap<>(MAX_REQUESTS);
 
     public PeerHandler(Peer peer, PeerSocket peerSocket, EventHandler eventHandler) {
         this.peerSocket = peerSocket;
@@ -81,7 +80,6 @@ public class PeerHandler {
 
         CompletableFuture<byte[]> future = new CompletableFuture<>();
         blockToFuture.put(block, future);
-        isBusy = true;
         int index = block.getIndex();
         int offset = block.getOffset();
         int length = block.getLength();
@@ -127,9 +125,8 @@ public class PeerHandler {
         return peer.isRemoteInterested();
     }
 
-
-    public boolean isReady() {
-        return peerSocket.isConnected() && !peer.isLocalChoked() && !isBusy;
+    public boolean isRequestQueueFull() {
+        return blockToFuture.size() >= MAX_REQUESTS;
     }
 
     public InetAddress getAddress() {
@@ -144,13 +141,10 @@ public class PeerHandler {
     public String toString() {
         return "PeerHandler{"
                 + "peer=" + peer
-                + ", isBusy=" + isBusy
                 + '}';
     }
 
     public interface EventHandler {
-
-        void onReady(PeerHandler peerHandler);
 
         void handlePeerConnected(PeerHandler peerHandler);
 
@@ -163,8 +157,6 @@ public class PeerHandler {
         void handlePeerInterested(PeerHandler peerHandler);
 
         void handlePeerNotInterested(PeerHandler peerHandler);
-
-        void handlePieceAvailable(PeerHandler peerHandler, int pieceIndex);
 
         void handlePiecesAvailable(PeerHandler peerHandler, Set<Integer> pieceIndices);
 
@@ -268,15 +260,6 @@ public class PeerHandler {
         private void handleUnchoke() {
             peer.setLocalChoked(false);
             eventHandler.handlePeerUnchoked(PeerHandler.this);
-            notifyIfReady();
-        }
-
-        private void notifyIfReady() {
-            if (!isReady()) {
-                return;
-            }
-
-            eventHandler.onReady(PeerHandler.this);
         }
 
         private void handleInterested() {
@@ -292,7 +275,7 @@ public class PeerHandler {
         private void handleHave(Have have) {
             int pieceIndex = have.getPieceIndex();
             availablePieces.add(pieceIndex);
-            eventHandler.handlePieceAvailable(PeerHandler.this, pieceIndex);
+            eventHandler.handlePiecesAvailable(PeerHandler.this, Set.of(pieceIndex));
         }
 
         private void handleBitfield(Bitfield bitfield) {
@@ -308,7 +291,6 @@ public class PeerHandler {
         }
 
         private void handlePiece(Piece piece) {
-            isBusy = false;
             Block block = new Block(piece.getIndex(), piece.getBegin(), piece.getBlock().length);
             CompletableFuture<byte[]> future = blockToFuture.remove(block);
 
@@ -318,7 +300,6 @@ public class PeerHandler {
             }
 
             future.complete(piece.getBlock());
-            notifyIfReady();
         }
 
         private void handleCancel(Cancel cancel) {
