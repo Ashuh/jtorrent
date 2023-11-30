@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -49,7 +50,8 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
     private final BehaviorSubject<Integer> uploadedSubject = BehaviorSubject.createDefault(0);
     private final MutableRxObservableSet<Peer> peers = new MutableRxObservableSet<>(new HashSet<>());
     private final CombinedDoubleSumObservable downloadRateObservable = new CombinedDoubleSumObservable();
-    private final BehaviorSubject<Integer> numVerifiedPiecesSubject = BehaviorSubject.createDefault(0);
+    private final AtomicLong verifiedBytes = new AtomicLong(0);
+    private final BehaviorSubject<Long> verifiedBytesSubject = BehaviorSubject.createDefault(0L);
     private final BehaviorSubject<Boolean> isActiveSubject = BehaviorSubject.createDefault(false);
     private boolean isActive = false;
 
@@ -198,6 +200,8 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
 
     public void setPieceVerified(int pieceIndex) {
         pieceTracker.setPieceVerified(pieceIndex);
+        verifiedBytes.getAndAdd(getPieceSize(pieceIndex));
+        verifiedBytesSubject.onNext(verifiedBytes.get());
     }
 
     public boolean isPieceComplete(int pieceIndex) {
@@ -228,16 +232,16 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
         return downloadedSubject;
     }
 
+    public Observable<Long> getVerifiedBytesObservable() {
+        return verifiedBytesSubject;
+    }
+
     public Observable<Integer> getUploadedObservable() {
         return uploadedSubject;
     }
 
     public RxObservableSet<Peer> getPeersObservable() {
         return peers;
-    }
-
-    public Observable<Integer> getNumVerifiedPiecesObservable() {
-        return numVerifiedPiecesSubject;
     }
 
     public void addPeer(Peer peer) {
@@ -383,7 +387,6 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
 
         public void setPieceVerified(int pieceIndex) {
             verifiedPieces.set(pieceIndex);
-            numVerifiedPiecesSubject.onNext(verifiedPieces.cardinality());
         }
 
         public boolean isPieceComplete(int pieceIndex) {

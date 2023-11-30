@@ -50,14 +50,14 @@ public class UiTorrent {
         Observable<Integer> downloadedObservable = torrent.getDownloadedObservable();
         Observable<Double> downloadRateObservable = torrent.getDownloadRateObservable();
         Observable<Boolean> isActiveObservable = torrent.getIsActiveObservable();
+        Observable<Long> verifiedBytesObservable = torrent.getVerifiedBytesObservable();
 
         downloadRateObservable.subscribe(new UpdatePropertyConsumer<>(downSpeed));
         Observable.combineLatest(downloadedObservable, downloadRateObservable, new CalculateEtaCombiner(torrentSize))
                 .subscribe(new UpdatePropertyConsumer<>(eta));
 
-        int numTotalPieces = torrent.getNumPieces();
-        torrent.getNumVerifiedPiecesObservable()
-                .map(numVerifiedPieces -> (double) numVerifiedPieces / numTotalPieces)
+        verifiedBytesObservable
+                .map(verifiedBytes -> (double) verifiedBytes / torrentSize)
                 .subscribe(new UpdatePropertyConsumer<>(progress));
 
         isActiveObservable.subscribe(new UpdatePropertyConsumer<>(isActive));
