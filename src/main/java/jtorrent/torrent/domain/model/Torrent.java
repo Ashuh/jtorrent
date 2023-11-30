@@ -316,13 +316,17 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
         private final HashMap<Integer, Map<Integer, Block.Status>> pieceIndexToBlockIndexToBlockStatus =
                 new HashMap<>();
 
+        private final BitSet partiallyMissingPieces = new BitSet();
+        private final BitSet completelyMissingPieces = new BitSet();
         private final BitSet completePieces = new BitSet();
-
         private final BitSet verifiedPieces = new BitSet();
 
         public PieceTracker() {
             IntStream.range(0, getNumPieces())
-                    .forEach(i -> pieceIndexToBlockIndexToBlockStatus.put(i, initializeBlockIndexToBlockStatus(i)));
+                    .forEach(i -> {
+                        pieceIndexToBlockIndexToBlockStatus.put(i, initializeBlockIndexToBlockStatus(i));
+                        completelyMissingPieces.set(i);
+                    });
         }
 
         private Map<Integer, Block.Status> initializeBlockIndexToBlockStatus(int pieceIndex) {
@@ -338,12 +342,26 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
 
             Map<Integer, Block.Status> blockIndexToBlockStatus = pieceIndexToBlockIndexToBlockStatus.get(pieceIndex);
             blockIndexToBlockStatus.put(blockIndex, Block.Status.MISSING);
-            completePieces.clear(pieceIndex);
+            if (blockIndexToBlockStatus.values().stream()
+                    .allMatch(status -> status == Block.Status.MISSING)) {
+                completelyMissingPieces.set(pieceIndex);
+            } else {
+                partiallyMissingPieces.set(pieceIndex);
+            }
         }
 
         public void setBlockIndexRequested(int pieceIndex, int blockIndex) {
             Map<Integer, Block.Status> blockIndexToBlockStatus = pieceIndexToBlockIndexToBlockStatus.get(pieceIndex);
             blockIndexToBlockStatus.put(blockIndex, Block.Status.REQUESTED);
+
+            if (completelyMissingPieces.get(pieceIndex)) {
+                completelyMissingPieces.clear(pieceIndex);
+                partiallyMissingPieces.set(pieceIndex);
+            } else if (partiallyMissingPieces.get(pieceIndex)
+                    && (blockIndexToBlockStatus.values().stream()
+                    .noneMatch(status -> status == Block.Status.MISSING))) {
+                partiallyMissingPieces.clear(pieceIndex);
+            }
         }
 
         public void setBlockReceived(int pieceIndex, int blockIndex) {
@@ -359,6 +377,7 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
 
             if (isAllBlocksReceived) {
                 completePieces.set(pieceIndex);
+                partiallyMissingPieces.clear(pieceIndex);
             }
         }
 
@@ -380,18 +399,14 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
         }
 
         public List<Integer> getPartiallyMissingPieceIndices() {
-            return pieceIndexToBlockIndexToBlockStatus.entrySet().stream()
-                    .filter(entry -> entry.getValue().values().stream()
-                            .anyMatch(status -> status == Block.Status.MISSING))
-                    .map(Map.Entry::getKey)
+            return partiallyMissingPieces.stream()
+                    .boxed()
                     .collect(Collectors.toList());
         }
 
         public List<Integer> getCompletelyMissingPieceIndices() {
-            return pieceIndexToBlockIndexToBlockStatus.entrySet().stream()
-                    .filter(entry -> entry.getValue().values().stream()
-                            .allMatch(status -> status == Block.Status.MISSING))
-                    .map(Map.Entry::getKey)
+            return completelyMissingPieces.stream()
+                    .boxed()
                     .collect(Collectors.toList());
         }
 
