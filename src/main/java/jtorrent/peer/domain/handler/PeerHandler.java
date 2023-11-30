@@ -84,6 +84,8 @@ public class PeerHandler {
         LOGGER.log(Level.DEBUG, "[{0}] Assigned block", peer.getPeerContactInfo(), block);
 
         CompletableFuture<byte[]> future = new CompletableFuture<byte[]>().orTimeout(5, TimeUnit.SECONDS);
+        future.whenComplete((result, throwable) -> blockToFuture.remove(block));
+
         blockToFuture.put(block, future);
         int index = block.getIndex();
         int offset = block.getOffset();
