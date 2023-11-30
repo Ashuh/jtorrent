@@ -267,6 +267,10 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
         LOGGER.log(level, String.format("[%s] %s", torrent.getName(), message));
     }
 
+    private void log(Level level, String message, Throwable throwable) {
+        LOGGER.log(level, String.format("[%s] %s", torrent.getName(), message), throwable);
+    }
+
     public interface Listener {
 
         void onDhtNodeDiscovered(InetSocketAddress address);
@@ -439,7 +443,8 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
                     .thenAccept(data -> handleBlockReceived(pieceIndex, block.getOffset(), data))
                     .whenComplete((unused, throwable) -> {
                         if (throwable != null) {
-                            LOGGER.log(Level.ERROR, "Error occurred while assigning block", throwable);
+                            log(Level.ERROR, String.format("Failed to receive block %d of piece %d from %s", blockIndex,
+                                    pieceIndex, peerHandler.getPeerContactInfo()), throwable);
                             torrent.setBlockMissing(pieceIndex, blockIndex);
                         }
                         if (shouldEnqueueOnCompletion(peerHandler)) {

@@ -83,7 +83,7 @@ public class PeerHandler {
     public CompletableFuture<byte[]> assignBlock(Block block) throws IOException {
         LOGGER.log(Level.DEBUG, "[{0}] Assigned block", peer.getPeerContactInfo(), block);
 
-        CompletableFuture<byte[]> future = new CompletableFuture<>();
+        CompletableFuture<byte[]> future = new CompletableFuture<byte[]>().orTimeout(5, TimeUnit.SECONDS);
         blockToFuture.put(block, future);
         int index = block.getIndex();
         int offset = block.getOffset();
