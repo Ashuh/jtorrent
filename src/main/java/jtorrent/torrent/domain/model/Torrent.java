@@ -49,6 +49,7 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
     private final BehaviorSubject<Integer> uploadedSubject = BehaviorSubject.createDefault(0);
     private final MutableRxObservableSet<Peer> peers = new MutableRxObservableSet<>(new HashSet<>());
     private final CombinedDoubleSumObservable downloadRateObservable = new CombinedDoubleSumObservable();
+    private final BehaviorSubject<Integer> numVerifiedPiecesSubject = BehaviorSubject.createDefault(0);
     private final BehaviorSubject<Boolean> isActiveSubject = BehaviorSubject.createDefault(false);
     private boolean isActive = false;
 
@@ -235,6 +236,10 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
         return peers;
     }
 
+    public Observable<Integer> getNumVerifiedPiecesObservable() {
+        return numVerifiedPiecesSubject;
+    }
+
     public void addPeer(Peer peer) {
         peers.add(peer);
         downloadRateObservable.addSource(peer.getDownloadRateObservable());
@@ -359,6 +364,7 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
 
         public void setPieceVerified(int pieceIndex) {
             verifiedPieces.set(pieceIndex);
+            numVerifiedPiecesSubject.onNext(verifiedPieces.cardinality());
         }
 
         public boolean isPieceComplete(int pieceIndex) {
