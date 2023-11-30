@@ -64,6 +64,7 @@ public class PeerHandler {
     }
 
     public void stop() {
+        eventHandler.handlePeerDisconnected(this);
         try {
             peerSocket.close();
         } catch (IOException e) {
@@ -73,6 +74,10 @@ public class PeerHandler {
         periodicKeepAliveTask.stop();
         periodicCheckAliveTask.stop();
         scheduledExecutorService.shutdownNow();
+    }
+
+    public Peer getPeer() {
+        return peer;
     }
 
     public CompletableFuture<byte[]> assignBlock(Block block) throws IOException {
@@ -182,7 +187,7 @@ public class PeerHandler {
             } catch (IOException e) {
                 if (!isStopping()) {
                     LOGGER.log(Level.ERROR, "[{0}] Error while communicating with peer", peer.getPeerContactInfo());
-                    HandlePeerTask.this.stop();
+                    PeerHandler.this.stop();
                 }
             }
         }
@@ -194,7 +199,7 @@ public class PeerHandler {
                 peer.setLocalInterested(true);
             } catch (IOException e) {
                 LOGGER.log(Level.ERROR, "[{0}] Error sending Interested", peer.getPeerContactInfo());
-                super.stop();
+                PeerHandler.this.stop();
             }
         }
 
@@ -324,7 +329,7 @@ public class PeerHandler {
                 peerSocket.sendKeepAlive();
             } catch (IOException e) {
                 LOGGER.log(Level.ERROR, "[{0}] Error sending KeepAlive", peer.getPeerContactInfo());
-                PeriodicKeepAliveTask.this.stop();
+                PeerHandler.this.stop();
             }
         }
     }

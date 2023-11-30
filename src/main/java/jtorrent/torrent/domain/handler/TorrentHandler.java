@@ -165,8 +165,9 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
     @Override
     public void handlePeerDisconnected(PeerHandler peerHandler) {
         log(Level.DEBUG, String.format("Handling peer disconnected: %s", peerHandler.getPeerContactInfo()));
+        workDispatcher.removePeerHandler(peerHandler);
+        torrent.removePeer(peerHandler.getPeer());
     }
-
 
     @Override
     public void handlePeerChoked(PeerHandler peerHandler) {
