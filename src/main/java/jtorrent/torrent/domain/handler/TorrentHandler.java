@@ -414,15 +414,16 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
             synchronized (this) {
                 pieceIndexToAssignOpt = getPieceIndexToAssign(peerHandler);
                 if (pieceIndexToAssignOpt.isEmpty()) {
-                    LOGGER.log(Level.DEBUG, "No piece to assign to {0}", peerHandler);
+                    log(Level.DEBUG, String.format("No piece to assign to %s", peerHandler.getPeerContactInfo()));
                     noPieceToAssignPeerHandlers.add(peerHandler);
                     return;
                 }
             }
 
             int pieceIndex = pieceIndexToAssignOpt.get();
-            LOGGER.log(Level.DEBUG, "Assigning piece to {0}", peerHandler);
             int blockIndex = torrent.getmissingBlockIndices(pieceIndex).iterator().next();
+            log(Level.DEBUG, String.format("Assigning piece %d, block %d to %s", pieceIndex, blockIndex,
+                    peerHandler.getPeerContactInfo()));
             try {
                 assignWork(peerHandler, pieceIndex, blockIndex);
 
