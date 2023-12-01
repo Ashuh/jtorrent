@@ -48,7 +48,15 @@ public abstract class CombinedObservable<T, R> extends Observable<R> {
     }
 
     private ObservableSource<? extends R> combineLatest(Collection<ObservableSource<T>> sources) {
+        if (sources.isEmpty()) {
+            return Observable.just(combineEmpty());
+        }
+
         return Observable.combineLatest(sources, this::combine);
+    }
+
+    private R combineEmpty() {
+        return combine(new Object[0]);
     }
 
     protected abstract R combine(Object[] objects);
