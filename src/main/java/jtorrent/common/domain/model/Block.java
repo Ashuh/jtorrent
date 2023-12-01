@@ -4,31 +4,25 @@ import java.util.Objects;
 
 public class Block {
 
-    private final int index;
-    private final int offset;
-    private final int length;
+    private final int pieceIndex;
+    private final int blockIndex;
 
-    public Block(int index, int offset, int length) {
-        this.index = index;
-        this.offset = offset;
-        this.length = length;
+    public Block(int pieceIndex, int blockIndex) {
+        this.pieceIndex = pieceIndex;
+        this.blockIndex = blockIndex;
     }
 
-    public int getIndex() {
-        return index;
+    public int getPieceIndex() {
+        return pieceIndex;
     }
 
-    public int getOffset() {
-        return offset;
-    }
-
-    public int getLength() {
-        return length;
+    public int getBlockIndex() {
+        return blockIndex;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(index, offset, length);
+        return Objects.hash(pieceIndex, blockIndex);
     }
 
     @Override
@@ -40,23 +34,12 @@ public class Block {
             return false;
         }
         Block block = (Block) o;
-        return index == block.index
-                && offset == block.offset
-                && length == block.length;
+        return pieceIndex == block.pieceIndex
+                && blockIndex == block.blockIndex;
     }
 
     @Override
     public String toString() {
-        return "Block{"
-                + "index=" + index
-                + ", offset=" + offset
-                + ", length=" + length
-                + '}';
-    }
-
-    public enum Status {
-        MISSING,
-        REQUESTED,
-        RECEIVED
+        return String.format("[Piece %d, Block %d]", pieceIndex, blockIndex);
     }
 }

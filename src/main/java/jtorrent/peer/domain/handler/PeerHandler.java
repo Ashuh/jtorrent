@@ -8,6 +8,7 @@ import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -16,7 +17,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import jtorrent.common.domain.model.Block;
 import jtorrent.common.domain.util.BackgroundTask;
 import jtorrent.common.domain.util.PeriodicTask;
 import jtorrent.peer.domain.communication.PeerSocket;
@@ -45,7 +45,7 @@ public class PeerHandler {
     private final PeriodicKeepAliveTask periodicKeepAliveTask;
     private final PeriodicCheckAliveTask periodicCheckAliveTask;
     private final ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
-    private final Map<Block, CompletableFuture<byte[]>> blockToFuture = new ConcurrentHashMap<>(MAX_REQUESTS);
+    private final Map<RequestKey, CompletableFuture<byte[]>> requestKeyToFuture = new ConcurrentHashMap<>(MAX_REQUESTS);
 
     public PeerHandler(Peer peer, PeerSocket peerSocket, EventHandler eventHandler) {
         this.peerSocket = peerSocket;
@@ -80,17 +80,12 @@ public class PeerHandler {
         return peer;
     }
 
-    public CompletableFuture<byte[]> assignBlock(Block block) throws IOException {
-        LOGGER.log(Level.DEBUG, "[{0}] Assigned block", peer.getPeerContactInfo(), block);
-
+    public CompletableFuture<byte[]> assignBlock(int piece, int offset, int length) throws IOException {
         CompletableFuture<byte[]> future = new CompletableFuture<byte[]>().orTimeout(5, TimeUnit.SECONDS);
-        future.whenComplete((result, throwable) -> blockToFuture.remove(block));
-
-        blockToFuture.put(block, future);
-        int index = block.getIndex();
-        int offset = block.getOffset();
-        int length = block.getLength();
-        peerSocket.sendRequest(index, offset, length);
+        RequestKey requestKey = new RequestKey(piece, offset, length);
+        future.whenComplete((result, throwable) -> requestKeyToFuture.remove(requestKey));
+        requestKeyToFuture.put(requestKey, future);
+        peerSocket.sendRequest(piece, offset, length);
         return future;
     }
 
@@ -133,7 +128,7 @@ public class PeerHandler {
     }
 
     public boolean isRequestQueueFull() {
-        return blockToFuture.size() >= MAX_REQUESTS;
+        return requestKeyToFuture.size() >= MAX_REQUESTS;
     }
 
     public InetAddress getAddress() {
@@ -298,8 +293,8 @@ public class PeerHandler {
         }
 
         private void handlePiece(Piece piece) {
-            Block block = new Block(piece.getIndex(), piece.getBegin(), piece.getBlock().length);
-            CompletableFuture<byte[]> future = blockToFuture.remove(block);
+            RequestKey requestKey = new RequestKey(piece.getIndex(), piece.getBegin(), piece.getBlock().length);
+            CompletableFuture<byte[]> future = requestKeyToFuture.remove(requestKey);
 
             if (future == null) {
                 LOGGER.log(Level.ERROR, "[{0}] Received block that was not requested", peer.getPeerContactInfo());
@@ -354,6 +349,38 @@ public class PeerHandler {
 
         private boolean isPeerAlive() {
             return peer.isLastSeenWithin(Duration.of(2, ChronoUnit.MINUTES));
+        }
+    }
+
+    private static class RequestKey {
+
+        private final int piece;
+        private final int offset;
+        private final int length;
+
+        public RequestKey(int piece, int offset, int length) {
+            this.piece = piece;
+            this.offset = offset;
+            this.length = length;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            RequestKey that = (RequestKey) o;
+            return piece == that.piece
+                    && offset == that.offset
+                    && length == that.length;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(piece, offset, length);
         }
     }
 }

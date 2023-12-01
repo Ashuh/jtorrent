@@ -12,13 +12,11 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.subjects.BehaviorSubject;
-import jtorrent.common.domain.model.Block;
 import jtorrent.common.domain.util.RangeList;
 import jtorrent.common.domain.util.Sha1Hash;
 import jtorrent.common.domain.util.rx.CombinedDoubleSumObservable;
@@ -152,7 +150,8 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
     }
 
     private int getVerifiedBytes() {
-        return pieceTracker.getVerifiedPieceIndices()
+        return pieceTracker.getVerifiedPieces()
+                .stream()
                 .map(this::getPieceSize)
                 .sum();
     }
@@ -181,21 +180,20 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
         pieceTracker.setBlockReceived(pieceIndex, blockIndex);
     }
 
-    public void setBlockMissing(int pieceIndex, int blockIndex) {
-        pieceTracker.setBlockMissing(pieceIndex, blockIndex);
+    public void setBlockNotRequested(int pieceIndex, int blockIndex) {
+        pieceTracker.setBlockNotRequested(pieceIndex, blockIndex);
     }
 
     public void setPieceMissing(int pieceIndex) {
-        IntStream.range(0, getNumBlocks(pieceIndex))
-                .forEach(i -> setBlockMissing(pieceIndex, i));
+        pieceTracker.setPieceMissing(pieceIndex);
     }
 
-    public List<Integer> getCompletelyMissingPieceIndices() {
-        return pieceTracker.getCompletelyMissingPieceIndices();
+    public BitSet getCompletelyMissingPiecesWithUnrequestedBlocks() {
+        return pieceTracker.getCompletelyMissingPiecesWithUnrequestedBlocks();
     }
 
-    public List<Integer> getPartiallyMissingPieceIndices() {
-        return pieceTracker.getPartiallyMissingPieceIndices();
+    public BitSet getPartiallyMissingPiecesWithUnrequestedBlocks() {
+        return pieceTracker.getPartiallyMissingPiecesWithUnrequestedBlocks();
     }
 
     public void setPieceVerified(int pieceIndex) {
@@ -212,12 +210,12 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
         return pieceTracker.isAllPiecesVerified();
     }
 
-    public List<Integer> getmissingBlockIndices(int pieceIndex) {
-        return pieceTracker.getMissingBlockIndices(pieceIndex);
+    public BitSet getMissingBlocks(int pieceIndex) {
+        return pieceTracker.getMissingBlocks(pieceIndex);
     }
 
     public void setBlockRequested(int pieceIndex, int blockIndex) {
-        pieceTracker.setBlockIndexRequested(pieceIndex, blockIndex);
+        pieceTracker.setBlockRequested(pieceIndex, blockIndex);
     }
 
     private int getNumBlocks(int pieceIndex) {
@@ -317,107 +315,203 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
 
     private class PieceTracker {
 
-        private final HashMap<Integer, Map<Integer, Block.Status>> pieceIndexToBlockIndexToBlockStatus =
-                new HashMap<>();
-
+        private final Map<Integer, BitSet> pieceIndexToRequestedBlocks = new HashMap<>();
+        private final Map<Integer, BitSet> pieceIndexToAvailableBlocks = new HashMap<>();
         private final BitSet partiallyMissingPieces = new BitSet();
+        private final BitSet partiallyMissingPiecesWithUnrequestedBlocks = new BitSet();
         private final BitSet completelyMissingPieces = new BitSet();
+        private final BitSet completelyMissingPiecesWithUnrequestedBlocks = new BitSet();
         private final BitSet completePieces = new BitSet();
         private final BitSet verifiedPieces = new BitSet();
 
         public PieceTracker() {
             IntStream.range(0, getNumPieces())
                     .forEach(i -> {
-                        pieceIndexToBlockIndexToBlockStatus.put(i, initializeBlockIndexToBlockStatus(i));
+                        pieceIndexToRequestedBlocks.put(i, new BitSet());
+                        pieceIndexToAvailableBlocks.put(i, new BitSet());
                         completelyMissingPieces.set(i);
+                        completelyMissingPiecesWithUnrequestedBlocks.set(i);
                     });
         }
 
-        private Map<Integer, Block.Status> initializeBlockIndexToBlockStatus(int pieceIndex) {
-            return IntStream.range(0, getNumBlocks(pieceIndex))
-                    .boxed()
-                    .collect(Collectors.toMap(Function.identity(), i -> Block.Status.MISSING, (a, b) -> b));
-        }
+        public synchronized void setBlockRequested(int pieceIndex, int blockIndex) {
+            BitSet requestedBlocks = pieceIndexToRequestedBlocks.get(pieceIndex);
+            requestedBlocks.set(blockIndex);
 
-        public void setBlockMissing(int pieceIndex, int blockIndex) {
-            if (isPieceComplete(pieceIndex)) {
-                completePieces.clear(pieceIndex);
-            }
-
-            Map<Integer, Block.Status> blockIndexToBlockStatus = pieceIndexToBlockIndexToBlockStatus.get(pieceIndex);
-            blockIndexToBlockStatus.put(blockIndex, Block.Status.MISSING);
-            if (blockIndexToBlockStatus.values().stream()
-                    .allMatch(status -> status == Block.Status.MISSING)) {
-                completelyMissingPieces.set(pieceIndex);
-            } else {
-                partiallyMissingPieces.set(pieceIndex);
-            }
-        }
-
-        public void setBlockIndexRequested(int pieceIndex, int blockIndex) {
-            Map<Integer, Block.Status> blockIndexToBlockStatus = pieceIndexToBlockIndexToBlockStatus.get(pieceIndex);
-            blockIndexToBlockStatus.put(blockIndex, Block.Status.REQUESTED);
-
-            if (completelyMissingPieces.get(pieceIndex)) {
-                completelyMissingPieces.clear(pieceIndex);
-                partiallyMissingPieces.set(pieceIndex);
-            } else if (partiallyMissingPieces.get(pieceIndex)
-                    && (blockIndexToBlockStatus.values().stream()
-                    .noneMatch(status -> status == Block.Status.MISSING))) {
-                partiallyMissingPieces.clear(pieceIndex);
-            }
-        }
-
-        public void setBlockReceived(int pieceIndex, int blockIndex) {
-            if (isPieceComplete(pieceIndex)) {
+            if (hasUnavailableAndUnrequestedBlocks(pieceIndex)) {
                 return;
             }
 
-            Map<Integer, Block.Status> blockIndexToBlockStatus = pieceIndexToBlockIndexToBlockStatus.get(pieceIndex);
-            blockIndexToBlockStatus.put(blockIndex, Block.Status.RECEIVED);
-
-            boolean isAllBlocksReceived = blockIndexToBlockStatus.values().stream()
-                    .allMatch(status -> status == Block.Status.RECEIVED);
-
-            if (isAllBlocksReceived) {
-                completePieces.set(pieceIndex);
-                partiallyMissingPieces.clear(pieceIndex);
+            if (isPieceCompletelyMissing(pieceIndex)) {
+                completelyMissingPiecesWithUnrequestedBlocks.clear(pieceIndex);
+            } else if (isPiecePartiallyMissing(pieceIndex)) {
+                partiallyMissingPiecesWithUnrequestedBlocks.clear(pieceIndex);
             }
         }
 
-        public void setPieceVerified(int pieceIndex) {
+        public synchronized void setBlockNotRequested(int pieceIndex, int blockIndex) {
+            BitSet requestedBlocks = pieceIndexToRequestedBlocks.get(pieceIndex);
+            requestedBlocks.clear(blockIndex);
+
+            if (isPieceCompletelyMissing(pieceIndex) && hasUnavailableAndUnrequestedBlocks(pieceIndex)) {
+                completelyMissingPiecesWithUnrequestedBlocks.set(pieceIndex);
+            } else if (isPiecePartiallyMissing(pieceIndex) && hasUnavailableAndUnrequestedBlocks(pieceIndex)) {
+                partiallyMissingPiecesWithUnrequestedBlocks.set(pieceIndex);
+            }
+        }
+
+        public synchronized void setBlockReceived(int pieceIndex, int blockIndex) {
+            if (isBlockAvailable(pieceIndex, blockIndex)) {
+                return;
+            }
+
+            boolean isAllBlocksReceived = setBlockAvailable(pieceIndex, blockIndex);
+
+            if (isAllBlocksReceived) {
+                setPieceComplete(pieceIndex);
+            } else {
+                setPiecePartiallyMissing(pieceIndex);
+            }
+        }
+
+        public synchronized void setPieceVerified(int pieceIndex) {
+            if (!isPieceComplete(pieceIndex)) {
+                throw new IllegalStateException("Piece must be complete to be verified");
+            }
+
             verifiedPieces.set(pieceIndex);
         }
 
-        public boolean isPieceComplete(int pieceIndex) {
-            return completePieces.get(pieceIndex);
+        public synchronized void setPieceMissing(int pieceIndex) {
+            verifiedPieces.clear(pieceIndex);
+            completePieces.clear(pieceIndex);
+            pieceIndexToAvailableBlocks.get(pieceIndex).clear();
+            partiallyMissingPieces.clear(pieceIndex);
+            partiallyMissingPiecesWithUnrequestedBlocks.clear(pieceIndex);
+            completelyMissingPieces.set(pieceIndex);
+
+            if (hasUnavailableAndUnrequestedBlocks(pieceIndex)) {
+                completelyMissingPiecesWithUnrequestedBlocks.set(pieceIndex);
+            } else {
+                completelyMissingPiecesWithUnrequestedBlocks.clear(pieceIndex);
+            }
         }
 
-        public boolean isAllPiecesVerified() {
+        public synchronized boolean isPieceComplete(int piece) {
+            return completePieces.get(piece);
+        }
+
+        public synchronized boolean isAllPiecesVerified() {
             return verifiedPieces.cardinality() == getNumPieces();
         }
 
-        public IntStream getVerifiedPieceIndices() {
-            return verifiedPieces.stream();
+        public synchronized BitSet getVerifiedPieces() {
+            return verifiedPieces;
         }
 
-        public List<Integer> getPartiallyMissingPieceIndices() {
-            return partiallyMissingPieces.stream()
-                    .boxed()
-                    .collect(Collectors.toList());
+        public synchronized BitSet getPartiallyMissingPiecesWithUnrequestedBlocks() {
+            return partiallyMissingPiecesWithUnrequestedBlocks;
         }
 
-        public List<Integer> getCompletelyMissingPieceIndices() {
-            return completelyMissingPieces.stream()
-                    .boxed()
-                    .collect(Collectors.toList());
+        public synchronized BitSet getCompletelyMissingPiecesWithUnrequestedBlocks() {
+            return completelyMissingPiecesWithUnrequestedBlocks;
         }
 
-        public List<Integer> getMissingBlockIndices(int pieceIndex) {
-            return pieceIndexToBlockIndexToBlockStatus.get(pieceIndex).entrySet().stream()
-                    .filter(entry -> entry.getValue() == Block.Status.MISSING)
-                    .map(Map.Entry::getKey)
-                    .collect(Collectors.toList());
+        public synchronized BitSet getMissingBlocks(int piece) {
+            BitSet requestedBlocks = getRequestedBlocks(piece);
+            BitSet availableBlocks = getAvailableBlocks(piece);
+            BitSet unavailableAndUnrequestedBlocks = new BitSet();
+            unavailableAndUnrequestedBlocks.set(0, getNumBlocks(piece));
+            unavailableAndUnrequestedBlocks.andNot(availableBlocks);
+            unavailableAndUnrequestedBlocks.andNot(requestedBlocks);
+            return unavailableAndUnrequestedBlocks;
+        }
+
+        private boolean isPieceCompletelyMissing(int piece) {
+            return completelyMissingPieces.get(piece);
+        }
+
+        private boolean isPiecePartiallyMissing(int piece) {
+            return partiallyMissingPieces.get(piece);
+        }
+
+        /**
+         * Checks whether the piece has any blocks that are both unavailable and unrequested.
+         *
+         * @param piece the piece index to check
+         * @return true if the piece has any blocks that are both unavailable and unrequested, false otherwise
+         */
+        private boolean hasUnavailableAndUnrequestedBlocks(int piece) {
+            BitSet unavailableBlocks = getUnavailableBlocks(piece);
+            BitSet unrequestedBlocks = getUnrequestedBlocks(piece);
+            return unavailableBlocks.intersects(unrequestedBlocks);
+        }
+
+        private BitSet getUnavailableBlocks(int piece) {
+            BitSet unavailableBlocks = new BitSet();
+            unavailableBlocks.set(0, getNumBlocks(piece));
+            unavailableBlocks.andNot(getAvailableBlocks(piece));
+            return unavailableBlocks;
+        }
+
+        private BitSet getAvailableBlocks(int piece) {
+            return pieceIndexToAvailableBlocks.get(piece);
+        }
+
+        private BitSet getUnrequestedBlocks(int piece) {
+            BitSet unrequestedBlocks = new BitSet();
+            unrequestedBlocks.set(0, getNumBlocks(piece));
+            unrequestedBlocks.andNot(getRequestedBlocks(piece));
+            return unrequestedBlocks;
+        }
+
+        private BitSet getRequestedBlocks(int piece) {
+            return pieceIndexToRequestedBlocks.get(piece);
+        }
+
+        private boolean hasUnrequestedBlocks(int piece) {
+            return pieceIndexToRequestedBlocks.get(piece).cardinality() < getNumBlocks(piece);
+        }
+
+        private boolean hasUnavailableBlocks(int piece) {
+            return pieceIndexToAvailableBlocks.get(piece).cardinality() < getNumBlocks(piece);
+        }
+
+        private boolean isBlockAvailable(int piece, int blockIndex) {
+            return pieceIndexToAvailableBlocks.get(piece).get(blockIndex);
+        }
+
+        private void setPieceComplete(int piece) {
+            completePieces.set(piece);
+            completelyMissingPieces.clear(piece);
+            completelyMissingPiecesWithUnrequestedBlocks.clear(piece);
+            partiallyMissingPieces.clear(piece);
+            partiallyMissingPiecesWithUnrequestedBlocks.clear(piece);
+        }
+
+        private void setPiecePartiallyMissing(int piece) {
+            completelyMissingPieces.clear(piece);
+            completelyMissingPiecesWithUnrequestedBlocks.clear(piece);
+            partiallyMissingPieces.set(piece);
+
+            if (hasUnavailableAndUnrequestedBlocks(piece)) {
+                partiallyMissingPiecesWithUnrequestedBlocks.set(piece);
+            } else {
+                partiallyMissingPiecesWithUnrequestedBlocks.clear(piece);
+            }
+        }
+
+        /**
+         * Sets the block as available and returns whether all blocks for the piece are now available.
+         *
+         * @param piece the piece index
+         * @param block the block index
+         * @return true if all blocks for the piece are now available, false otherwise
+         */
+        private boolean setBlockAvailable(int piece, int block) {
+            BitSet availableBlocks = getAvailableBlocks(piece);
+            availableBlocks.set(block);
+            return availableBlocks.cardinality() == getNumBlocks(piece);
         }
     }
 }
