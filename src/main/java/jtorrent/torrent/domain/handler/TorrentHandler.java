@@ -383,6 +383,7 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
             if (isPeerHandlerRegistered(peerHandler)) {
                 removePeerHandler(peerHandler);
                 chokedPeerHandlers.add(peerHandler);
+                noPieceToAssignPeerHandlers.remove(peerHandler);
             }
         }
 
