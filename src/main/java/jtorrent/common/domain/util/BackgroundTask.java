@@ -2,7 +2,6 @@ package jtorrent.common.domain.util;
 
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
-import java.util.Optional;
 
 public abstract class BackgroundTask implements Runnable {
 
@@ -13,11 +12,11 @@ public abstract class BackgroundTask implements Runnable {
 
     protected BackgroundTask() {
         thread = new Thread(this);
-        getThreadName().ifPresent(thread::setName);
+        thread.setName(getThreadName());
     }
 
-    protected Optional<String> getThreadName() {
-        return Optional.empty();
+    protected String getThreadName() {
+        return getClass().getName();
     }
 
     @Override

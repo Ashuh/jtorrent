@@ -9,7 +9,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -172,8 +171,8 @@ public class PeerHandler {
     private class HandlePeerTask extends BackgroundTask {
 
         @Override
-        protected Optional<String> getThreadName() {
-            return Optional.of("PeerHandler-" + peer.getPeerContactInfo());
+        protected String getThreadName() {
+            return "PeerHandler-" + peer.getPeerContactInfo();
         }
 
         @Override
