@@ -506,7 +506,7 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
 
         private boolean isPieceChecksumValid(int pieceIndex) {
             byte[] pieceBytes = repository.getPiece(torrent, pieceIndex);
-            Sha1Hash expected = torrent.getPieceHashes().get(pieceIndex);
+            Sha1Hash expected = torrent.getPieceHash(pieceIndex);
             return Sha1Hash.of(pieceBytes).equals(expected);
         }
 

@@ -114,6 +114,10 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
         return pieceHashes;
     }
 
+    public Sha1Hash getPieceHash(int piece) {
+        return pieceHashes.get(piece);
+    }
+
     public String getName() {
         return name;
     }
