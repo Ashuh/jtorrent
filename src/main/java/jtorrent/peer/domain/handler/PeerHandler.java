@@ -18,6 +18,7 @@ import java.util.concurrent.TimeUnit;
 
 import jtorrent.common.domain.util.BackgroundTask;
 import jtorrent.common.domain.util.PeriodicTask;
+import jtorrent.common.domain.util.Sha1Hash;
 import jtorrent.peer.domain.communication.PeerSocket;
 import jtorrent.peer.domain.model.Peer;
 import jtorrent.peer.domain.model.PeerContactInfo;
@@ -58,8 +59,6 @@ public class PeerHandler {
 
     public void start() {
         handlePeerTask.start();
-        periodicKeepAliveTask.scheduleAtFixedRate(2, TimeUnit.MINUTES);
-        periodicCheckAliveTask.scheduleAtFixedRate(2, TimeUnit.MINUTES);
     }
 
     public void stop() {
@@ -73,6 +72,20 @@ public class PeerHandler {
         periodicKeepAliveTask.stop();
         periodicCheckAliveTask.stop();
         scheduledExecutorService.shutdownNow();
+    }
+
+    public CompletableFuture<Boolean> connect(Sha1Hash infoHash, boolean isDhtSupported) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                peerSocket.connect(peer.getPeerContactInfo().toInetSocketAddress(), infoHash, isDhtSupported);
+                periodicKeepAliveTask.scheduleAtFixedRate(2, TimeUnit.MINUTES);
+                periodicCheckAliveTask.scheduleAtFixedRate(2, TimeUnit.MINUTES);
+                return true;
+            } catch (IOException e) {
+                LOGGER.log(Level.ERROR, String.format("[%s] Error while connecting", peer.getPeerContactInfo()), e);
+                return false;
+            }
+        });
     }
 
     public Peer getPeer() {
