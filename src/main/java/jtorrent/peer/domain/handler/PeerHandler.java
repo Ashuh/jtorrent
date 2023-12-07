@@ -59,6 +59,8 @@ public class PeerHandler {
 
     public void start() {
         handlePeerTask.start();
+        periodicKeepAliveTask.scheduleAtFixedRate(2, TimeUnit.MINUTES);
+        periodicCheckAliveTask.scheduleAtFixedRate(2, TimeUnit.MINUTES);
     }
 
     public void stop() {
@@ -78,8 +80,6 @@ public class PeerHandler {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 peerSocket.connect(peer.getPeerContactInfo().toInetSocketAddress(), infoHash, isDhtSupported);
-                periodicKeepAliveTask.scheduleAtFixedRate(2, TimeUnit.MINUTES);
-                periodicCheckAliveTask.scheduleAtFixedRate(2, TimeUnit.MINUTES);
                 return true;
             } catch (IOException e) {
                 LOGGER.log(Level.ERROR, String.format("[%s] Error while connecting", peer.getPeerContactInfo()), e);
