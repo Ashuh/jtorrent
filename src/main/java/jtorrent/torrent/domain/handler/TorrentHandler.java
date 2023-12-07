@@ -129,6 +129,12 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
         peerHandlers.add(peerHandler);
         workDispatcher.addPeerHandler(peerHandler);
         peerHandler.start();
+        try {
+            peerHandler.setLocalInterested();
+        } catch (IOException e) {
+            LOGGER.log(Level.ERROR, "[{0}] Error sending Interested", peerHandler.getPeerContactInfo());
+            peerHandler.stop();
+        }
     }
 
     /**

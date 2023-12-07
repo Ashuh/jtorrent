@@ -101,6 +101,17 @@ public class PeerHandler {
         return future;
     }
 
+
+    public void setLocalInterested() throws IOException {
+        peerSocket.sendInterested();
+        peer.setLocalInterested(true);
+    }
+
+    public void setLocalNotInterested() throws IOException {
+        peerSocket.sendNotInterested();
+        peer.setLocalInterested(false);
+    }
+
     public void choke() {
         LOGGER.log(Level.INFO, "[{0}] Choking remote", peer.getPeerContactInfo());
 
