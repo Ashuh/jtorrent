@@ -56,6 +56,10 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
     private final Set<PeerContactInfo> pendingContacts = ConcurrentHashMap.newKeySet();
     private final List<Listener> listeners = new ArrayList<>();
     /**
+     * Used to prevent concurrent modification to the state of pieces.
+     */
+    private final Object pieceStateLock = new Object();
+    /**
      * Used to prevent verification from happening while handling a successful peer connection.
      */
     private final Object verificationLock = new Object();
@@ -432,7 +436,7 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
                         } else {
                             log(Level.ERROR, String.format("Failed to receive block %d of piece %d from %s", blockIndex,
                                     pieceIndex, peerHandler.getPeerContactInfo()), throwable);
-                            synchronized (this) {
+                            synchronized (pieceStateLock) {
                                 torrent.setBlockNotRequested(pieceIndex, blockIndex);
                             }
                         }
@@ -499,7 +503,7 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
 
             repository.storeBlock(torrent, pieceIndex, offset, data);
 
-            synchronized (this) {
+            synchronized (pieceStateLock) {
                 torrent.setBlockReceived(pieceIndex, blockIndex);
                 torrent.setBlockNotRequested(pieceIndex, blockIndex);
                 torrent.incrementDownloaded(data.length);
