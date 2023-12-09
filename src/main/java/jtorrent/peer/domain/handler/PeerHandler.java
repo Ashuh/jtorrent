@@ -17,6 +17,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import jtorrent.common.domain.util.BackgroundTask;
@@ -39,7 +41,7 @@ public class PeerHandler {
 
     private static final Logger LOGGER = System.getLogger(PeerHandler.class.getName());
     private static final int MAX_REQUESTS = 5;
-    private static final ExecutorService MESSAGE_HANDLER_THREAD_POOL = Executors.newCachedThreadPool();
+    private static final ExecutorService MESSAGE_HANDLER_THREAD_POOL = new ConnectionThreadPool();
 
     private final Peer peer;
     private final PeerSocket peerSocket;
@@ -414,6 +416,18 @@ public class PeerHandler {
         @Override
         public int hashCode() {
             return Objects.hash(piece, offset, length);
+        }
+    }
+
+    private static class ConnectionThreadPool extends ThreadPoolExecutor {
+
+        public ConnectionThreadPool() {
+            super(0, Integer.MAX_VALUE, 60, TimeUnit.SECONDS, new SynchronousQueue<>(), r -> {
+                Thread thread = new Thread(r);
+                thread.setName("ConnectionThreadPool-" + thread.getId());
+                thread.setDaemon(true);
+                return thread;
+            });
         }
     }
 }
