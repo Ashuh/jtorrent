@@ -55,6 +55,10 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
      */
     private final Set<PeerContactInfo> pendingContacts = ConcurrentHashMap.newKeySet();
     private final List<Listener> listeners = new ArrayList<>();
+    /**
+     * Used to prevent verification from happening while handling a successful peer connection.
+     */
+    private final Object verificationLock = new Object();
 
     public TorrentHandler(Torrent torrent, PieceRepository pieceRepository) {
         this.torrent = requireNonNull(torrent);
@@ -126,22 +130,22 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
 
     private void handleConnectionSuccess(PeerHandler peerHandler) {
         log(Level.INFO, String.format("[%s] Connected", peerHandler.getPeerContactInfo()));
-        torrent.addPeer(peerHandler.getPeer());
-        peerHandlers.add(peerHandler);
         try {
-            BitSet verifiedPieces = torrent.getVerifiedPieces();
-            if (!verifiedPieces.isEmpty()) {
-                peerHandler.notifyRemoteOfInitialPieceAvailability(verifiedPieces, torrent.getNumPieces());
+            synchronized (verificationLock) {
+                BitSet verifiedPieces = torrent.getVerifiedPieces();
+                if (!verifiedPieces.isEmpty()) {
+                    peerHandler.notifyRemoteOfInitialPieceAvailability(verifiedPieces, torrent.getNumPieces());
+                }
+                peerHandler.setLocalInterested();
+                peerHandlers.add(peerHandler);
             }
-            peerHandler.setLocalInterested();
+            torrent.addPeer(peerHandler.getPeer());
+            workDispatcher.addPeerHandler(peerHandler);
+            peerHandler.start();
         } catch (IOException e) {
             log(Level.ERROR, String.format("Error handling connection success: %s", peerHandler.getPeerContactInfo()),
                     e);
-            torrent.removePeer(peerHandler.getPeer());
-            peerHandlers.remove(peerHandler);
         }
-        workDispatcher.addPeerHandler(peerHandler);
-        peerHandler.start();
     }
 
     /**
@@ -504,8 +508,18 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
                     LOGGER.log(Level.DEBUG, "Piece {0} complete", pieceIndex);
 
                     if (isPieceChecksumValid(pieceIndex)) {
-                        LOGGER.log(Level.INFO, "Piece {0} verified", pieceIndex);
-                        torrent.setPieceVerified(pieceIndex);
+                        synchronized (verificationLock) {
+                            LOGGER.log(Level.INFO, "Piece {0} verified", pieceIndex);
+                            torrent.setPieceVerified(pieceIndex);
+                            peerHandlers.forEach(handler -> {
+                                try {
+                                    handler.notifyRemoteOfPieceAvailability(pieceIndex);
+                                } catch (IOException e) {
+                                    log(Level.ERROR, String.format("[%s] Failed to notify remote of piece availability",
+                                            handler.getPeerContactInfo()), e);
+                                }
+                            });
+                        }
                     } else {
                         LOGGER.log(Level.WARNING, "Piece {0} verification failed", pieceIndex);
                         torrent.setPieceMissing(pieceIndex);

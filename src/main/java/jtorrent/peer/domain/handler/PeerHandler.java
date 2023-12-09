@@ -112,6 +112,9 @@ public class PeerHandler {
         peerSocket.sendBitfield(pieces, numTotalPieces);
     }
 
+    public void notifyRemoteOfPieceAvailability(int piece) throws IOException {
+        peerSocket.sendHave(piece);
+    }
 
     public void setLocalInterested() throws IOException {
         peerSocket.sendInterested();
