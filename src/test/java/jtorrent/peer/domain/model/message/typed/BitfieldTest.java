@@ -29,7 +29,7 @@ class BitfieldTest {
                 .put(payload)
                 .array();
 
-        Bitfield bitfield = new Bitfield(bitSet);
+        Bitfield bitfield = Bitfield.fromBitSetAndNumTotalPieces(bitSet, 9);
         byte[] actual = bitfield.pack();
 
         assertArrayEquals(expected, actual);
@@ -45,7 +45,7 @@ class BitfieldTest {
         bitSet.set(7);
         bitSet.set(8);
 
-        Bitfield expected = new Bitfield(bitSet);
+        Bitfield expected = Bitfield.fromBitSetAndNumTotalPieces(bitSet, 9);
 
         byte[] payload = new byte[] {(byte) 0b1010_1011, (byte) 0b1000_0000};
         Bitfield actual = Bitfield.unpack(payload);

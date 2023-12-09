@@ -142,8 +142,8 @@ public class PeerSocket {
         sendMessage(have);
     }
 
-    public void sendBitfield(BitSet bitSet) throws IOException {
-        Bitfield bitfield = new Bitfield(bitSet);
+    public void sendBitfield(BitSet bitSet, int numTotalPieces) throws IOException {
+        Bitfield bitfield = Bitfield.fromBitSetAndNumTotalPieces(bitSet, numTotalPieces);
         sendMessage(bitfield);
     }
 

@@ -3,7 +3,6 @@ package jtorrent.peer.domain.model.message.typed;
 import static jtorrent.common.domain.util.ValidationUtil.requireNonNull;
 
 import java.util.BitSet;
-import java.util.Collection;
 import java.util.Objects;
 import java.util.stream.IntStream;
 
@@ -45,16 +44,45 @@ import java.util.stream.IntStream;
  */
 public class Bitfield extends TypedPeerMessage {
 
+    /**
+     * The bitset representing the pieces that are available.
+     */
     private final BitSet bitSet;
+    /**
+     * The number of bytes required to represent all the pieces of the torrent as a bitfield.
+     * This is equal to the number of pieces rounded up to the nearest multiple of 8.
+     */
+    private final int numBytesToPack;
 
-    public Bitfield(BitSet bitSet) {
-        this.bitSet = requireNonNull(bitSet);
+    private Bitfield(BitSet bitSet, int numBytesToPack) {
+        this.bitSet = (BitSet) requireNonNull(bitSet).clone();
+        this.numBytesToPack = numBytesToPack;
     }
 
-    public static Bitfield forIndices(Collection<Integer> indices) {
-        BitSet bitSet = new BitSet();
-        indices.forEach(bitSet::set);
-        return new Bitfield(bitSet);
+    /**
+     * Creates a new {@link Bitfield} from the given bitset and the number of total pieces.
+     *
+     * @param bitSet         the bitset representing the pieces that are available
+     * @param numTotalPieces the total number of pieces, must be greater than or equal to the length of the bitset
+     * @return a new {@link Bitfield} from the given bitset and the number of total pieces
+     */
+    public static Bitfield fromBitSetAndNumTotalPieces(BitSet bitSet, int numTotalPieces) {
+        if (bitSet.length() > numTotalPieces) {
+            throw new IllegalArgumentException("BitSet length is greater than the number of total pieces");
+        }
+        int numBytesToPack = roundUpToNearestByte(numTotalPieces);
+        return new Bitfield(bitSet, numBytesToPack);
+    }
+
+    /**
+     * Rounds up the given value to the nearest multiple of 8.
+     * For example, 9 would be rounded up to 16, 16 would be rounded up to 16, 17 would be rounded up to 24.
+     *
+     * @param value the value to round up
+     * @return the value rounded up to the nearest multiple of 8
+     */
+    private static int roundUpToNearestByte(int value) {
+        return (value + Byte.SIZE - 1) / Byte.SIZE;
     }
 
     public static Bitfield unpack(byte[] payload) {
@@ -70,7 +98,7 @@ public class Bitfield extends TypedPeerMessage {
             }
         }
 
-        return new Bitfield(bitSet);
+        return new Bitfield(bitSet, payload.length);
     }
 
     /**
@@ -108,7 +136,7 @@ public class Bitfield extends TypedPeerMessage {
 
     @Override
     public int getPayloadSize() {
-        return (bitSet.length() + 7) / Byte.SIZE;
+        return numBytesToPack;
     }
 
     @Override
@@ -118,8 +146,7 @@ public class Bitfield extends TypedPeerMessage {
 
     @Override
     protected byte[] getPayload() {
-        int numBytes = (bitSet.length() + Byte.SIZE - 1) / Byte.SIZE;
-        byte[] bytes = new byte[numBytes];
+        byte[] bytes = new byte[numBytesToPack];
         bitSet.stream().forEach(i -> {
             int byteIndex = i / Byte.SIZE;
             int bitIndex = i % Byte.SIZE;
@@ -131,6 +158,36 @@ public class Bitfield extends TypedPeerMessage {
 
     @Override
     protected String getPayloadString() {
-        return String.format("bitSet=%s", bitSet);
+        StringBuilder stringBuilder = new StringBuilder();
+
+        boolean inRange = false;
+        int startRange = -1;
+
+        for (int i = bitSet.nextSetBit(0); i >= 0; i = bitSet.nextSetBit(i + 1)) {
+            if (!inRange) {
+                // Start of a new range
+                startRange = i;
+                inRange = true;
+            }
+
+            // Check if the next bit is not set or if we have reached the end
+            if (i + 1 >= bitSet.length() || !bitSet.get(i + 1)) {
+                // End of the current range
+                if (startRange == i) {
+                    stringBuilder.append(i);
+                } else {
+                    stringBuilder.append(startRange).append("-").append(i);
+                }
+
+                // If it's not the last element, add a comma
+                if (i + 1 < bitSet.length()) {
+                    stringBuilder.append(",");
+                }
+
+                inRange = false;
+            }
+        }
+
+        return stringBuilder.toString();
     }
 }
