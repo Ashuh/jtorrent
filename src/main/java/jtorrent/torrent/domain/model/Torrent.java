@@ -414,15 +414,15 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
         }
 
         public synchronized BitSet getVerifiedPieces() {
-            return verifiedPieces;
+            return (BitSet) verifiedPieces.clone();
         }
 
         public synchronized BitSet getPartiallyMissingPiecesWithUnrequestedBlocks() {
-            return partiallyMissingPiecesWithUnrequestedBlocks;
+            return (BitSet) partiallyMissingPiecesWithUnrequestedBlocks.clone();
         }
 
         public synchronized BitSet getCompletelyMissingPiecesWithUnrequestedBlocks() {
-            return completelyMissingPiecesWithUnrequestedBlocks;
+            return (BitSet) completelyMissingPiecesWithUnrequestedBlocks.clone();
         }
 
         public synchronized BitSet getMissingBlocks(int piece) {
