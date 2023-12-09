@@ -13,7 +13,9 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -37,6 +39,7 @@ public class PeerHandler {
 
     private static final Logger LOGGER = System.getLogger(PeerHandler.class.getName());
     private static final int MAX_REQUESTS = 5;
+    private static final ExecutorService MESSAGE_HANDLER_THREAD_POOL = Executors.newCachedThreadPool();
 
     private final Peer peer;
     private final PeerSocket peerSocket;
@@ -46,7 +49,10 @@ public class PeerHandler {
     private final PeriodicKeepAliveTask periodicKeepAliveTask;
     private final PeriodicCheckAliveTask periodicCheckAliveTask;
     private final ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
-    private final Map<RequestKey, CompletableFuture<byte[]>> requestKeyToFuture = new ConcurrentHashMap<>(MAX_REQUESTS);
+    private final Map<RequestKey, CompletableFuture<byte[]>> outRequestKeyToFuture =
+            new ConcurrentHashMap<>(MAX_REQUESTS);
+    private final Map<RequestKey, Future<?>> inRequestKeyToFuture = new ConcurrentHashMap<>();
+
 
     public PeerHandler(Peer peer, PeerSocket peerSocket, EventHandler eventHandler) {
         this.peerSocket = peerSocket;
@@ -96,8 +102,8 @@ public class PeerHandler {
     public CompletableFuture<byte[]> assignBlock(int piece, int offset, int length) throws IOException {
         CompletableFuture<byte[]> future = new CompletableFuture<byte[]>().orTimeout(5, TimeUnit.SECONDS);
         RequestKey requestKey = new RequestKey(piece, offset, length);
-        future.whenComplete((result, throwable) -> requestKeyToFuture.remove(requestKey));
-        requestKeyToFuture.put(requestKey, future);
+        future.whenComplete((result, throwable) -> outRequestKeyToFuture.remove(requestKey));
+        outRequestKeyToFuture.put(requestKey, future);
         peerSocket.sendRequest(piece, offset, length);
         return future;
     }
@@ -139,6 +145,10 @@ public class PeerHandler {
         }
     }
 
+    public void sendPiece(int index, int begin, byte[] block) throws IOException {
+        peerSocket.sendPiece(index, begin, block);
+    }
+
     public double getDownloadRate() {
         return peer.getDownloadRate();
     }
@@ -156,7 +166,7 @@ public class PeerHandler {
     }
 
     public boolean isRequestQueueFull() {
-        return requestKeyToFuture.size() >= MAX_REQUESTS;
+        return outRequestKeyToFuture.size() >= MAX_REQUESTS;
     }
 
     public InetAddress getAddress() {
@@ -306,13 +316,18 @@ public class PeerHandler {
         }
 
         private void handleRequest(Request request) {
-            eventHandler.handleBlockRequested(PeerHandler.this, request.getIndex(), request.getBegin(),
-                    request.getLength());
+            RequestKey requestKey = new RequestKey(request.getIndex(), request.getBegin(), request.getLength());
+            Future<?> future = MESSAGE_HANDLER_THREAD_POOL.submit(() -> {
+                eventHandler.handleBlockRequested(PeerHandler.this, request.getIndex(), request.getBegin(),
+                        request.getLength());
+                inRequestKeyToFuture.remove(requestKey);
+            });
+            inRequestKeyToFuture.put(requestKey, future);
         }
 
         private void handlePiece(Piece piece) {
             RequestKey requestKey = new RequestKey(piece.getIndex(), piece.getBegin(), piece.getBlock().length);
-            CompletableFuture<byte[]> future = requestKeyToFuture.remove(requestKey);
+            CompletableFuture<byte[]> future = outRequestKeyToFuture.remove(requestKey);
 
             if (future == null) {
                 LOGGER.log(Level.ERROR, "[{0}] Received block that was not requested", peer.getPeerContactInfo());
@@ -323,8 +338,15 @@ public class PeerHandler {
         }
 
         private void handleCancel(Cancel cancel) {
-            eventHandler.handleBlockCancelled(PeerHandler.this, cancel.getIndex(), cancel.getBegin(),
-                    cancel.getLength());
+            RequestKey requestKey = new RequestKey(cancel.getIndex(), cancel.getBegin(), cancel.getLength());
+            Future<?> future = inRequestKeyToFuture.remove(requestKey);
+            if (future != null) {
+                LOGGER.log(Level.DEBUG, "[{0}] Cancelling request for {1}", peer.getPeerContactInfo(), requestKey);
+                future.cancel(true);
+            } else {
+                LOGGER.log(Level.DEBUG, "[{0}] Failed to cancel request for {1} ", peer.getPeerContactInfo(),
+                        requestKey);
+            }
         }
 
         private void handlePort(Port port) {

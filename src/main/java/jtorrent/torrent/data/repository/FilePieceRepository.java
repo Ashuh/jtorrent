@@ -20,13 +20,24 @@ public class FilePieceRepository implements PieceRepository {
 
     @Override
     public byte[] getPiece(Torrent torrent, int index) {
-        LOGGER.log(Level.DEBUG, "Getting piece {0} for torrent {1}", index, torrent.getName());
+        LOGGER.log(Level.DEBUG, "[{0}] Getting piece {1}", torrent.getName(), index);
         long start = torrent.getPieceOffset(index);
         int length = torrent.getPieceSize(index);
-        long end = start + length; // exclusive
+        return getData(torrent, start, length);
+    }
 
+    @Override
+    public byte[] getBlock(Torrent torrent, int index, int offset, int length) {
+        LOGGER.log(Level.DEBUG, "[{0}] Getting block at index {1}, offset {2}, length {3}",
+                torrent.getName(), index, offset, length);
+        long start = torrent.getPieceOffset(index) + offset;
+        return getData(torrent, start, length);
+    }
+
+    private byte[] getData(Torrent torrent, long start, int length) {
         RangeList fileOffsetList = torrent.getFileByteRanges();
         int startIndex = fileOffsetList.getRangeIndex(start);
+        long end = start + length; // exclusive
         int endIndex = fileOffsetList.getRangeIndex(end - 1);
 
         ByteBuffer buffer = ByteBuffer.allocate(length);

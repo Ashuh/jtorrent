@@ -223,6 +223,13 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
     public void handleBlockRequested(PeerHandler peerHandler, int pieceIndex, int offset, int length) {
         log(Level.DEBUG, String.format("Handling block requested (%d - %d) for piece %d", offset, offset + length,
                 pieceIndex));
+        byte[] data = repository.getBlock(torrent, pieceIndex, offset, length);
+        try {
+            peerHandler.sendPiece(pieceIndex, offset, data);
+        } catch (IOException e) {
+            log(Level.ERROR, String.format("[%s] Failed to send block [%d - %d] for piece %d",
+                    peerHandler.getPeerContactInfo(), offset, offset + length, pieceIndex), e);
+        }
     }
 
     @Override
