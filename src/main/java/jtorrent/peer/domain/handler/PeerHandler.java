@@ -204,6 +204,50 @@ public class PeerHandler {
         void handleDhtPortReceived(PeerHandler peerHandler, int port);
     }
 
+    private static class RequestKey {
+
+        private final int piece;
+        private final int offset;
+        private final int length;
+
+        public RequestKey(int piece, int offset, int length) {
+            this.piece = piece;
+            this.offset = offset;
+            this.length = length;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(piece, offset, length);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            RequestKey that = (RequestKey) o;
+            return piece == that.piece
+                    && offset == that.offset
+                    && length == that.length;
+        }
+    }
+
+    private static class ConnectionThreadPool extends ThreadPoolExecutor {
+
+        public ConnectionThreadPool() {
+            super(0, Integer.MAX_VALUE, 60, TimeUnit.SECONDS, new SynchronousQueue<>(), r -> {
+                Thread thread = new Thread(r);
+                thread.setName("ConnectionThreadPool-" + thread.getId());
+                thread.setDaemon(true);
+                return thread;
+            });
+        }
+    }
+
     private class HandlePeerTask extends BackgroundTask {
 
         @Override
@@ -384,50 +428,6 @@ public class PeerHandler {
 
         private boolean isPeerAlive() {
             return peer.isLastSeenWithin(Duration.of(2, ChronoUnit.MINUTES));
-        }
-    }
-
-    private static class RequestKey {
-
-        private final int piece;
-        private final int offset;
-        private final int length;
-
-        public RequestKey(int piece, int offset, int length) {
-            this.piece = piece;
-            this.offset = offset;
-            this.length = length;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) {
-                return true;
-            }
-            if (o == null || getClass() != o.getClass()) {
-                return false;
-            }
-            RequestKey that = (RequestKey) o;
-            return piece == that.piece
-                    && offset == that.offset
-                    && length == that.length;
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(piece, offset, length);
-        }
-    }
-
-    private static class ConnectionThreadPool extends ThreadPoolExecutor {
-
-        public ConnectionThreadPool() {
-            super(0, Integer.MAX_VALUE, 60, TimeUnit.SECONDS, new SynchronousQueue<>(), r -> {
-                Thread thread = new Thread(r);
-                thread.setName("ConnectionThreadPool-" + thread.getId());
-                thread.setDaemon(true);
-                return thread;
-            });
         }
     }
 }
