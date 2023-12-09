@@ -421,7 +421,7 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
             int blockIndex = block.getBlockIndex();
             int offset = block.getBlockIndex() * torrent.getBlockSize();
             int length = torrent.getBlockSize(block.getPieceIndex(), block.getBlockIndex());
-            peerHandler.assignBlock(block.getPieceIndex(), offset, length)
+            peerHandler.requestBlock(block.getPieceIndex(), offset, length)
                     .handle((data, throwable) -> {
                         if (throwable == null) {
                             handleBlockReceived(pieceIndex, offset, data);

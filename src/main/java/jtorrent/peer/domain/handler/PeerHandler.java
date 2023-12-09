@@ -99,7 +99,7 @@ public class PeerHandler {
         return peer;
     }
 
-    public CompletableFuture<byte[]> assignBlock(int piece, int offset, int length) throws IOException {
+    public CompletableFuture<byte[]> requestBlock(int piece, int offset, int length) throws IOException {
         CompletableFuture<byte[]> future = new CompletableFuture<byte[]>().orTimeout(5, TimeUnit.SECONDS);
         RequestKey requestKey = new RequestKey(piece, offset, length);
         future.whenComplete((result, throwable) -> outRequestKeyToFuture.remove(requestKey));
