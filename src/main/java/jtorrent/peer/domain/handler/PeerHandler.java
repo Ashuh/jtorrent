@@ -189,23 +189,15 @@ public class PeerHandler {
 
     public interface EventHandler {
 
-        void handlePeerConnected(PeerHandler peerHandler);
-
         void handlePeerDisconnected(PeerHandler peerHandler);
 
         void handlePeerChoked(PeerHandler peerHandler);
 
         void handlePeerUnchoked(PeerHandler peerHandler);
 
-        void handlePeerInterested(PeerHandler peerHandler);
-
-        void handlePeerNotInterested(PeerHandler peerHandler);
-
         void handlePiecesAvailable(PeerHandler peerHandler, Set<Integer> pieceIndices);
 
         void handleBlockRequested(PeerHandler peerHandler, int pieceIndex, int offset, int length);
-
-        void handleBlockCancelled(PeerHandler peerHandler, int pieceIndex, int offset, int length);
 
         void handleDhtPortReceived(PeerHandler peerHandler, int port);
     }
@@ -297,12 +289,10 @@ public class PeerHandler {
 
         private void handleInterested() {
             peer.setRemoteInterested(true);
-            eventHandler.handlePeerInterested(PeerHandler.this);
         }
 
         private void handleNotInterested() {
             peer.setRemoteInterested(false);
-            eventHandler.handlePeerNotInterested(PeerHandler.this);
         }
 
         private void handleHave(Have have) {

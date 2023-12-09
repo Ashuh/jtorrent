@@ -175,11 +175,6 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
     }
 
     @Override
-    public void handlePeerConnected(PeerHandler peerHandler) {
-        log(Level.DEBUG, String.format("Handling peer connected: %s", peerHandler.getPeerContactInfo()));
-    }
-
-    @Override
     public void handlePeerDisconnected(PeerHandler peerHandler) {
         log(Level.DEBUG, String.format("Handling peer disconnected: %s", peerHandler.getPeerContactInfo()));
         workDispatcher.removePeerHandler(peerHandler);
@@ -209,16 +204,6 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
     }
 
     @Override
-    public void handlePeerInterested(PeerHandler peerHandler) {
-        log(Level.DEBUG, String.format("Handling peer interested: %s", peerHandler.getPeerContactInfo()));
-    }
-
-    @Override
-    public void handlePeerNotInterested(PeerHandler peerHandler) {
-        log(Level.DEBUG, String.format("Handling peer not interested: %s", peerHandler.getPeerContactInfo()));
-    }
-
-    @Override
     public void handlePiecesAvailable(PeerHandler peerHandler, Set<Integer> pieceIndices) {
         log(Level.DEBUG, String.format("Handling %d pieces available", pieceIndices.size()));
         pieceIndices.forEach(pieceIndex -> pieceIndexToAvailablePeerHandlers
@@ -238,12 +223,6 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
             log(Level.ERROR, String.format("[%s] Failed to send block [%d - %d] for piece %d",
                     peerHandler.getPeerContactInfo(), offset, offset + length, pieceIndex), e);
         }
-    }
-
-    @Override
-    public void handleBlockCancelled(PeerHandler peerHandler, int pieceIndex, int offset, int length) {
-        log(Level.DEBUG, String.format("Handling block cancelled (%d - %d) for piece %d", offset, offset + length,
-                pieceIndex));
     }
 
     @Override
