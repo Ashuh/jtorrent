@@ -124,17 +124,19 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
     }
 
     private void handleConnectionSuccess(PeerHandler peerHandler) {
-        LOGGER.log(Level.INFO, "[{0}] Connection success", peerHandler.getPeerContactInfo());
+        log(Level.INFO, String.format("[%s] Connected", peerHandler.getPeerContactInfo()));
         torrent.addPeer(peerHandler.getPeer());
         peerHandlers.add(peerHandler);
-        workDispatcher.addPeerHandler(peerHandler);
-        peerHandler.start();
         try {
             peerHandler.setLocalInterested();
         } catch (IOException e) {
-            LOGGER.log(Level.ERROR, "[{0}] Error sending Interested", peerHandler.getPeerContactInfo());
-            peerHandler.stop();
+            log(Level.ERROR, String.format("Error handling connection success: %s", peerHandler.getPeerContactInfo()),
+                    e);
+            torrent.removePeer(peerHandler.getPeer());
+            peerHandlers.remove(peerHandler);
         }
+        workDispatcher.addPeerHandler(peerHandler);
+        peerHandler.start();
     }
 
     /**

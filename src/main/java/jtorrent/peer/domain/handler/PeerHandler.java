@@ -206,20 +206,10 @@ public class PeerHandler {
                 handleMessage(message);
             } catch (IOException e) {
                 if (!isStopping()) {
-                    LOGGER.log(Level.ERROR, "[{0}] Error while communicating with peer", peer.getPeerContactInfo());
+                    LOGGER.log(Level.ERROR, String.format("[%s] Error while communicating with peer",
+                            peer.getPeerContactInfo()), e);
                     PeerHandler.this.stop();
                 }
-            }
-        }
-
-        @Override
-        protected void doOnStarted() {
-            try {
-                peerSocket.sendInterested();
-                peer.setLocalInterested(true);
-            } catch (IOException e) {
-                LOGGER.log(Level.ERROR, "[{0}] Error sending Interested", peer.getPeerContactInfo());
-                PeerHandler.this.stop();
             }
         }
 
