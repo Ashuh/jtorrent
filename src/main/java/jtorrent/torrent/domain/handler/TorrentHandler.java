@@ -131,7 +131,7 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
         try {
             BitSet verifiedPieces = torrent.getVerifiedPieces();
             if (!verifiedPieces.isEmpty()) {
-                peerHandler.notifyRemoteOfInitialAvailability(verifiedPieces, torrent.getNumPieces());
+                peerHandler.notifyRemoteOfInitialPieceAvailability(verifiedPieces, torrent.getNumPieces());
             }
             peerHandler.setLocalInterested();
         } catch (IOException e) {

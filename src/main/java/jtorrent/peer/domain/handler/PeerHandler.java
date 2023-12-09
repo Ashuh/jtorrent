@@ -108,7 +108,7 @@ public class PeerHandler {
         return future;
     }
 
-    public void notifyRemoteOfInitialAvailability(BitSet pieces, int numTotalPieces) throws IOException {
+    public void notifyRemoteOfInitialPieceAvailability(BitSet pieces, int numTotalPieces) throws IOException {
         peerSocket.sendBitfield(pieces, numTotalPieces);
     }
 
