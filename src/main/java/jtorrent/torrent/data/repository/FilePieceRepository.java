@@ -102,7 +102,6 @@ public class FilePieceRepository implements PieceRepository {
         return buffer;
     }
 
-
     private void write(Path path, long start, byte[] data) throws IOException {
         LOGGER.log(Level.DEBUG, "Writing {0} bytes to {1} starting at {2}", data.length, path, start);
         try (RandomAccessFile file = new RandomAccessFile(path.toFile(), READ_WRITE_MODE)) {
