@@ -6,6 +6,7 @@ import java.lang.System.Logger.Level;
 import java.net.InetAddress;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
+import java.util.BitSet;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
@@ -99,6 +100,10 @@ public class PeerHandler {
         requestKeyToFuture.put(requestKey, future);
         peerSocket.sendRequest(piece, offset, length);
         return future;
+    }
+
+    public void notifyRemoteOfInitialAvailability(BitSet pieces, int numTotalPieces) throws IOException {
+        peerSocket.sendBitfield(pieces, numTotalPieces);
     }
 
 

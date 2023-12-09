@@ -9,6 +9,7 @@ import static jtorrent.common.domain.util.ValidationUtil.requireNonNull;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -128,6 +129,10 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
         torrent.addPeer(peerHandler.getPeer());
         peerHandlers.add(peerHandler);
         try {
+            BitSet verifiedPieces = torrent.getVerifiedPieces();
+            if (!verifiedPieces.isEmpty()) {
+                peerHandler.notifyRemoteOfInitialAvailability(verifiedPieces, torrent.getNumPieces());
+            }
             peerHandler.setLocalInterested();
         } catch (IOException e) {
             log(Level.ERROR, String.format("Error handling connection success: %s", peerHandler.getPeerContactInfo()),

@@ -200,6 +200,10 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
         return pieceTracker.getPartiallyMissingPiecesWithUnrequestedBlocks();
     }
 
+    public BitSet getVerifiedPieces() {
+        return pieceTracker.getVerifiedPieces();
+    }
+
     public void setPieceVerified(int pieceIndex) {
         pieceTracker.setPieceVerified(pieceIndex);
         verifiedBytes.getAndAdd(getPieceSize(pieceIndex));
