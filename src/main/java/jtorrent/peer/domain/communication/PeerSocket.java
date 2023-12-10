@@ -10,7 +10,6 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
-import java.util.BitSet;
 import java.util.Optional;
 
 import jtorrent.common.domain.util.Sha1Hash;
@@ -18,19 +17,8 @@ import jtorrent.peer.domain.model.PeerContactInfo;
 import jtorrent.peer.domain.model.exception.InfoHashMismatchException;
 import jtorrent.peer.domain.model.exception.UnexpectedEndOfStreamException;
 import jtorrent.peer.domain.model.message.Handshake;
-import jtorrent.peer.domain.model.message.KeepAlive;
 import jtorrent.peer.domain.model.message.PeerMessage;
 import jtorrent.peer.domain.model.message.PeerMessageUnpacker;
-import jtorrent.peer.domain.model.message.typed.Bitfield;
-import jtorrent.peer.domain.model.message.typed.Cancel;
-import jtorrent.peer.domain.model.message.typed.Choke;
-import jtorrent.peer.domain.model.message.typed.Have;
-import jtorrent.peer.domain.model.message.typed.Interested;
-import jtorrent.peer.domain.model.message.typed.NotInterested;
-import jtorrent.peer.domain.model.message.typed.Piece;
-import jtorrent.peer.domain.model.message.typed.Port;
-import jtorrent.peer.domain.model.message.typed.Request;
-import jtorrent.peer.domain.model.message.typed.Unchoke;
 
 public class PeerSocket {
 
@@ -117,57 +105,7 @@ public class PeerSocket {
         return Optional.ofNullable(receivedHandshakeInfoHash);
     }
 
-    public void sendKeepAlive() throws IOException {
-        sendMessage(new KeepAlive());
-    }
-
-    public void sendChoke() throws IOException {
-        sendMessage(new Choke());
-    }
-
-    public void sendUnchoke() throws IOException {
-        sendMessage(new Unchoke());
-    }
-
-    public void sendInterested() throws IOException {
-        sendMessage(new Interested());
-    }
-
-    public void sendNotInterested() throws IOException {
-        sendMessage(new NotInterested());
-    }
-
-    public void sendHave(int pieceIndex) throws IOException {
-        Have have = new Have(pieceIndex);
-        sendMessage(have);
-    }
-
-    public void sendBitfield(BitSet bitSet, int numTotalPieces) throws IOException {
-        Bitfield bitfield = Bitfield.fromBitSetAndNumTotalPieces(bitSet, numTotalPieces);
-        sendMessage(bitfield);
-    }
-
-    public void sendRequest(int index, int begin, int length) throws IOException {
-        Request request = new Request(index, begin, length);
-        sendMessage(request);
-    }
-
-    public void sendPiece(int index, int begin, byte[] block) throws IOException {
-        Piece piece = new Piece(index, begin, block);
-        sendMessage(piece);
-    }
-
-    public void sendCancel(int index, int begin, int length) throws IOException {
-        Cancel cancel = new Cancel(index, begin, length);
-        sendMessage(cancel);
-    }
-
-    public void sendPort(int port) throws IOException {
-        Port portMessage = new Port(port);
-        sendMessage(portMessage);
-    }
-
-    private void sendMessage(PeerMessage message) throws IOException {
+    public void sendMessage(PeerMessage message) throws IOException {
         socket.getOutputStream().write(message.pack());
         LOGGER.log(Level.INFO, "[{0}] Sent: {1}", getPeerContactInfo(), message);
     }

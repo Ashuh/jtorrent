@@ -139,9 +139,9 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
             synchronized (verificationLock) {
                 BitSet verifiedPieces = torrent.getVerifiedPieces();
                 if (!verifiedPieces.isEmpty()) {
-                    peerHandler.notifyRemoteOfInitialPieceAvailability(verifiedPieces, torrent.getNumPieces());
+                    peerHandler.sendBitfield(verifiedPieces, torrent.getNumPieces());
                 }
-                peerHandler.setLocalInterested();
+                peerHandler.sendInterested();
                 peerHandlers.add(peerHandler);
             }
             torrent.addPeer(peerHandler.getPeer());
@@ -290,10 +290,24 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
         private void processPeersToUnchoke(Set<PeerHandler> peersToUnchoke) {
             unchokedPeerHandlers.stream()
                     .filter(Predicate.not(peersToUnchoke::contains))
-                    .forEach(PeerHandler::choke);
+                    .forEach(peerHandler -> {
+                        try {
+                            peerHandler.sendChoke();
+                        } catch (IOException e) {
+                            log(Level.ERROR, String.format("[%s] Failed to send choke",
+                                    peerHandler.getPeerContactInfo()), e);
+                        }
+                    });
             peersToUnchoke.stream()
                     .filter(Predicate.not(unchokedPeerHandlers::contains))
-                    .forEach(PeerHandler::unchoke);
+                    .forEach(peerHandler -> {
+                        try {
+                            peerHandler.sendUnchoke();
+                        } catch (IOException e) {
+                            log(Level.ERROR, String.format("[%s] Failed to send unchoke",
+                                    peerHandler.getPeerContactInfo()), e);
+                        }
+                    });
         }
 
         private Optional<PeerHandler> selectPeerToOptimisticUnchoke() {
@@ -309,12 +323,21 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
 
             // choke the current optimistic unchoked peer
             if (optimisticUnchokedPeerHandler != null) {
-                optimisticUnchokedPeerHandler.choke();
+                try {
+                    optimisticUnchokedPeerHandler.sendChoke();
+                } catch (IOException e) {
+                    log(Level.ERROR, String.format("[%s] Failed to send choke", optimisticUnchokedPeerHandler
+                            .getPeerContactInfo()), e);
+                }
             }
 
             // unchoke the new optimistic unchoked peer
-            optimisticUnchokedPeerHandler = peerHandler;
-            optimisticUnchokedPeerHandler.unchoke();
+            try {
+                peerHandler.sendUnchoke();
+                optimisticUnchokedPeerHandler = peerHandler;
+            } catch (IOException e) {
+                log(Level.ERROR, String.format("[%s] Failed to send unchoke", peerHandler.getPeerContactInfo()), e);
+            }
         }
     }
 
@@ -417,7 +440,7 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
             int blockIndex = block.getBlockIndex();
             int offset = block.getBlockIndex() * torrent.getBlockSize();
             int length = torrent.getBlockSize(block.getPieceIndex(), block.getBlockIndex());
-            peerHandler.requestBlock(block.getPieceIndex(), offset, length)
+            peerHandler.sendRequest(block.getPieceIndex(), offset, length)
                     .handle((data, throwable) -> {
                         if (throwable == null) {
                             handleBlockReceived(pieceIndex, offset, data);
@@ -505,7 +528,7 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
                             torrent.setPieceVerified(pieceIndex);
                             peerHandlers.forEach(handler -> {
                                 try {
-                                    handler.notifyRemoteOfPieceAvailability(pieceIndex);
+                                    handler.sendHave(pieceIndex);
                                 } catch (IOException e) {
                                     log(Level.ERROR, String.format("[%s] Failed to notify remote of piece availability",
                                             handler.getPeerContactInfo()), e);

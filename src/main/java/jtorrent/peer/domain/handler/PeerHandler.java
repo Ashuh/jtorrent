@@ -31,11 +31,15 @@ import jtorrent.peer.domain.model.message.KeepAlive;
 import jtorrent.peer.domain.model.message.PeerMessage;
 import jtorrent.peer.domain.model.message.typed.Bitfield;
 import jtorrent.peer.domain.model.message.typed.Cancel;
+import jtorrent.peer.domain.model.message.typed.Choke;
 import jtorrent.peer.domain.model.message.typed.Have;
+import jtorrent.peer.domain.model.message.typed.Interested;
+import jtorrent.peer.domain.model.message.typed.NotInterested;
 import jtorrent.peer.domain.model.message.typed.Piece;
 import jtorrent.peer.domain.model.message.typed.Port;
 import jtorrent.peer.domain.model.message.typed.Request;
 import jtorrent.peer.domain.model.message.typed.TypedPeerMessage;
+import jtorrent.peer.domain.model.message.typed.Unchoke;
 
 public class PeerHandler {
 
@@ -101,66 +105,72 @@ public class PeerHandler {
         return peer;
     }
 
-    public CompletableFuture<byte[]> requestBlock(int piece, int offset, int length) throws IOException {
+    private void sendKeepAlive() throws IOException {
+        sendMessage(new KeepAlive());
+    }
+
+    public void sendChoke() throws IOException {
+        sendMessage(new Choke());
+        peer.setRemoteChoked(true);
+    }
+
+    public void sendUnchoke() throws IOException {
+        sendMessage(new Unchoke());
+    }
+
+    public void sendInterested() throws IOException {
+        sendMessage(new Interested());
+        peer.setLocalInterested(true);
+    }
+
+    public void sendNotInterested() throws IOException {
+        sendMessage(new NotInterested());
+        peer.setLocalInterested(false);
+    }
+
+    public void sendHave(int pieceIndex) throws IOException {
+        Have have = new Have(pieceIndex);
+        sendMessage(have);
+    }
+
+    public void sendBitfield(BitSet bitSet, int numTotalPieces) throws IOException {
+        Bitfield bitfield = Bitfield.fromBitSetAndNumTotalPieces(bitSet, numTotalPieces);
+        sendMessage(bitfield);
+    }
+
+    public CompletableFuture<byte[]> sendRequest(int index, int begin, int length) throws IOException {
         CompletableFuture<byte[]> future = new CompletableFuture<byte[]>().orTimeout(5, TimeUnit.SECONDS);
-        RequestKey requestKey = new RequestKey(piece, offset, length);
+        RequestKey requestKey = new RequestKey(index, begin, length);
         future.whenComplete((result, throwable) -> outRequestKeyToFuture.remove(requestKey));
         outRequestKeyToFuture.put(requestKey, future);
-        peerSocket.sendRequest(piece, offset, length);
+        Request request = new Request(index, begin, length);
+        sendMessage(request);
         return future;
     }
 
-    public void cancelRequest(int piece, int offset, int length) throws IOException {
-        RequestKey requestKey = new RequestKey(piece, offset, length);
-        peerSocket.sendCancel(piece, offset, length);
+    public void sendPiece(int index, int begin, byte[] block) throws IOException {
+        Piece piece = new Piece(index, begin, block);
+        sendMessage(piece);
+    }
+
+    public void sendCancel(int index, int begin, int length) throws IOException {
+        RequestKey requestKey = new RequestKey(index, begin, length);
+        sendCancel(index, begin, length);
         Future<?> future = inRequestKeyToFuture.remove(requestKey);
         if (future != null) {
             future.cancel(true);
         }
+        Cancel cancel = new Cancel(index, begin, length);
+        sendMessage(cancel);
     }
 
-    public void notifyRemoteOfInitialPieceAvailability(BitSet pieces, int numTotalPieces) throws IOException {
-        peerSocket.sendBitfield(pieces, numTotalPieces);
+    public void sendPort(int port) throws IOException {
+        Port portMessage = new Port(port);
+        sendMessage(portMessage);
     }
 
-    public void notifyRemoteOfPieceAvailability(int piece) throws IOException {
-        peerSocket.sendHave(piece);
-    }
-
-    public void setLocalInterested() throws IOException {
-        peerSocket.sendInterested();
-        peer.setLocalInterested(true);
-    }
-
-    public void setLocalNotInterested() throws IOException {
-        peerSocket.sendNotInterested();
-        peer.setLocalInterested(false);
-    }
-
-    public void choke() {
-        LOGGER.log(Level.INFO, "[{0}] Choking remote", peer.getPeerContactInfo());
-
-        try {
-            peerSocket.sendChoke();
-            peer.setRemoteChoked(true);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public void unchoke() {
-        LOGGER.log(Level.INFO, "[{0}] Unchoking remote", peer.getPeerContactInfo());
-
-        try {
-            peerSocket.sendUnchoke();
-            peer.setRemoteChoked(false);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public void sendPiece(int index, int begin, byte[] block) throws IOException {
-        peerSocket.sendPiece(index, begin, block);
+    private void sendMessage(PeerMessage message) throws IOException {
+        peerSocket.sendMessage(message);
     }
 
     public double getDownloadRate() {
@@ -411,7 +421,7 @@ public class PeerHandler {
         @Override
         public void run() {
             try {
-                peerSocket.sendKeepAlive();
+                sendKeepAlive();
             } catch (IOException e) {
                 LOGGER.log(Level.ERROR, "[{0}] Error sending KeepAlive", peer.getPeerContactInfo());
                 PeerHandler.this.stop();
