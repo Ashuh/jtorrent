@@ -110,6 +110,15 @@ public class PeerHandler {
         return future;
     }
 
+    public void cancelRequest(int piece, int offset, int length) throws IOException {
+        RequestKey requestKey = new RequestKey(piece, offset, length);
+        peerSocket.sendCancel(piece, offset, length);
+        Future<?> future = inRequestKeyToFuture.remove(requestKey);
+        if (future != null) {
+            future.cancel(true);
+        }
+    }
+
     public void notifyRemoteOfInitialPieceAvailability(BitSet pieces, int numTotalPieces) throws IOException {
         peerSocket.sendBitfield(pieces, numTotalPieces);
     }
