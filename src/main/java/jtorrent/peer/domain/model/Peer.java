@@ -8,16 +8,17 @@ import java.net.InetSocketAddress;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 import io.reactivex.rxjava3.core.Observable;
-import jtorrent.common.domain.util.DurationWindow;
+import jtorrent.common.domain.util.RateTracker;
 
 public class Peer {
 
     private static final Logger LOGGER = System.getLogger(Peer.class.getName());
 
     private final PeerContactInfo peerContactInfo;
-    private final DurationWindow durationWindow = new DurationWindow(Duration.ofSeconds(20));
+    private final RateTracker rateTracker = new RateTracker(Duration.ofSeconds(20));
     private boolean isLocalChoked = true;
     private boolean isRemoteChoked = true;
     private boolean isLocalInterested = false;
@@ -26,10 +27,6 @@ public class Peer {
 
     public Peer(PeerContactInfo peerContactInfo) {
         this.peerContactInfo = requireNonNull(peerContactInfo);
-    }
-
-    public void disconnect() {
-        durationWindow.close();
     }
 
     public PeerContactInfo getPeerContactInfo() {
@@ -81,15 +78,15 @@ public class Peer {
     }
 
     public double getDownloadRate() {
-        return durationWindow.getRate();
+        return rateTracker.getRate();
     }
 
     public void addDownloadedBytes(int bytes) {
-        durationWindow.add(bytes);
+        rateTracker.addBytes(bytes);
     }
 
     public Observable<Double> getDownloadRateObservable() {
-        return durationWindow.getRateObservable();
+        return rateTracker.getRateObservable(1, TimeUnit.SECONDS); // TODO: fixed rate?
     }
 
     public double getUploadRate() {

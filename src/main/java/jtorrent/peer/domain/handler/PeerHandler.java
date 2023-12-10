@@ -288,11 +288,6 @@ public class PeerHandler {
             }
         }
 
-        @Override
-        protected void doOnStop() {
-            peer.disconnect();
-        }
-
         private void handleMessage(PeerMessage message) {
             LOGGER.log(Level.DEBUG, "[{0}] Handling {1}", peer.getPeerContactInfo(), message);
 
