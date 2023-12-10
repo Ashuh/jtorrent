@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.BitSet;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -28,6 +27,7 @@ import java.util.stream.Collectors;
 
 import jtorrent.common.domain.model.Block;
 import jtorrent.common.domain.util.BackgroundTask;
+import jtorrent.common.domain.util.PeriodicTask;
 import jtorrent.common.domain.util.Sha1Hash;
 import jtorrent.peer.domain.communication.PeerSocket;
 import jtorrent.peer.domain.handler.PeerHandler;
@@ -50,6 +50,7 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
     private final WorkDispatcher workDispatcher = new WorkDispatcher();
     private final PieceRepository repository;
     private final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1);
+    private final UnchokeTask unchokeTask = new UnchokeTask(executorService);
     /**
      * Set of peer contacts that are currently being connected to.
      */
@@ -78,14 +79,14 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
         torrent.setIsActive(true);
         workDispatcher.start();
         trackerHandlers.forEach(TrackerHandler::start);
-        executorService.scheduleAtFixedRate(new Unchoke(peerHandlers), 0, 10, SECONDS);
-        executorService.scheduleAtFixedRate(new OptimisticUnchoke(peerHandlers), 0, 30, SECONDS);
+        unchokeTask.scheduleAtFixedRate(0, 10, SECONDS);
     }
 
     public void stop() {
         torrent.setIsActive(false);
         workDispatcher.stop();
         trackerHandlers.forEach(TrackerHandler::stop);
+        unchokeTask.stop();
         executorService.shutdownNow();
         peerHandlers.forEach(PeerHandler::stop);
         torrent.clearPeers();
@@ -246,64 +247,72 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
         void onDhtNodeDiscovered(InetSocketAddress address);
     }
 
-    private static class Unchoke implements Runnable {
+    private class UnchokeTask extends PeriodicTask {
 
-        private static final int MAX_UNCHOKED_PEERS = 4;
-
-        private final Collection<PeerHandler> peerHandlers;
+        private static final int MAX_UNCHOKED_PEERS = 3;
 
         private Set<PeerHandler> unchokedPeerHandlers = new HashSet<>();
+        private PeerHandler optimisticUnchokedPeerHandler;
+        private int iteration;
 
-        private Unchoke(Collection<PeerHandler> peerHandlers) {
-            this.peerHandlers = peerHandlers;
+        public UnchokeTask(ScheduledExecutorService scheduledExecutorService) {
+            super(scheduledExecutorService);
         }
 
         @Override
         public void run() {
-            Set<PeerHandler> toUnchoke = peerHandlers.stream()
+            if (isThirdIteration()) {
+                selectPeerToOptimisticUnchoke().ifPresent(this::processPeerToOptimisticUnchoke);
+            }
+            Set<PeerHandler> peersToUnchoke = selectPeersToUnchoke();
+            processPeersToUnchoke(peersToUnchoke);
+            unchokedPeerHandlers = peersToUnchoke;
+            iteration = (iteration + 1) % 3;
+        }
+
+        private boolean isThirdIteration() {
+            return iteration == 0;
+        }
+
+        private Set<PeerHandler> selectPeersToUnchoke() {
+            return peerHandlers.stream()
+                    .filter(this::isNotOptimisticUnchoke)
                     .filter(PeerHandler::isRemoteInterested)
                     .sorted(Comparator.comparingDouble(PeerHandler::getDownloadRate).reversed())
                     .limit(MAX_UNCHOKED_PEERS)
                     .collect(Collectors.toSet());
+        }
 
+        private boolean isNotOptimisticUnchoke(PeerHandler peerHandler) {
+            return peerHandler != optimisticUnchokedPeerHandler;
+        }
+
+        private void processPeersToUnchoke(Set<PeerHandler> peersToUnchoke) {
             unchokedPeerHandlers.stream()
-                    .filter(Predicate.not(toUnchoke::contains))
+                    .filter(Predicate.not(peersToUnchoke::contains))
                     .forEach(PeerHandler::choke);
-
-            toUnchoke.stream()
+            peersToUnchoke.stream()
                     .filter(Predicate.not(unchokedPeerHandlers::contains))
                     .forEach(PeerHandler::unchoke);
-
-            unchokedPeerHandlers = toUnchoke;
-        }
-    }
-
-    private static class OptimisticUnchoke implements Runnable {
-
-        private final Collection<PeerHandler> peerHandlers;
-        private PeerHandler optimisticUnchokedPeerHandler;
-
-        private OptimisticUnchoke(Collection<PeerHandler> peerHandlers) {
-            this.peerHandlers = peerHandlers;
         }
 
-        @Override
-        public void run() {
-            List<PeerHandler> peerHandlersCopy = new ArrayList<>(this.peerHandlers);
+        private Optional<PeerHandler> selectPeerToOptimisticUnchoke() {
+            List<PeerHandler> peerHandlersCopy = new ArrayList<>(peerHandlers);
             Collections.shuffle(peerHandlersCopy);
-            peerHandlersCopy.stream()
+            return peerHandlersCopy.stream()
                     .filter(PeerHandler::isRemoteChoked)
-                    .findFirst()
-                    .ifPresent(this::setOptimisticUnchokedPeerHandler);
+                    .findFirst();
         }
 
-        private void setOptimisticUnchokedPeerHandler(PeerHandler peerHandler) {
+        private void processPeerToOptimisticUnchoke(PeerHandler peerHandler) {
             assert peerHandler != optimisticUnchokedPeerHandler;
 
+            // choke the current optimistic unchoked peer
             if (optimisticUnchokedPeerHandler != null) {
                 optimisticUnchokedPeerHandler.choke();
             }
 
+            // unchoke the new optimistic unchoked peer
             optimisticUnchokedPeerHandler = peerHandler;
             optimisticUnchokedPeerHandler.unchoke();
         }
