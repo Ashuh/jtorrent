@@ -49,10 +49,12 @@ public class UiTorrent {
 
         Observable<Integer> downloadedObservable = torrent.getDownloadedObservable();
         Observable<Double> downloadRateObservable = torrent.getDownloadRateObservable();
+        Observable<Double> uploadRateObservable = torrent.getUploadRateObservable();
         Observable<Boolean> isActiveObservable = torrent.getIsActiveObservable();
         Observable<Long> verifiedBytesObservable = torrent.getVerifiedBytesObservable();
 
         downloadRateObservable.subscribe(new UpdatePropertyConsumer<>(downSpeed));
+        uploadRateObservable.subscribe(new UpdatePropertyConsumer<>(upSpeed));
         Observable.combineLatest(verifiedBytesObservable, downloadRateObservable,
                         new CalculateEtaCombiner(torrentSize))
                 .subscribe(new UpdatePropertyConsumer<>(eta));

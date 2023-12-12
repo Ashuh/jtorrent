@@ -16,9 +16,11 @@ import jtorrent.common.domain.util.RateTracker;
 public class Peer {
 
     private static final Logger LOGGER = System.getLogger(Peer.class.getName());
+    private static final Duration WINDOW_DURATION = Duration.ofSeconds(20);
 
     private final PeerContactInfo peerContactInfo;
-    private final RateTracker rateTracker = new RateTracker(Duration.ofSeconds(20));
+    private final RateTracker downloadRateTracker = new RateTracker(WINDOW_DURATION);
+    private final RateTracker uploadRateTracker = new RateTracker(WINDOW_DURATION);
     private boolean isLocalChoked = true;
     private boolean isRemoteChoked = true;
     private boolean isLocalInterested = false;
@@ -77,24 +79,29 @@ public class Peer {
         this.isRemoteInterested = isRemoteInterested;
     }
 
-    public double getDownloadRate() {
-        return rateTracker.getRate();
+    public void addDownloadedBytes(int bytes) {
+        downloadRateTracker.addBytes(bytes);
     }
 
-    public void addDownloadedBytes(int bytes) {
-        rateTracker.addBytes(bytes);
+    public double getDownloadRate() {
+        return downloadRateTracker.getRate();
     }
 
     public Observable<Double> getDownloadRateObservable() {
-        return rateTracker.getRateObservable(1, TimeUnit.SECONDS); // TODO: fixed rate?
+        return downloadRateTracker.getRateObservable(1, TimeUnit.SECONDS); // TODO: fixed rate?
+    }
+
+    public void addUploadedBytes(int bytes) {
+        uploadRateTracker.addBytes(bytes);
+        System.out.println("Added " + bytes + " bytes to upload rate tracker");
     }
 
     public double getUploadRate() {
-        return 0; // TODO: implement
+        return uploadRateTracker.getRate();
     }
 
     public Observable<Double> getUploadRateObservable() {
-        return Observable.never(); // TODO: implement
+        return uploadRateTracker.getRateObservable(1, TimeUnit.SECONDS); // TODO: fixed rate?
     }
 
     public boolean isLastSeenWithin(Duration duration) {

@@ -171,6 +171,7 @@ public class PeerHandler {
 
     private void sendMessage(PeerMessage message) throws IOException {
         peerSocket.sendMessage(message);
+        peer.addUploadedBytes(message.getMessageSize());
     }
 
     public double getDownloadRate() {

@@ -48,6 +48,7 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
     private final BehaviorSubject<Integer> uploadedSubject = BehaviorSubject.createDefault(0);
     private final MutableRxObservableSet<Peer> peers = new MutableRxObservableSet<>(new HashSet<>());
     private final CombinedDoubleSumObservable downloadRateObservable = new CombinedDoubleSumObservable();
+    private final CombinedDoubleSumObservable uploadRateObservable = new CombinedDoubleSumObservable();
     private final AtomicLong verifiedBytes = new AtomicLong(0);
     private final BehaviorSubject<Long> verifiedBytesSubject = BehaviorSubject.createDefault(0L);
     private final BehaviorSubject<Boolean> isActiveSubject = BehaviorSubject.createDefault(false);
@@ -238,12 +239,16 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
         return downloadedSubject;
     }
 
-    public Observable<Long> getVerifiedBytesObservable() {
-        return verifiedBytesSubject;
+    public Observable<Double> getUploadRateObservable() {
+        return uploadRateObservable;
     }
 
     public Observable<Integer> getUploadedObservable() {
         return uploadedSubject;
+    }
+
+    public Observable<Long> getVerifiedBytesObservable() {
+        return verifiedBytesSubject;
     }
 
     public RxObservableSet<Peer> getPeersObservable() {
@@ -253,16 +258,19 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
     public void addPeer(Peer peer) {
         peers.add(peer);
         downloadRateObservable.addSource(peer.getDownloadRateObservable());
+        uploadRateObservable.addSource(peer.getUploadRateObservable());
     }
 
     public void removePeer(Peer peer) {
         peers.remove(peer);
         downloadRateObservable.removeSource(peer.getDownloadRateObservable());
+        uploadRateObservable.removeSource(peer.getUploadRateObservable());
     }
 
     public void clearPeers() {
         peers.clear();
         downloadRateObservable.clearSources();
+        uploadRateObservable.clearSources();
     }
 
     public boolean hasPeer(PeerContactInfo peerContactInfo) {
