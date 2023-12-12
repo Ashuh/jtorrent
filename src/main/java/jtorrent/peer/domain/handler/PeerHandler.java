@@ -177,6 +177,10 @@ public class PeerHandler {
         return peer.getDownloadRate();
     }
 
+    public double getUploadRate() {
+        return peer.getUploadRate();
+    }
+
     public Set<Integer> getAvailablePieces() {
         return availablePieces;
     }

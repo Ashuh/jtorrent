@@ -281,9 +281,28 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
             return peerHandlers.stream()
                     .filter(this::isNotOptimisticUnchoke)
                     .filter(PeerHandler::isRemoteInterested)
-                    .sorted(Comparator.comparingDouble(PeerHandler::getDownloadRate).reversed())
+                    .sorted(this::comparePeerHandlersByTransferRate)
                     .limit(MAX_UNCHOKED_PEERS)
                     .collect(Collectors.toSet());
+        }
+
+        /**
+         * Compares two PeerHandlers based on their upload or download rates. If all pieces are verified, the upload
+         * rate is used, otherwise the download rate is used. The PeerHandler with the higher rate is considered to be
+         * "less than" the PeerHandler with the lower rate.
+         *
+         * @param peerHandler1 The first PeerHandler to compare
+         * @param peerHandler2 The second PeerHandler to compare
+         * @return A negative integer if peerHandler1 has a higher rate than peerHandler2,
+         * a positive integer if peerHandler1 has a lower rate than peerHandler2,
+         * or zero if both PeerHandlers have the same rate.
+         */
+        private int comparePeerHandlersByTransferRate(PeerHandler peerHandler1, PeerHandler peerHandler2) {
+            if (torrent.isAllPiecesVerified()) {
+                return Double.compare(peerHandler2.getUploadRate(), peerHandler1.getUploadRate());
+            } else {
+                return Double.compare(peerHandler2.getDownloadRate(), peerHandler1.getDownloadRate());
+            }
         }
 
         private boolean isNotOptimisticUnchoke(PeerHandler peerHandler) {
