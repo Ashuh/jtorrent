@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -59,7 +60,6 @@ public class PeerHandler {
             new ConcurrentHashMap<>(MAX_REQUESTS);
     private final Map<RequestKey, Future<?>> inRequestKeyToFuture = new ConcurrentHashMap<>();
 
-
     public PeerHandler(Peer peer, PeerSocket peerSocket, EventHandler eventHandler) {
         this.peerSocket = peerSocket;
         this.peer = peer;
@@ -93,10 +93,9 @@ public class PeerHandler {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 peerSocket.connect(peer.getPeerContactInfo().toInetSocketAddress(), infoHash, isDhtSupported);
-                return true;
+                return peerSocket.isDhtSupportedByRemote();
             } catch (IOException e) {
-                LOGGER.log(Level.ERROR, String.format("[%s] Error while connecting", peer.getPeerContactInfo()), e);
-                return false;
+                throw new CompletionException(e);
             }
         });
     }

@@ -25,6 +25,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import jtorrent.common.domain.Constants;
 import jtorrent.common.domain.model.Block;
 import jtorrent.common.domain.util.BackgroundTask;
 import jtorrent.common.domain.util.PeriodicTask;
@@ -102,15 +103,7 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
 
         Peer peer = new Peer(peerSocket.getPeerContactInfo());
         PeerHandler peerHandler = new PeerHandler(peer, peerSocket, this);
-        peerHandler.connect(torrent.getInfoHash(), true)
-                .thenAccept(isConnected -> {
-                    if (Boolean.TRUE.equals(isConnected)) {
-                        handleConnectionSuccess(peerHandler);
-                    } else {
-                        LOGGER.log(Level.ERROR, "[{0}] Connection failed", peerContactInfo);
-                    }
-                    pendingContacts.remove(peerContactInfo);
-                });
+        connectPeerHandler(peerHandler);
     }
 
     public void handleDiscoveredPeerContact(PeerContactInfo peerContactInfo) {
@@ -122,24 +115,32 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
         PeerSocket peerSocket = new PeerSocket();
         Peer peer = new Peer(peerContactInfo);
         PeerHandler peerHandler = new PeerHandler(peer, peerSocket, this);
+        connectPeerHandler(peerHandler);
+    }
+
+    private void connectPeerHandler(PeerHandler peerHandler) {
         peerHandler.connect(torrent.getInfoHash(), true)
-                .thenAccept(isConnected -> {
-                    if (Boolean.TRUE.equals(isConnected)) {
-                        handleConnectionSuccess(peerHandler);
+                .whenComplete((isDhtSupportedByRemote, throwable) -> {
+                    if (throwable != null) {
+                        log(Level.ERROR, String.format("[%s] Failed to connect", peerHandler.getPeerContactInfo()),
+                                throwable);
                     } else {
-                        LOGGER.log(Level.ERROR, "[{0}] Connection failed", peerContactInfo);
+                        handleConnectionSuccess(peerHandler, isDhtSupportedByRemote);
                     }
-                    pendingContacts.remove(peerContactInfo);
+                    pendingContacts.remove(peerHandler.getPeerContactInfo());
                 });
     }
 
-    private void handleConnectionSuccess(PeerHandler peerHandler) {
+    private void handleConnectionSuccess(PeerHandler peerHandler, boolean isDhtSupportedByRemote) {
         log(Level.INFO, String.format("[%s] Connected", peerHandler.getPeerContactInfo()));
         try {
             synchronized (verificationLock) {
                 BitSet verifiedPieces = torrent.getVerifiedPieces();
                 if (!verifiedPieces.isEmpty()) {
                     peerHandler.sendBitfield(verifiedPieces, torrent.getNumPieces());
+                }
+                if (isDhtSupportedByRemote) {
+                    peerHandler.sendPort(Constants.PORT);
                 }
                 peerHandler.sendInterested();
                 peerHandlers.add(peerHandler);

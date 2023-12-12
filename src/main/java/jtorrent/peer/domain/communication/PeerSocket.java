@@ -26,7 +26,7 @@ public class PeerSocket {
 
     private final Socket socket;
     private boolean isConnected;
-    private Sha1Hash receivedHandshakeInfoHash;
+    private Handshake receivedHandshake;
 
     public PeerSocket() {
         this(new Socket());
@@ -98,11 +98,19 @@ public class PeerSocket {
     }
 
     private boolean isHandshakeReceived() {
-        return receivedHandshakeInfoHash != null;
+        return receivedHandshake != null;
     }
 
     private Optional<Sha1Hash> getReceivedHandshakeInfoHash() {
-        return Optional.ofNullable(receivedHandshakeInfoHash);
+        return Optional.ofNullable(receivedHandshake).map(Handshake::getInfoHash);
+    }
+
+    public boolean isDhtSupportedByRemote() {
+        if (!isHandshakeReceived()) {
+            throw new IllegalStateException("Handshake has not been received");
+        }
+
+        return receivedHandshake.isDhtSupported();
     }
 
     public void sendMessage(PeerMessage message) throws IOException {
@@ -152,7 +160,7 @@ public class PeerSocket {
             throw new UnexpectedEndOfStreamException();
         }
         Handshake handshake = Handshake.unpack(buffer);
-        receivedHandshakeInfoHash = handshake.getInfoHash();
+        receivedHandshake = handshake;
         LOGGER.log(Level.INFO, "[{0}] Received: {1}", getPeerContactInfo(), handshake);
 
         return handshake;
