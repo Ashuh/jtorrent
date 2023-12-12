@@ -142,7 +142,9 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
                 if (isDhtSupportedByRemote) {
                     peerHandler.sendPort(Constants.PORT);
                 }
-                peerHandler.sendInterested();
+                if (!torrent.isAllPiecesVerified()) {
+                    peerHandler.sendInterested();
+                }
                 peerHandlers.add(peerHandler);
             }
             torrent.addPeer(peerHandler.getPeer());
