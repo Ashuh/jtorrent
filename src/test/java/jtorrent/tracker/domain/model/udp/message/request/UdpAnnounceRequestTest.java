@@ -41,7 +41,7 @@ class UdpAnnounceRequestTest {
                 .putLong(1)
                 .putLong(2)
                 .putLong(3)
-                .putInt(Event.STARTED.getValue())
+                .putInt(Event.STARTED.getUdpValue())
                 .putInt(1234)
                 .putInt(100)
                 .putInt(10)
