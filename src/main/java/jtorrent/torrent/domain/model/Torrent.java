@@ -391,10 +391,11 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
         }
 
         public synchronized void setPieceVerified(int pieceIndex) {
-            if (!isPieceComplete(pieceIndex)) {
-                throw new IllegalStateException("Piece must be complete to be verified");
-            }
-
+            completelyMissingPieces.clear(pieceIndex);
+            completelyMissingPiecesWithUnrequestedBlocks.clear(pieceIndex);
+            partiallyMissingPieces.clear(pieceIndex);
+            partiallyMissingPiecesWithUnrequestedBlocks.clear(pieceIndex);
+            completePieces.set(pieceIndex);
             verifiedPieces.set(pieceIndex);
         }
 

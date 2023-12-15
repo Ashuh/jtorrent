@@ -18,12 +18,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import jtorrent.common.domain.Constants;
 import jtorrent.common.domain.model.Block;
@@ -77,10 +79,13 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
     }
 
     public void start() {
-        torrent.setIsActive(true);
-        workDispatcher.start();
-        trackerHandlers.forEach(TrackerHandler::start);
-        unchokeTask.scheduleAtFixedRate(0, 10, SECONDS);
+        CompletableFuture.runAsync(this::verifyFiles)
+                .thenAccept(ignored -> {
+                    torrent.setIsActive(true);
+                    workDispatcher.start();
+                    trackerHandlers.forEach(TrackerHandler::start);
+                    unchokeTask.scheduleAtFixedRate(0, 10, SECONDS);
+                });
     }
 
     public void stop() {
@@ -91,6 +96,19 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
         executorService.shutdownNow();
         peerHandlers.forEach(PeerHandler::stop);
         torrent.clearPeers();
+    }
+
+    private void verifyFiles() {
+        synchronized (pieceStateLock) {
+            IntStream.range(0, torrent.getNumPieces())
+                    .forEach(piece -> {
+                        if (isPieceChecksumValid(piece)) {
+                            torrent.setPieceVerified(piece);
+                        } else {
+                            torrent.setPieceMissing(piece);
+                        }
+                    });
+        }
     }
 
     public void handleInboundPeerConnection(PeerSocket peerSocket) {
@@ -169,6 +187,12 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
 
     public void addListener(Listener listener) {
         listeners.add(listener);
+    }
+
+    private boolean isPieceChecksumValid(int pieceIndex) {
+        byte[] pieceBytes = repository.getPiece(torrent, pieceIndex);
+        Sha1Hash expected = torrent.getPieceHash(pieceIndex);
+        return Sha1Hash.of(pieceBytes).equals(expected);
     }
 
     @Override
@@ -577,12 +601,6 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
                 });
                 trackerHandlers.forEach(TrackerHandler::stop);
             }
-        }
-
-        private boolean isPieceChecksumValid(int pieceIndex) {
-            byte[] pieceBytes = repository.getPiece(torrent, pieceIndex);
-            Sha1Hash expected = torrent.getPieceHash(pieceIndex);
-            return Sha1Hash.of(pieceBytes).equals(expected);
         }
 
         private void enqueueIdlePeerHandlersWithPiece(int pieceIndex) {
