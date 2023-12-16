@@ -591,6 +591,7 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
 
             if (torrent.isAllPiecesVerified()) {
                 LOGGER.log(Level.DEBUG, "All pieces received");
+                trackerHandlers.forEach(TrackerHandler::announceCompleted);
                 peerHandlers.forEach(peerHandler -> {
                     try {
                         peerHandler.sendNotInterested();
