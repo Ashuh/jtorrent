@@ -408,7 +408,6 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
         }
 
         public synchronized void removePeerHandler(PeerHandler peerHandler) {
-            LOGGER.log(Level.ERROR, "Removing peer handler from queue: {0}", peerHandler);
             peerHandlerToShouldEnqueueOnCompletion.remove(peerHandler);
             noPieceToAssignPeerHandlers.remove(peerHandler);
             chokedPeerHandlers.remove(peerHandler);
@@ -548,7 +547,6 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
         }
 
         private void enqueuePeerHandler(PeerHandler peerHandler) {
-            LOGGER.log(Level.ERROR, "Adding peer handler to queue: {0}", peerHandler);
             peerHandlersQueue.add(peerHandler);
         }
 
