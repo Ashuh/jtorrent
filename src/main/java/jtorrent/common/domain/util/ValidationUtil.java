@@ -39,4 +39,11 @@ public class ValidationUtil {
         }
         return value;
     }
+
+    public static int requireEquals(int value, int expected, String valueName) {
+        if (value != expected) {
+            throw new IllegalArgumentException(String.format("%s must be %d, but was %d", valueName, expected, value));
+        }
+        return value;
+    }
 }

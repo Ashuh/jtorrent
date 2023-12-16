@@ -30,7 +30,7 @@ public class UiPeer {
         SimpleDoubleProperty upSpeed = new SimpleDoubleProperty(0.0);
 
         peer.getDownloadRateObservable().subscribe(new UpdatePropertyConsumer<>(downSpeed));
-        peer.getDownloadRateObservable().subscribe(new UpdatePropertyConsumer<>(upSpeed));
+        peer.getUploadRateObservable().subscribe(new UpdatePropertyConsumer<>(upSpeed));
 
         return new UiPeer(ip, client, downSpeed, upSpeed);
     }

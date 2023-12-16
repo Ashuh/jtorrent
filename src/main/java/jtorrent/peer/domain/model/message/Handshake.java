@@ -1,5 +1,6 @@
 package jtorrent.peer.domain.model.message;
 
+import static jtorrent.common.domain.util.ValidationUtil.requireEquals;
 import static jtorrent.common.domain.util.ValidationUtil.requireNonNull;
 
 import java.nio.ByteBuffer;
@@ -12,7 +13,7 @@ import jtorrent.common.domain.util.Sha1Hash;
 
 public class Handshake implements PeerMessage {
 
-    public static final int BYTES = 68;
+    public static final int MESSAGE_SIZE_BYTES = 68;
     private static final String PROTOCOL_IDENTIFIER = "BitTorrent protocol";
     private static final byte PROTOCOL_IDENTIFIER_LENGTH = (byte) PROTOCOL_IDENTIFIER.length();
 
@@ -28,12 +29,9 @@ public class Handshake implements PeerMessage {
     }
 
     public Handshake(Sha1Hash infoHash, byte[] peerId, byte[] flags) {
-        if (peerId.length != 20) {
-            throw new IllegalArgumentException("Peer ID must be 20 bytes long");
-        }
-        if (flags.length != 8) {
-            throw new IllegalArgumentException("Flags must be 8 bytes long");
-        }
+        requireEquals(peerId.length, 20, "Peer ID length");
+        requireEquals(flags.length, 8, "Flags length");
+
         this.infoHash = requireNonNull(infoHash);
         this.peerId = requireNonNull(peerId);
         this.flags = requireNonNull(flags);
@@ -86,7 +84,7 @@ public class Handshake implements PeerMessage {
 
     @Override
     public byte[] pack() {
-        return ByteBuffer.allocate(BYTES)
+        return ByteBuffer.allocate(MESSAGE_SIZE_BYTES)
                 .order(ByteOrder.BIG_ENDIAN)
                 .put(PROTOCOL_IDENTIFIER_LENGTH)
                 .put(PROTOCOL_IDENTIFIER.getBytes())
@@ -94,6 +92,11 @@ public class Handshake implements PeerMessage {
                 .put(infoHash.getBytes())
                 .put(peerId)
                 .array();
+    }
+
+    @Override
+    public int getMessageSize() {
+        return MESSAGE_SIZE_BYTES;
     }
 
     @Override
@@ -120,10 +123,7 @@ public class Handshake implements PeerMessage {
 
     @Override
     public String toString() {
-        return "Handshake{"
-                + "infoHash=" + infoHash
-                + ", peerId=" + Arrays.toString(peerId)
-                + ", flags=" + Arrays.toString(flags)
-                + '}';
+        return String.format("[[HANDSHAKE]: [infoHash=%s, peerId=%s, flags=%s]]",
+                infoHash, Arrays.toString(peerId), Arrays.toString(flags));
     }
 }

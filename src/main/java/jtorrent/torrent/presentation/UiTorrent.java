@@ -49,12 +49,20 @@ public class UiTorrent {
 
         Observable<Integer> downloadedObservable = torrent.getDownloadedObservable();
         Observable<Double> downloadRateObservable = torrent.getDownloadRateObservable();
+        Observable<Double> uploadRateObservable = torrent.getUploadRateObservable();
         Observable<Boolean> isActiveObservable = torrent.getIsActiveObservable();
+        Observable<Long> verifiedBytesObservable = torrent.getVerifiedBytesObservable();
 
         downloadRateObservable.subscribe(new UpdatePropertyConsumer<>(downSpeed));
-        Observable.combineLatest(downloadedObservable, downloadRateObservable, new CalculateEtaCombiner(torrentSize))
+        uploadRateObservable.subscribe(new UpdatePropertyConsumer<>(upSpeed));
+        Observable.combineLatest(verifiedBytesObservable, downloadRateObservable,
+                        new CalculateEtaCombiner(torrentSize))
                 .subscribe(new UpdatePropertyConsumer<>(eta));
-        downloadedObservable.subscribe(downloaded -> progress.set((double) downloaded / torrentSize));
+
+        verifiedBytesObservable
+                .map(verifiedBytes -> (double) verifiedBytes / torrentSize)
+                .subscribe(new UpdatePropertyConsumer<>(progress));
+
         isActiveObservable.subscribe(new UpdatePropertyConsumer<>(isActive));
 
         return new UiTorrent(name, size, progress, downSpeed, upSpeed, eta, isActive);
@@ -116,7 +124,7 @@ public class UiTorrent {
         return isActive;
     }
 
-    private static class CalculateEtaCombiner implements BiFunction<Integer, Double, Double> {
+    private static class CalculateEtaCombiner implements BiFunction<Long, Double, Double> {
 
         private final long size;
 
@@ -125,7 +133,11 @@ public class UiTorrent {
         }
 
         @Override
-        public Double apply(Integer downloaded, Double rate) {
+        public Double apply(Long downloaded, Double rate) {
+            if (downloaded == size) {
+                return 0.0;
+            }
+
             if (rate == 0) {
                 return Double.POSITIVE_INFINITY;
             } else {

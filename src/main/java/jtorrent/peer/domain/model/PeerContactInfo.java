@@ -1,6 +1,7 @@
 package jtorrent.peer.domain.model;
 
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.Objects;
@@ -43,6 +44,10 @@ public class PeerContactInfo {
 
     public int getPort() {
         return port;
+    }
+
+    public InetSocketAddress toInetSocketAddress() {
+        return new InetSocketAddress(address, port);
     }
 
     public byte[] toCompactPeerInfo() {

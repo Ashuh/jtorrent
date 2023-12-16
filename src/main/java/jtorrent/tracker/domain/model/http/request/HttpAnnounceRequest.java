@@ -62,7 +62,7 @@ public class HttpAnnounceRequest {
         map.put(KEY_UPLOADED, String.valueOf(uploaded));
         map.put(KEY_PORT, String.valueOf(port));
         if (event != null) {
-            map.put(KEY_EVENT, event.toString().toLowerCase());
+            map.put(KEY_EVENT, event.getHttpValue());
         }
         if (ip != null) {
             map.put(KEY_IP, String.valueOf(ip));

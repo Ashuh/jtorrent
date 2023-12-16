@@ -63,7 +63,7 @@ public class UdpAnnounceRequest extends UdpRequest {
                 .putLong(downloaded)
                 .putLong(left)
                 .putLong(uploaded)
-                .putInt(event.getValue())
+                .putInt(event.getUdpValue())
                 .putInt(ipv4)
                 .putInt(key)
                 .putInt(numWant)

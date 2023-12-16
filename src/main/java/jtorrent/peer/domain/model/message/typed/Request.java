@@ -20,13 +20,4 @@ public class Request extends BlockMessage {
     public MessageType getMessageType() {
         return MessageType.REQUEST;
     }
-
-    @Override
-    public String toString() {
-        return "Request{"
-                + "index=" + index
-                + ", begin=" + begin
-                + ", length=" + length
-                + '}';
-    }
 }

@@ -22,6 +22,9 @@ public class PeerMessageUnpacker {
 
     private static final Logger LOGGER = System.getLogger(PeerMessageUnpacker.class.getName());
 
+    private PeerMessageUnpacker() {
+    }
+
     /**
      * Unpacks a message from a byte array.
      *
@@ -30,7 +33,7 @@ public class PeerMessageUnpacker {
      *                     Cannot be null.
      * @return the unpacked message
      */
-    public PeerMessage unpack(byte[] messageBytes) {
+    public static PeerMessage unpack(byte[] messageBytes) {
         requireNonNull(messageBytes);
 
         if (messageBytes.length == 0) {
@@ -40,14 +43,14 @@ public class PeerMessageUnpacker {
         return unpackTypedMessage(messageBytes);
     }
 
-    private PeerMessage unpackTypedMessage(byte[] messageBytes) {
+    private static PeerMessage unpackTypedMessage(byte[] messageBytes) {
         MessageType messageType = MessageType.fromValue(messageBytes[0]);
         byte[] payload = new byte[messageBytes.length - 1];
         System.arraycopy(messageBytes, 1, payload, 0, payload.length);
         return unpackTypedMessage(messageType, payload);
     }
 
-    private TypedPeerMessage unpackTypedMessage(MessageType messageType, byte[] payload) {
+    private static TypedPeerMessage unpackTypedMessage(MessageType messageType, byte[] payload) {
         LOGGER.log(Level.DEBUG, "Unpacking {0} message", messageType);
 
         switch (messageType) {

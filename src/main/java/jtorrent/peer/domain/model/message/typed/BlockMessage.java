@@ -29,14 +29,36 @@ public abstract class BlockMessage extends TypedPeerMessage {
         this.length = length;
     }
 
+    public int getIndex() {
+        return index;
+    }
+
+    public int getBegin() {
+        return begin;
+    }
+
+    public int getLength() {
+        return length;
+    }
+
     @Override
-    protected byte[] getPayload() {
+    protected final int getPayloadSize() {
+        return PAYLOAD_BYTES;
+    }
+
+    @Override
+    protected final byte[] getPayload() {
         return ByteBuffer.allocate(PAYLOAD_BYTES)
                 .order(ByteOrder.BIG_ENDIAN)
                 .putInt(index)
                 .putInt(begin)
                 .putInt(length)
                 .array();
+    }
+
+    @Override
+    protected String getPayloadString() {
+        return String.format("index=%d, begin=%d, length=%d", index, begin, length);
     }
 
     @Override

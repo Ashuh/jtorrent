@@ -2,6 +2,7 @@ package jtorrent.tracker.domain.handler;
 
 import static jtorrent.common.domain.util.ValidationUtil.requireNonNull;
 
+import java.io.IOException;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
 import java.util.ArrayList;
@@ -27,6 +28,7 @@ public abstract class TrackerHandler {
     protected final TorrentProgressProvider torrentProgressProvider;
     private final List<Listener> listeners = new ArrayList<>();
     private final PeriodicAnnounceTask periodicAnnounceTask = new PeriodicAnnounceTask();
+    private final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1);
 
     protected TrackerHandler(TorrentProgressProvider torrentProgressProvider) {
         this.torrentProgressProvider = requireNonNull(torrentProgressProvider);
@@ -44,6 +46,17 @@ public abstract class TrackerHandler {
     public void stop() {
         LOGGER.log(Level.DEBUG, "Stopping tracker handler");
         periodicAnnounceTask.stop();
+        executorService.shutdown();
+        try {
+            executorService.awaitTermination(1, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    public void announceCompleted() {
+        AnnounceTask announceTask = createAnnounceTask(Event.COMPLETED);
+        executorService.submit(announceTask);
     }
 
     protected abstract AnnounceTask createAnnounceTask(Event event);
@@ -52,7 +65,6 @@ public abstract class TrackerHandler {
 
         void onAnnounceResponse(List<PeerResponse> peerResponses);
     }
-
 
     public interface TorrentProgressProvider {
 
@@ -84,11 +96,13 @@ public abstract class TrackerHandler {
         protected AnnounceTask(Event event) {
             this.event = requireNonNull(event);
         }
+
+        @Override
+        public abstract AnnounceResponse call() throws IOException;
     }
 
     private class PeriodicAnnounceTask extends BackgroundTask {
 
-        private final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1);
 
         private ScheduledFuture<AnnounceResponse> scheduledFuture;
 
@@ -117,12 +131,6 @@ public abstract class TrackerHandler {
         protected void doOnStop() {
             cancelAnnounce();
             scheduleAnnounce(Event.STOPPED, 0);
-            executorService.shutdown();
-            try {
-                executorService.awaitTermination(1, TimeUnit.SECONDS);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
         }
 
         /**

@@ -8,7 +8,9 @@ import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.net.SocketAddress;
 import java.nio.ByteBuffer;
+import java.util.Optional;
 
 import jtorrent.common.domain.util.Sha1Hash;
 import jtorrent.peer.domain.model.PeerContactInfo;
@@ -22,17 +24,98 @@ public class PeerSocket {
 
     private static final Logger LOGGER = System.getLogger(PeerSocket.class.getName());
 
-    private final PeerMessageUnpacker peerMessageUnpacker = new PeerMessageUnpacker();
     private final Socket socket;
     private boolean isConnected;
-    private boolean isHandshakeReceived;
+    private Handshake receivedHandshake;
 
-    public PeerSocket(PeerContactInfo peerContactInfo) throws IOException {
-        this(new Socket(peerContactInfo.getAddress(), peerContactInfo.getPort()));
+    public PeerSocket() {
+        this(new Socket());
     }
 
     public PeerSocket(Socket socket) {
         this.socket = requireNonNull(socket);
+    }
+
+    private static void checkInfoHashMatch(Sha1Hash expected, Sha1Hash actual) {
+        if (!expected.equals(actual)) {
+            throw new InfoHashMismatchException(expected, actual);
+        }
+    }
+
+    public boolean isConnected() {
+        return isConnected;
+    }
+
+    public void connect(SocketAddress address, Sha1Hash infoHash, boolean isDhtSupported) throws IOException {
+        LOGGER.log(Level.INFO, "[{0}] Connecting", address);
+
+        if (isConnected) {
+            LOGGER.log(Level.WARNING, "[{0}] Already connected", socket.getRemoteSocketAddress());
+            return;
+        }
+
+        if (socket.isConnected()) {
+            if (!socket.getRemoteSocketAddress().equals(address)) {
+                throw new IllegalStateException("Socket is already connected to a different address");
+            }
+        } else {
+            socket.connect(address);
+        }
+
+        getReceivedHandshakeInfoHash().ifPresent(receivedInfoHash -> checkInfoHashMatch(receivedInfoHash, infoHash));
+        Handshake handshake = new Handshake(infoHash, PEER_ID.getBytes(), isDhtSupported);
+        sendMessage(handshake);
+
+        if (!isHandshakeReceived()) {
+            Handshake inHandshake = waitForHandshake();
+            checkInfoHashMatch(infoHash, inHandshake.getInfoHash());
+        }
+
+        isConnected = true;
+    }
+
+    public void acceptInboundConnection(boolean isDhtSupported) throws IOException {
+        LOGGER.log(Level.INFO, "[{0}] Accepting inbound connection", socket.getRemoteSocketAddress());
+
+        if (isConnected) {
+            LOGGER.log(Level.WARNING, "[{0}] Already connected", socket.getRemoteSocketAddress());
+            return;
+        }
+
+        if (!isHandshakeReceived()) {
+            throw new IllegalStateException(
+                    String.format("[%s] Connection is not inbound, handshake has not been received",
+                            socket.getRemoteSocketAddress()));
+        }
+
+        Optional<Sha1Hash> infoHash = getReceivedHandshakeInfoHash();
+        assert infoHash.isPresent();
+
+        Handshake outboundHandshake = new Handshake(infoHash.get(), PEER_ID.getBytes(), isDhtSupported);
+        sendMessage(outboundHandshake);
+
+        isConnected = true;
+    }
+
+    private boolean isHandshakeReceived() {
+        return receivedHandshake != null;
+    }
+
+    private Optional<Sha1Hash> getReceivedHandshakeInfoHash() {
+        return Optional.ofNullable(receivedHandshake).map(Handshake::getInfoHash);
+    }
+
+    public boolean isDhtSupportedByRemote() {
+        if (!isHandshakeReceived()) {
+            throw new IllegalStateException("Handshake has not been received");
+        }
+
+        return receivedHandshake.isDhtSupported();
+    }
+
+    public void sendMessage(PeerMessage message) throws IOException {
+        socket.getOutputStream().write(message.pack());
+        LOGGER.log(Level.INFO, "[{0}] Sent: {1}", getPeerContactInfo(), message);
     }
 
     public PeerContactInfo getPeerContactInfo() {
@@ -50,54 +133,41 @@ public class PeerSocket {
         return socket.getPort();
     }
 
-    public boolean isConnected() {
-        return isConnected;
+    /**
+     * Gets the timeout for socket operations.
+     *
+     * @throws IOException if an I/O error occurs when getting the timeout
+     */
+    public int getTimeout() throws IOException {
+        return socket.getSoTimeout();
     }
 
-    public void connect(Sha1Hash infoHash, boolean isDhtSupported) throws IOException {
-        if (isConnected) {
-            return;
-        }
-
-        if (!socket.isConnected()) {
-            throw new IllegalStateException("Socket is not connected");
-        }
-
-        requireNonNull(infoHash);
-        LOGGER.log(Level.DEBUG, "Connecting to {0}", socket.getRemoteSocketAddress());
-        Handshake handshake = new Handshake(infoHash, PEER_ID.getBytes(), isDhtSupported);
-        sendMessage(handshake);
-
-        if (!isHandshakeReceived) {
-            Handshake inHandshake = waitForHandshake();
-            if (!inHandshake.getInfoHash().equals(infoHash)) {
-                throw new InfoHashMismatchException(infoHash, inHandshake.getInfoHash());
-            }
-        }
-
-        isConnected = true;
-        LOGGER.log(Level.DEBUG, "Sent handshake {0}", socket.getRemoteSocketAddress());
-    }
-
-    public void sendMessage(PeerMessage message) throws IOException {
-        LOGGER.log(Level.DEBUG, "Sending message: {0}", message);
-        socket.getOutputStream().write(message.pack());
+    /**
+     * Sets the timeout for socket operations.
+     *
+     * @param timeout the timeout in milliseconds
+     * @throws IOException if an I/O error occurs when setting the timeout
+     */
+    public void setTimeout(int timeout) throws IOException {
+        socket.setSoTimeout(timeout);
     }
 
     public Handshake waitForHandshake() throws IOException {
-        LOGGER.log(Level.DEBUG, "Waiting for handshake");
-        byte[] buffer = socket.getInputStream().readNBytes(Handshake.BYTES);
-        if (buffer.length != Handshake.BYTES) {
+        LOGGER.log(Level.DEBUG, "[{0}] Waiting for handshake", getPeerContactInfo());
+
+        byte[] buffer = socket.getInputStream().readNBytes(Handshake.MESSAGE_SIZE_BYTES);
+        if (buffer.length != Handshake.MESSAGE_SIZE_BYTES) {
             throw new UnexpectedEndOfStreamException();
         }
         Handshake handshake = Handshake.unpack(buffer);
-        isHandshakeReceived = true;
-        LOGGER.log(Level.DEBUG, "Received handshake " + handshake);
+        receivedHandshake = handshake;
+        LOGGER.log(Level.INFO, "[{0}] Received: {1}", getPeerContactInfo(), handshake);
+
         return handshake;
     }
 
     public void close() throws IOException {
-        LOGGER.log(Level.DEBUG, "Closing PeerSocket {0}", socket.getRemoteSocketAddress());
+        LOGGER.log(Level.DEBUG, "[{0}] Closing PeerSocket", getPeerContactInfo());
         socket.close();
     }
 
@@ -107,11 +177,13 @@ public class PeerSocket {
         int lengthPrefix = readLengthPrefix();
 
         if (lengthPrefix == 0) {
-            return peerMessageUnpacker.unpack(new byte[0]);
+            return PeerMessageUnpacker.unpack(new byte[0]);
         }
 
         byte[] messageBytes = readMessageBytes(lengthPrefix);
-        return peerMessageUnpacker.unpack(messageBytes);
+        PeerMessage peerMessage = PeerMessageUnpacker.unpack(messageBytes);
+        LOGGER.log(Level.INFO, "[{0}] Received: {1}", getPeerContactInfo(), peerMessage);
+        return peerMessage;
     }
 
     private int readLengthPrefix() throws IOException {

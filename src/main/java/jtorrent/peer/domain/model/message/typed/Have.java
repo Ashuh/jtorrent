@@ -21,6 +21,11 @@ public class Have extends TypedPeerMessage {
     }
 
     @Override
+    protected int getPayloadSize() {
+        return PAYLOAD_BYTES;
+    }
+
+    @Override
     public MessageType getMessageType() {
         return MessageType.HAVE;
     }
@@ -31,6 +36,11 @@ public class Have extends TypedPeerMessage {
                 .order(ByteOrder.BIG_ENDIAN)
                 .putInt(pieceIndex)
                 .array();
+    }
+
+    @Override
+    protected String getPayloadString() {
+        return String.format("pieceIndex=%d", pieceIndex);
     }
 
     public int getPieceIndex() {
@@ -52,12 +62,5 @@ public class Have extends TypedPeerMessage {
         }
         Have have = (Have) o;
         return pieceIndex == have.pieceIndex;
-    }
-
-    @Override
-    public String toString() {
-        return "Have{"
-                + "pieceIndex=" + pieceIndex
-                + '}';
     }
 }

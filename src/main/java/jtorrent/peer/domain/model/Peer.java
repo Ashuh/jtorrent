@@ -4,39 +4,47 @@ import static jtorrent.common.domain.util.ValidationUtil.requireNonNull;
 
 import java.lang.System.Logger;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 import io.reactivex.rxjava3.core.Observable;
-import jtorrent.common.domain.util.DurationWindow;
+import jtorrent.common.domain.util.RateTracker;
 
 public class Peer {
 
     private static final Logger LOGGER = System.getLogger(Peer.class.getName());
+    private static final Duration WINDOW_DURATION = Duration.ofSeconds(20);
 
-    protected final PeerContactInfo peerContactInfo;
-    protected final DurationWindow durationWindow = new DurationWindow(Duration.ofSeconds(20));
-    protected boolean isLocalChoked = true;
-    protected boolean isRemoteChoked = true;
+    private final PeerContactInfo peerContactInfo;
+    private final RateTracker downloadRateTracker = new RateTracker(WINDOW_DURATION);
+    private final RateTracker uploadRateTracker = new RateTracker(WINDOW_DURATION);
+    private boolean isLocalChoked = true;
+    private boolean isRemoteChoked = true;
+    private boolean isLocalInterested = false;
+    private boolean isRemoteInterested = false;
+    private LocalDateTime lastSeen = LocalDateTime.MIN;
 
     public Peer(PeerContactInfo peerContactInfo) {
         this.peerContactInfo = requireNonNull(peerContactInfo);
-    }
-
-    public void disconnect() {
-        durationWindow.close();
-    }
-
-    public InetAddress getAddress() {
-        return getPeerContactInfo().getAddress();
     }
 
     public PeerContactInfo getPeerContactInfo() {
         return peerContactInfo;
     }
 
+    public InetSocketAddress getSocketAddress() {
+        return peerContactInfo.toInetSocketAddress();
+    }
+
+    public InetAddress getAddress() {
+        return peerContactInfo.getAddress();
+    }
+
     public int getPort() {
-        return getPeerContactInfo().getPort();
+        return peerContactInfo.getPort();
     }
 
     public boolean isLocalChoked() {
@@ -55,24 +63,53 @@ public class Peer {
         isRemoteChoked = remoteChoked;
     }
 
-    public double getDownloadRate() {
-        return durationWindow.getRate();
+    public boolean isLocalInterested() {
+        return isLocalInterested;
+    }
+
+    public void setLocalInterested(boolean isLocalInterested) {
+        this.isLocalInterested = isLocalInterested;
+    }
+
+    public boolean isRemoteInterested() {
+        return isRemoteInterested;
+    }
+
+    public void setRemoteInterested(boolean isRemoteInterested) {
+        this.isRemoteInterested = isRemoteInterested;
     }
 
     public void addDownloadedBytes(int bytes) {
-        durationWindow.add(bytes);
+        downloadRateTracker.addBytes(bytes);
+    }
+
+    public double getDownloadRate() {
+        return downloadRateTracker.getRate();
     }
 
     public Observable<Double> getDownloadRateObservable() {
-        return durationWindow.getRateObservable();
+        return downloadRateTracker.getRateObservable(1, TimeUnit.SECONDS); // TODO: fixed rate?
+    }
+
+    public void addUploadedBytes(int bytes) {
+        uploadRateTracker.addBytes(bytes);
+        System.out.println("Added " + bytes + " bytes to upload rate tracker");
     }
 
     public double getUploadRate() {
-        return 0; // TODO: implement
+        return uploadRateTracker.getRate();
     }
 
     public Observable<Double> getUploadRateObservable() {
-        return Observable.never(); // TODO: implement
+        return uploadRateTracker.getRateObservable(1, TimeUnit.SECONDS); // TODO: fixed rate?
+    }
+
+    public boolean isLastSeenWithin(Duration duration) {
+        return lastSeen.isAfter(LocalDateTime.now().minus(duration));
+    }
+
+    public void setLastSeenNow() {
+        lastSeen = LocalDateTime.now();
     }
 
     @Override

@@ -19,15 +19,17 @@ class BitfieldTest {
         bitSet.set(4);
         bitSet.set(6);
         bitSet.set(7);
+        bitSet.set(8);
 
-        byte[] expected = ByteBuffer.allocate(6)
+        byte[] payload = new byte[] {(byte) 0b1010_1011, (byte) 0b1000_0000};
+        byte[] expected = ByteBuffer.allocate(7)
                 .order(ByteOrder.BIG_ENDIAN)
-                .putInt(2)
+                .putInt(3)
                 .put(MessageType.BITFIELD.getValue())
-                .put(bitSet.toByteArray())
+                .put(payload)
                 .array();
 
-        Bitfield bitfield = new Bitfield(bitSet);
+        Bitfield bitfield = Bitfield.fromBitSetAndNumTotalPieces(bitSet, 9);
         byte[] actual = bitfield.pack();
 
         assertArrayEquals(expected, actual);
@@ -43,15 +45,9 @@ class BitfieldTest {
         bitSet.set(7);
         bitSet.set(8);
 
-        Bitfield expected = new Bitfield(bitSet);
+        Bitfield expected = Bitfield.fromBitSetAndNumTotalPieces(bitSet, 9);
 
-        byte[] payload = new byte[2];
-
-        bitSet.stream().forEach(i -> {
-            int byteIndex = i / Byte.SIZE;
-            payload[byteIndex] |= 1 << (7 - i % Byte.SIZE);
-        });
-
+        byte[] payload = new byte[] {(byte) 0b1010_1011, (byte) 0b1000_0000};
         Bitfield actual = Bitfield.unpack(payload);
 
         assertEquals(expected, actual);

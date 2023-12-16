@@ -2,6 +2,8 @@ package jtorrent.tracker.domain.handler;
 
 import static jtorrent.common.domain.util.ValidationUtil.requireNonNull;
 
+import java.io.IOException;
+
 import jtorrent.common.domain.util.Sha1Hash;
 import jtorrent.tracker.domain.model.AnnounceResponse;
 import jtorrent.tracker.domain.model.Event;
@@ -30,7 +32,7 @@ public class HttpTrackerHandler extends TrackerHandler {
         }
 
         @Override
-        public AnnounceResponse call() throws Exception {
+        public AnnounceResponse call() throws IOException {
             Sha1Hash infoHash = torrentProgressProvider.getInfoHash();
             long downloaded = torrentProgressProvider.getDownloaded();
             long left = torrentProgressProvider.getLeft();

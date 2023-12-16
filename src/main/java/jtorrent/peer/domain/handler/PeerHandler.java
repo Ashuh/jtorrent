@@ -4,17 +4,30 @@ import java.io.IOException;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
 import java.net.InetAddress;
-import java.util.ArrayList;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
+import java.util.BitSet;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
-import jtorrent.common.domain.model.Block;
 import jtorrent.common.domain.util.BackgroundTask;
+import jtorrent.common.domain.util.PeriodicTask;
 import jtorrent.common.domain.util.Sha1Hash;
 import jtorrent.peer.domain.communication.PeerSocket;
 import jtorrent.peer.domain.model.Peer;
+import jtorrent.peer.domain.model.PeerContactInfo;
 import jtorrent.peer.domain.model.message.KeepAlive;
 import jtorrent.peer.domain.model.message.PeerMessage;
 import jtorrent.peer.domain.model.message.typed.Bitfield;
@@ -22,6 +35,7 @@ import jtorrent.peer.domain.model.message.typed.Cancel;
 import jtorrent.peer.domain.model.message.typed.Choke;
 import jtorrent.peer.domain.model.message.typed.Have;
 import jtorrent.peer.domain.model.message.typed.Interested;
+import jtorrent.peer.domain.model.message.typed.NotInterested;
 import jtorrent.peer.domain.model.message.typed.Piece;
 import jtorrent.peer.domain.model.message.typed.Port;
 import jtorrent.peer.domain.model.message.typed.Request;
@@ -31,84 +45,139 @@ import jtorrent.peer.domain.model.message.typed.Unchoke;
 public class PeerHandler {
 
     private static final Logger LOGGER = System.getLogger(PeerHandler.class.getName());
+    private static final int MAX_REQUESTS = 5;
+    private static final ExecutorService MESSAGE_HANDLER_THREAD_POOL = new ConnectionThreadPool();
 
     private final Peer peer;
     private final PeerSocket peerSocket;
-    private final Sha1Hash infoHash;
-    private final List<Listener> listeners = new ArrayList<>();
+    private final EventHandler eventHandler;
     private final Set<Integer> availablePieces = new HashSet<>();
     private final HandlePeerTask handlePeerTask;
+    private final PeriodicKeepAliveTask periodicKeepAliveTask;
+    private final PeriodicCheckAliveTask periodicCheckAliveTask;
+    private final ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
+    private final Map<RequestKey, CompletableFuture<byte[]>> outRequestKeyToFuture =
+            new ConcurrentHashMap<>(MAX_REQUESTS);
+    private final Map<RequestKey, Future<?>> inRequestKeyToFuture = new ConcurrentHashMap<>();
 
-    private boolean isBusy = false;
-
-    public PeerHandler(Peer peer, PeerSocket peerSocket, Sha1Hash infoHash) {
+    public PeerHandler(Peer peer, PeerSocket peerSocket, EventHandler eventHandler) {
         this.peerSocket = peerSocket;
         this.peer = peer;
-        this.infoHash = infoHash;
+        this.eventHandler = eventHandler;
         handlePeerTask = new HandlePeerTask();
+        periodicKeepAliveTask = new PeriodicKeepAliveTask(scheduledExecutorService);
+        periodicCheckAliveTask = new PeriodicCheckAliveTask(scheduledExecutorService);
+        peer.setLastSeenNow();
     }
 
     public void start() {
         handlePeerTask.start();
+        periodicKeepAliveTask.scheduleAtFixedRate(2, TimeUnit.MINUTES);
+        periodicCheckAliveTask.scheduleAtFixedRate(2, TimeUnit.MINUTES);
     }
 
     public void stop() {
+        eventHandler.handlePeerDisconnected(this);
         try {
             peerSocket.close();
         } catch (IOException e) {
-            LOGGER.log(Level.ERROR, "Error while closing socket", e);
+            LOGGER.log(Level.ERROR, "[{0}] Error while closing socket", peer.getPeerContactInfo());
         }
         handlePeerTask.stop();
+        periodicKeepAliveTask.stop();
+        periodicCheckAliveTask.stop();
+        scheduledExecutorService.shutdownNow();
     }
 
-    public void addListener(Listener listener) {
-        this.listeners.add(listener);
+    public CompletableFuture<Boolean> connect(Sha1Hash infoHash, boolean isDhtSupported) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                peerSocket.connect(peer.getPeerContactInfo().toInetSocketAddress(), infoHash, isDhtSupported);
+                return peerSocket.isDhtSupportedByRemote();
+            } catch (IOException e) {
+                throw new CompletionException(e);
+            }
+        });
     }
 
-    public void assignBlock(Block block) throws IOException {
-        LOGGER.log(Level.DEBUG, "Peer {0} assigned block {1}", peer, block);
-
-        isBusy = true;
-        int index = block.getIndex();
-        int offset = block.getOffset();
-        int length = block.getLength();
-        sendRequest(index, offset, length);
+    public Peer getPeer() {
+        return peer;
     }
 
-    private void sendRequest(int index, int begin, int length) throws IOException {
+    private void sendKeepAlive() throws IOException {
+        sendMessage(new KeepAlive());
+    }
+
+    public void sendChoke() throws IOException {
+        sendMessage(new Choke());
+        peer.setRemoteChoked(true);
+    }
+
+    public void sendUnchoke() throws IOException {
+        sendMessage(new Unchoke());
+    }
+
+    public void sendInterested() throws IOException {
+        sendMessage(new Interested());
+        peer.setLocalInterested(true);
+    }
+
+    public void sendNotInterested() throws IOException {
+        sendMessage(new NotInterested());
+        peer.setLocalInterested(false);
+    }
+
+    public void sendHave(int pieceIndex) throws IOException {
+        Have have = new Have(pieceIndex);
+        sendMessage(have);
+    }
+
+    public void sendBitfield(BitSet bitSet, int numTotalPieces) throws IOException {
+        Bitfield bitfield = Bitfield.fromBitSetAndNumTotalPieces(bitSet, numTotalPieces);
+        sendMessage(bitfield);
+    }
+
+    public CompletableFuture<byte[]> sendRequest(int index, int begin, int length) throws IOException {
+        CompletableFuture<byte[]> future = new CompletableFuture<byte[]>().orTimeout(5, TimeUnit.SECONDS);
+        RequestKey requestKey = new RequestKey(index, begin, length);
+        future.whenComplete((result, throwable) -> outRequestKeyToFuture.remove(requestKey));
+        outRequestKeyToFuture.put(requestKey, future);
         Request request = new Request(index, begin, length);
-        peerSocket.sendMessage(request);
+        sendMessage(request);
+        return future;
     }
 
-    private void sendInterested() throws IOException {
-        Interested interested = new Interested();
-        peerSocket.sendMessage(interested);
+    public void sendPiece(int index, int begin, byte[] block) throws IOException {
+        Piece piece = new Piece(index, begin, block);
+        sendMessage(piece);
     }
 
-    public void choke() {
-        LOGGER.log(Level.DEBUG, "Choking peer: " + peer.getPeerContactInfo());
-        Choke choke = new Choke();
-        try {
-            peerSocket.sendMessage(choke);
-            peer.setRemoteChoked(true);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+    public void sendCancel(int index, int begin, int length) throws IOException {
+        RequestKey requestKey = new RequestKey(index, begin, length);
+        Future<?> future = inRequestKeyToFuture.remove(requestKey);
+        if (future != null) {
+            future.cancel(true);
         }
+        Cancel cancel = new Cancel(index, begin, length);
+        sendMessage(cancel);
     }
 
-    public void unchoke() {
-        LOGGER.log(Level.DEBUG, "Unchoking peer: " + peer.getPeerContactInfo());
-        Unchoke unchoke = new Unchoke();
-        try {
-            peerSocket.sendMessage(unchoke);
-            peer.setRemoteChoked(false);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+    public void sendPort(int port) throws IOException {
+        Port portMessage = new Port(port);
+        sendMessage(portMessage);
+    }
+
+    private void sendMessage(PeerMessage message) throws IOException {
+        peerSocket.sendMessage(message);
+        peer.addUploadedBytes(message.getMessageSize());
     }
 
     public double getDownloadRate() {
         return peer.getDownloadRate();
+    }
+
+    public double getUploadRate() {
+        return peer.getUploadRate();
     }
 
     public Set<Integer> getAvailablePieces() {
@@ -119,43 +188,93 @@ public class PeerHandler {
         return peer.isRemoteChoked();
     }
 
-    public boolean isReady() {
-        return peerSocket.isConnected() && !peer.isLocalChoked() && !isBusy;
+    public boolean isRemoteInterested() {
+        return peer.isRemoteInterested();
+    }
+
+    public boolean isRequestQueueFull() {
+        return outRequestKeyToFuture.size() >= MAX_REQUESTS;
     }
 
     public InetAddress getAddress() {
         return peer.getAddress();
     }
 
+    public PeerContactInfo getPeerContactInfo() {
+        return peer.getPeerContactInfo();
+    }
+
     @Override
     public String toString() {
         return "PeerHandler{"
                 + "peer=" + peer
-                + ", infoHash=" + infoHash
-                + ", isBusy=" + isBusy
                 + '}';
     }
 
-    public interface Listener {
+    public interface EventHandler {
 
-        void onUnchokeRecevied(PeerHandler peerHandler);
+        void handlePeerDisconnected(PeerHandler peerHandler);
 
-        void onChokeReceived(PeerHandler peerHandler);
+        void handlePeerChoked(PeerHandler peerHandler);
 
-        void onReady(PeerHandler peerHandler);
+        void handlePeerUnchoked(PeerHandler peerHandler);
 
-        void onPieceReceived(Piece piece);
+        void handlePiecesAvailable(PeerHandler peerHandler, Set<Integer> pieceIndices);
 
-        void onPieceAvailable(PeerHandler peerHandler, int index);
+        void handleBlockRequested(PeerHandler peerHandler, int pieceIndex, int offset, int length);
 
-        void onPortReceived(PeerHandler peerHandler, int port);
+        void handleDhtPortReceived(PeerHandler peerHandler, int port);
+    }
+
+    private static class RequestKey {
+
+        private final int piece;
+        private final int offset;
+        private final int length;
+
+        public RequestKey(int piece, int offset, int length) {
+            this.piece = piece;
+            this.offset = offset;
+            this.length = length;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(piece, offset, length);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            RequestKey that = (RequestKey) o;
+            return piece == that.piece
+                    && offset == that.offset
+                    && length == that.length;
+        }
+    }
+
+    private static class ConnectionThreadPool extends ThreadPoolExecutor {
+
+        public ConnectionThreadPool() {
+            super(0, Integer.MAX_VALUE, 60, TimeUnit.SECONDS, new SynchronousQueue<>(), r -> {
+                Thread thread = new Thread(r);
+                thread.setName("ConnectionThreadPool-" + thread.getId());
+                thread.setDaemon(true);
+                return thread;
+            });
+        }
     }
 
     private class HandlePeerTask extends BackgroundTask {
 
         @Override
-        protected Optional<String> getThreadName() {
-            return Optional.of("PeerHandler-" + peer.getPeerContactInfo());
+        protected String getThreadName() {
+            return "PeerHandler-" + peer.getPeerContactInfo();
         }
 
         @Override
@@ -165,34 +284,20 @@ public class PeerHandler {
                 handleMessage(message);
             } catch (IOException e) {
                 if (!isStopping()) {
-                    LOGGER.log(Level.ERROR, "Error while communicating with peer" + peer, e);
-                    HandlePeerTask.this.stop();
+                    LOGGER.log(Level.ERROR, String.format("[%s] Error while communicating with peer",
+                            peer.getPeerContactInfo()), e);
+                    PeerHandler.this.stop();
                 }
             }
         }
 
-        @Override
-        protected void doOnStarted() {
-            try {
-                // TODO: hardcoded true for now
-                peerSocket.connect(infoHash, true);
-                sendInterested();
-            } catch (IOException e) {
-                LOGGER.log(Level.ERROR, "Error while connecting to peer {0}", peer);
-                super.stop();
-            }
-        }
-
-        @Override
-        protected void doOnStop() {
-            peer.disconnect();
-        }
-
         private void handleMessage(PeerMessage message) {
-            LOGGER.log(Level.INFO, "Received message {0} from {1}", message, peer.getPeerContactInfo());
+            LOGGER.log(Level.DEBUG, "[{0}] Handling {1}", peer.getPeerContactInfo(), message);
+
+            peer.addDownloadedBytes(message.getMessageSize());
+            peer.setLastSeenNow();
 
             if (message instanceof KeepAlive) {
-                handleKeepAlive();
                 return;
             }
 
@@ -235,73 +340,111 @@ public class PeerHandler {
             }
         }
 
-        public void handleKeepAlive() {
-            LOGGER.log(Level.DEBUG, "Handling KeepAlive");
-        }
-
-        public void handleChoke() {
-            LOGGER.log(Level.DEBUG, "Handling Choke");
+        private void handleChoke() {
             peer.setLocalChoked(true);
-            listeners.forEach(listener -> listener.onChokeReceived(PeerHandler.this));
+            eventHandler.handlePeerChoked(PeerHandler.this);
         }
 
-        public void handleUnchoke() {
-            LOGGER.log(Level.DEBUG, "Handling Unchoke");
+        private void handleUnchoke() {
             peer.setLocalChoked(false);
-            listeners.forEach(listener -> listener.onUnchokeRecevied(PeerHandler.this));
-            notifyIfReady();
+            eventHandler.handlePeerUnchoked(PeerHandler.this);
         }
 
-        private void notifyIfReady() {
-            if (!isReady()) {
+        private void handleInterested() {
+            peer.setRemoteInterested(true);
+        }
+
+        private void handleNotInterested() {
+            peer.setRemoteInterested(false);
+        }
+
+        private void handleHave(Have have) {
+            int pieceIndex = have.getPieceIndex();
+            availablePieces.add(pieceIndex);
+            eventHandler.handlePiecesAvailable(PeerHandler.this, Set.of(pieceIndex));
+        }
+
+        private void handleBitfield(Bitfield bitfield) {
+            Set<Integer> newAvailablePieces = new HashSet<>();
+            bitfield.getBits().forEach(newAvailablePieces::add);
+            availablePieces.addAll(newAvailablePieces);
+            eventHandler.handlePiecesAvailable(PeerHandler.this, newAvailablePieces);
+        }
+
+        private void handleRequest(Request request) {
+            RequestKey requestKey = new RequestKey(request.getIndex(), request.getBegin(), request.getLength());
+            Future<?> future = MESSAGE_HANDLER_THREAD_POOL.submit(() -> {
+                eventHandler.handleBlockRequested(PeerHandler.this, request.getIndex(), request.getBegin(),
+                        request.getLength());
+                inRequestKeyToFuture.remove(requestKey);
+            });
+            inRequestKeyToFuture.put(requestKey, future);
+        }
+
+        private void handlePiece(Piece piece) {
+            RequestKey requestKey = new RequestKey(piece.getIndex(), piece.getBegin(), piece.getBlock().length);
+            CompletableFuture<byte[]> future = outRequestKeyToFuture.remove(requestKey);
+
+            if (future == null) {
+                LOGGER.log(Level.ERROR, "[{0}] Received block that was not requested", peer.getPeerContactInfo());
                 return;
             }
 
-            listeners.forEach(listener -> listener.onReady(PeerHandler.this));
+            future.complete(piece.getBlock());
         }
 
-        public void handleInterested() {
-            LOGGER.log(Level.DEBUG, "Handling Interested");
+        private void handleCancel(Cancel cancel) {
+            RequestKey requestKey = new RequestKey(cancel.getIndex(), cancel.getBegin(), cancel.getLength());
+            Future<?> future = inRequestKeyToFuture.remove(requestKey);
+            if (future != null) {
+                LOGGER.log(Level.DEBUG, "[{0}] Cancelling request for {1}", peer.getPeerContactInfo(), requestKey);
+                future.cancel(true);
+            } else {
+                LOGGER.log(Level.DEBUG, "[{0}] Failed to cancel request for {1} ", peer.getPeerContactInfo(),
+                        requestKey);
+            }
         }
 
-        public void handleNotInterested() {
-            LOGGER.log(Level.DEBUG, "Handling NotInterested");
+        private void handlePort(Port port) {
+            eventHandler.handleDhtPortReceived(PeerHandler.this, port.getListenPort());
+        }
+    }
+
+    private class PeriodicKeepAliveTask extends PeriodicTask {
+
+        protected PeriodicKeepAliveTask(ScheduledExecutorService scheduledExecutorService) {
+            super(scheduledExecutorService);
         }
 
-        public void handleHave(Have have) {
-            LOGGER.log(Level.DEBUG, "Handling Have: {0}", have);
-            int pieceIndex = have.getPieceIndex();
-            availablePieces.add(pieceIndex);
-            listeners.forEach(listener -> listener.onPieceAvailable(PeerHandler.this, pieceIndex));
+        @Override
+        public void run() {
+            try {
+                sendKeepAlive();
+            } catch (IOException e) {
+                LOGGER.log(Level.ERROR, "[{0}] Error sending KeepAlive", peer.getPeerContactInfo());
+                PeerHandler.this.stop();
+            }
+        }
+    }
+
+    private class PeriodicCheckAliveTask extends PeriodicTask {
+
+        protected PeriodicCheckAliveTask(ScheduledExecutorService scheduledExecutorService) {
+            super(scheduledExecutorService);
         }
 
-        public void handleBitfield(Bitfield bitfield) {
-            LOGGER.log(Level.DEBUG, "Handling Bitfield: {0}", bitfield);
-            bitfield.getBits()
-                    .forEach(i -> {
-                        availablePieces.add(i);
-                        listeners.forEach(listener -> listener.onPieceAvailable(PeerHandler.this, i));
-                    });
+        @Override
+        public void run() {
+            if (isPeerAlive()) {
+                return;
+            }
+
+            LOGGER.log(Level.INFO, "[{0}] Peer is dead, stopping", peer.getPeerContactInfo());
+            PeerHandler.this.stop();
         }
 
-        public void handleRequest(Request request) {
-            LOGGER.log(Level.DEBUG, "Handling Request: {0}", request);
-        }
-
-        public void handlePiece(Piece piece) {
-            LOGGER.log(Level.DEBUG, "Handling piece: {0}", piece);
-            isBusy = false;
-            listeners.forEach(listener -> listener.onPieceReceived(piece));
-            peer.addDownloadedBytes(piece.getBlock().length);
-            notifyIfReady();
-        }
-
-        public void handleCancel(Cancel cancel) {
-            LOGGER.log(Level.DEBUG, "Handling Cancel: {0}", cancel);
-        }
-
-        public void handlePort(Port port) {
-            listeners.forEach(listener -> listener.onPortReceived(PeerHandler.this, port.getListenPort()));
+        private boolean isPeerAlive() {
+            return peer.isLastSeenWithin(Duration.of(2, ChronoUnit.MINUTES));
         }
     }
 }
