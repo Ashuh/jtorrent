@@ -154,7 +154,6 @@ public class PeerHandler {
 
     public void sendCancel(int index, int begin, int length) throws IOException {
         RequestKey requestKey = new RequestKey(index, begin, length);
-        sendCancel(index, begin, length);
         Future<?> future = inRequestKeyToFuture.remove(requestKey);
         if (future != null) {
             future.cancel(true);
