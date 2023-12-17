@@ -1,69 +1,51 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import org.kordamp.ikonli.javafx.FontIcon?>
 <?import javafx.scene.control.Button?>
-<?import javafx.scene.control.Separator?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.ToolBar?>
 <?import javafx.scene.control.Tooltip?>
-<?import javafx.scene.image.Image?>
-<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
-<fx:root type="StackPane" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1">
-    <VBox>
-        <ToolBar style="-fx-spacing: 4; -fx-padding: 0;">
-            <Button fx:id="addButton" mnemonicParsing="false" stylesheets="@../../../common/presentation/button.css">
+<fx:root xmlns:fx="http://javafx.com/fxml/1" type="StackPane" xmlns="http://javafx.com/javafx/17.0.2-ea">
+    <VBox maxHeight="1.7976931348623157E308">
+        <ToolBar>
+            <Button fx:id="addButton" mnemonicParsing="false">
                 <tooltip>
                     <Tooltip text="Add Torrent" textAlignment="CENTER"/>
                 </tooltip>
                 <graphic>
-                    <ImageView fitHeight="28.0" fitWidth="28.0" pickOnBounds="true" preserveRatio="true">
-                        <Image url="@../../../common/presentation/outline_add_black_48dp.png"/>
-                    </ImageView>
+                    <FontIcon iconLiteral="mdi2p-plus"/>
                 </graphic>
             </Button>
-            <Button fx:id="addUrlButton" mnemonicParsing="false" stylesheets="@../../../common/presentation/button.css">
+            <Button fx:id="addUrlButton" mnemonicParsing="false">
                 <graphic>
-                    <ImageView fitHeight="28.0" fitWidth="28.0" pickOnBounds="true" preserveRatio="true">
-                        <Image url="@../../../common/presentation/outline_link_black_48dp.png"/>
-                    </ImageView>
+                    <FontIcon iconLiteral="mdi2l-link-variant"/>
                 </graphic>
             </Button>
-            <Separator orientation="VERTICAL"/>
-            <Button fx:id="createFileButton" mnemonicParsing="false"
-                    stylesheets="@../../../common/presentation/button.css">
+            <Button fx:id="createFileButton" mnemonicParsing="false">
                 <graphic>
-                    <ImageView fitHeight="28.0" fitWidth="28.0" pickOnBounds="true" preserveRatio="true">
-                        <Image url="@../../../common/presentation/outline_insert_drive_file_black_48dp.png"/>
-                    </ImageView>
+                    <FontIcon iconLiteral="mdi2f-file-plus"/>
                 </graphic>
             </Button>
-            <Separator orientation="VERTICAL"/>
-            <Button fx:id="deleteButton" mnemonicParsing="false" stylesheets="@../../../common/presentation/button.css">
+            <Button fx:id="deleteButton" mnemonicParsing="false">
                 <graphic>
-                    <ImageView fitHeight="28.0" fitWidth="28.0" pickOnBounds="true" preserveRatio="true">
-                        <Image url="@../../../common/presentation/outline_delete_black_48dp.png"/>
-                    </ImageView>
+                    <FontIcon iconLiteral="mdi2d-delete"/>
                 </graphic>
             </Button>
-            <Separator orientation="VERTICAL"/>
-            <Button fx:id="startButton" mnemonicParsing="false" stylesheets="@../../../common/presentation/button.css">
+            <Button fx:id="startButton" mnemonicParsing="false">
                 <graphic>
-                    <ImageView fitHeight="28.0" fitWidth="28.0" pickOnBounds="true" preserveRatio="true">
-                        <Image url="@../../../common/presentation/outline_download_black_48dp.png"/>
-                    </ImageView>
+                    <FontIcon iconLiteral="mdi2a-arrow-collapse-down"/>
                 </graphic>
             </Button>
-            <Button fx:id="stopButton" mnemonicParsing="false" stylesheets="@../../../common/presentation/button.css">
+            <Button fx:id="stopButton" mnemonicParsing="false">
                 <graphic>
-                    <ImageView fitHeight="28.0" fitWidth="28.0" pickOnBounds="true" preserveRatio="true">
-                        <Image url="@../../../common/presentation/outline_stop_black_48dp.png"/>
-                    </ImageView>
+                    <FontIcon iconLiteral="mdi2s-stop"/>
                 </graphic>
             </Button>
         </ToolBar>
-        <TableView fx:id="tableView">
+        <TableView fx:id="tableView" VBox.vgrow="ALWAYS">
             <columns>
                 <TableColumn fx:id="name" minWidth="0.0" prefWidth="200.0" text="Name"/>
                 <TableColumn fx:id="size" minWidth="0.0" prefWidth="50.0" text="Size"/>
