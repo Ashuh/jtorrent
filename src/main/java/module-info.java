@@ -5,6 +5,9 @@ module jtorrent {
     requires javafx.fxml;
     requires io.reactivex.rxjava3;
     requires com.dampcake.bencode;
+    requires atlantafx.base;
+    requires org.kordamp.ikonli.javafx;
+    requires org.kordamp.ikonli.materialdesign2;
 
     opens jtorrent.common.presentation to javafx.fxml;
     opens jtorrent.peer.presentation to javafx.fxml;
