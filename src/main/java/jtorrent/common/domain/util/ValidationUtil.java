@@ -46,4 +46,11 @@ public class ValidationUtil {
         }
         return value;
     }
+
+    public static long requireNonNegative(long value) {
+        if (value < 0) {
+            throw new IllegalArgumentException("Value must be non-negative");
+        }
+        return value;
+    }
 }
