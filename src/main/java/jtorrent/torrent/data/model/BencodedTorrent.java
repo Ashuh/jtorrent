@@ -11,7 +11,7 @@ import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -116,7 +116,8 @@ public class BencodedTorrent extends BencodedObject {
                     .map(TrackerFactory::fromUri)
                     .collect(Collectors.toCollection(() -> trackers));
 
-            LocalDateTime creationDateTime = LocalDateTime.ofEpochSecond(creationDate, 0, ZoneOffset.UTC);
+            LocalDateTime creationDateTime = LocalDateTime.ofEpochSecond(creationDate, 0,
+                    OffsetDateTime.now().getOffset());
             List<Sha1Hash> pieceHashes = mapPieces(info.getPieces());
             int pieceLength = info.getPieceLength();
             String name = info.getName();
