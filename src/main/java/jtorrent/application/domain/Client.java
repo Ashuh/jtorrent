@@ -58,7 +58,6 @@ public class Client implements LocalServiceDiscoveryManager.Listener, TorrentHan
         torrentRepository.getTorrents().subscribe(event -> {
             switch (event.getType()) {
             case ADD:
-                startTorrent(event.getItem());
                 break;
             case REMOVE:
                 stopTorrent(event.getItem());
