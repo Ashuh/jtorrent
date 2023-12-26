@@ -3,21 +3,9 @@ package jtorrent.common.domain.util;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-import jtorrent.common.domain.util.exception.Sha1AlgorithmUnavailableException;
-
 public class Sha1Hash extends Bit160Value {
 
     public static final int HASH_SIZE = 20;
-
-    private static final MessageDigest MESSAGE_DIGEST;
-
-    static {
-        try {
-            MESSAGE_DIGEST = MessageDigest.getInstance("SHA-1");
-        } catch (NoSuchAlgorithmException e) {
-            throw new Sha1AlgorithmUnavailableException(e);
-        }
-    }
 
     public Sha1Hash(byte[] hash) {
         super(hash);
@@ -30,9 +18,22 @@ public class Sha1Hash extends Bit160Value {
      * @return the SHA-1 hash of the given bytes
      */
     public static Sha1Hash of(byte[] bytes) {
-        byte[] hash = MESSAGE_DIGEST.digest(bytes);
-        MESSAGE_DIGEST.reset();
+        byte[] hash = getSha1MessageDigest().digest(bytes);
         return new Sha1Hash(hash);
+    }
+
+    /**
+     * Creates and returns a new SHA-1 {@link MessageDigest}.
+     * {@link MessageDigest}s are not reused because they are not thread-safe.
+     *
+     * @return a new SHA-1 {@link MessageDigest}
+     */
+    private static MessageDigest getSha1MessageDigest() {
+        try {
+            return MessageDigest.getInstance("SHA-1");
+        } catch (NoSuchAlgorithmException e) {
+            throw new AssertionError(e);
+        }
     }
 
     public static Sha1Hash fromHexString(String hexString) {
@@ -52,7 +53,7 @@ public class Sha1Hash extends Bit160Value {
         StringBuilder hexString = new StringBuilder();
 
         for (byte b : bytes) {
-            hexString.append(String.format("%02x", b));
+            hexString.append(String.format("%02X", b));
         }
 
         return hexString.toString();
