@@ -3,7 +3,6 @@ package jtorrent.torrent.presentation;
 import static jtorrent.common.domain.util.ValidationUtil.requireNonNull;
 
 import io.reactivex.rxjava3.core.Observable;
-import io.reactivex.rxjava3.functions.BiFunction;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -133,25 +132,4 @@ public class UiTorrent {
         return isActive;
     }
 
-    private static class CalculateEtaCombiner implements BiFunction<Long, Double, Double> {
-
-        private final long size;
-
-        public CalculateEtaCombiner(long size) {
-            this.size = size;
-        }
-
-        @Override
-        public Double apply(Long downloaded, Double rate) {
-            if (downloaded == size) {
-                return 0.0;
-            }
-
-            if (rate == 0) {
-                return Double.POSITIVE_INFINITY;
-            } else {
-                return (size - downloaded) / rate;
-            }
-        }
-    }
 }

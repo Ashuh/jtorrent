@@ -46,7 +46,7 @@
     </top>
     <center>
         <SplitPane dividerPositions="0.5" orientation="VERTICAL" BorderPane.alignment="CENTER">
-            <fx:include source="TorrentsTableView.fxml" fx:id="torrentsTableView"/>
+            <fx:include fx:id="torrentsTableView" source="TorrentsTableView.fxml"/>
             <AnchorPane>
                 <children>
                     <TabPane fx:id="tabPane" tabClosingPolicy="UNAVAILABLE" AnchorPane.bottomAnchor="0.0"
@@ -55,10 +55,10 @@
                             <AnchorPane/>
                         </Tab>
                         <Tab closable="false" text="Info">
-                            <AnchorPane/>
+                            <fx:include fx:id="torrentInfoView" source="TorrentInfoView.fxml"/>
                         </Tab>
                         <Tab fx:id="peersTab" closable="false" text="Peers">
-                            <fx:include source="PeersTableView.fxml" fx:id="peersTableView"/>
+                            <fx:include fx:id="peersTableView" source="PeersTableView.fxml"/>
                         </Tab>
                     </TabPane>
                 </children>

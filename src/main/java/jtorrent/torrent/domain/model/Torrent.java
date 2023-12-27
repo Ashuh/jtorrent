@@ -51,6 +51,8 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
     private final CombinedDoubleSumObservable uploadRateObservable = new CombinedDoubleSumObservable();
     private final AtomicLong verifiedBytes = new AtomicLong(0);
     private final BehaviorSubject<Long> verifiedBytesSubject = BehaviorSubject.createDefault(0L);
+    private final BehaviorSubject<BitSet> verifiedPiecesSubject = BehaviorSubject.createDefault(new BitSet());
+    private final BehaviorSubject<BitSet> availablePiecesSubject = BehaviorSubject.createDefault(new BitSet());
     private final BehaviorSubject<Boolean> isActiveSubject = BehaviorSubject.createDefault(false);
     private boolean isActive = false;
 
@@ -191,6 +193,9 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
 
     public void setPieceMissing(int pieceIndex) {
         pieceTracker.setPieceMissing(pieceIndex);
+        verifiedBytes.getAndAdd(-getPieceSize(pieceIndex));
+        verifiedBytesSubject.onNext(verifiedBytes.get());
+        verifiedPiecesSubject.onNext(pieceTracker.getVerifiedPieces());
     }
 
     public BitSet getCompletelyMissingPiecesWithUnrequestedBlocks() {
@@ -205,10 +210,19 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
         return pieceTracker.getVerifiedPieces();
     }
 
+    public Observable<BitSet> getVerifiedPiecesObservable() {
+        return verifiedPiecesSubject;
+    }
+
+    public Observable<BitSet> getAvailablePiecesObservable() {
+        return availablePiecesSubject;
+    }
+
     public void setPieceVerified(int pieceIndex) {
         pieceTracker.setPieceVerified(pieceIndex);
         verifiedBytes.getAndAdd(getPieceSize(pieceIndex));
         verifiedBytesSubject.onNext(verifiedBytes.get());
+        verifiedPiecesSubject.onNext(pieceTracker.getVerifiedPieces());
     }
 
     public boolean isPieceComplete(int pieceIndex) {

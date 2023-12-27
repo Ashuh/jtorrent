@@ -8,6 +8,9 @@ import java.util.Map;
 import java.util.Optional;
 
 import io.reactivex.rxjava3.disposables.Disposable;
+import javafx.application.Platform;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import jtorrent.application.domain.Client;
@@ -15,12 +18,14 @@ import jtorrent.peer.domain.model.Peer;
 import jtorrent.peer.presentation.UiPeer;
 import jtorrent.torrent.domain.model.Torrent;
 import jtorrent.torrent.presentation.UiTorrent;
+import jtorrent.torrent.presentation.UiTorrentInfo;
 
 public class ViewModel {
 
     private final Client client;
     private final ObservableList<UiTorrent> uiTorrents = FXCollections.observableList(new ArrayList<>());
     private final ObservableList<UiPeer> uiPeers = FXCollections.observableList(new ArrayList<>());
+    private final ObjectProperty<UiTorrentInfo> uiTorrentInfo = new SimpleObjectProperty<>(null);
     private final Map<UiTorrent, Torrent> uiTorrentToTorrent = new HashMap<>();
     private final Map<Peer, UiPeer> peerToUiPeer = new HashMap<>();
 
@@ -87,6 +92,12 @@ public class ViewModel {
                 throw new AssertionError("Unknown event type: " + event.getType());
             }
         });
+
+        UiTorrentInfo selectedUiTorrentInfo = UiTorrentInfo.fromDomain(torrent);
+        if (uiTorrentInfo.get() != null) {
+            uiTorrentInfo.get().dispose();
+        }
+        Platform.runLater(() -> uiTorrentInfo.set(selectedUiTorrentInfo));
     }
 
     public ObservableList<UiTorrent> getTorrents() {
@@ -110,4 +121,9 @@ public class ViewModel {
         }
         client.stopTorrent(selectedTorrent);
     }
+
+    public ObjectProperty<UiTorrentInfo> getTorrentInfo() {
+        return uiTorrentInfo;
+    }
+
 }
