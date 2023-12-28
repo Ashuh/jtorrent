@@ -43,7 +43,6 @@ public class DataStatusBar extends Pane {
         BitSet changed = (BitSet) previous.clone();
         changed.xor(current);
         changed.stream()
-                .filter(i -> i < totalSegments.get())
                 .forEach(this::flipColor);
     }
 
