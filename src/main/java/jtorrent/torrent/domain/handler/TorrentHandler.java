@@ -85,6 +85,9 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
                     workDispatcher.start();
                     trackerHandlers.forEach(TrackerHandler::start);
                     unchokeTask.scheduleAtFixedRate(0, 10, SECONDS);
+                }).exceptionally(throwable -> {
+                    log(Level.ERROR, "Failed to start", throwable);
+                    return null;
                 });
     }
 
@@ -190,9 +193,14 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
     }
 
     private boolean isPieceChecksumValid(int pieceIndex) {
-        byte[] pieceBytes = repository.getPiece(torrent, pieceIndex);
-        Sha1Hash expected = torrent.getPieceHash(pieceIndex);
-        return Sha1Hash.of(pieceBytes).equals(expected);
+        try {
+            byte[] pieceBytes = repository.getPiece(torrent, pieceIndex);
+            Sha1Hash expected = torrent.getPieceHash(pieceIndex);
+            return Sha1Hash.of(pieceBytes).equals(expected);
+        } catch (IOException e) {
+            log(Level.ERROR, String.format("Failed to retrieve piece %d", pieceIndex), e);
+            return false;
+        }
     }
 
     @Override
@@ -244,7 +252,14 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
     public void handleBlockRequested(PeerHandler peerHandler, int pieceIndex, int offset, int length) {
         log(Level.DEBUG, String.format("Handling block requested (%d - %d) for piece %d", offset, offset + length,
                 pieceIndex));
-        byte[] data = repository.getBlock(torrent, pieceIndex, offset, length);
+        byte[] data;
+        try {
+            data = repository.getBlock(torrent, pieceIndex, offset, length);
+        } catch (IOException e) {
+            log(Level.ERROR, String.format("Failed to retrieve block [%d - %d] for piece %d",
+                    offset, offset + length, pieceIndex), e);
+            return;
+        }
         try {
             peerHandler.sendPiece(pieceIndex, offset, data);
         } catch (IOException e) {
@@ -556,7 +571,12 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
 
             int blockIndex = offset / torrent.getBlockSize();
 
-            repository.storeBlock(torrent, pieceIndex, offset, data);
+            try {
+                repository.storeBlock(torrent, pieceIndex, offset, data);
+            } catch (IOException e) {
+                log(Level.ERROR, String.format("Failed to store block %d of piece %d", blockIndex, pieceIndex), e);
+                return;
+            }
 
             synchronized (pieceStateLock) {
                 torrent.setBlockReceived(pieceIndex, blockIndex);

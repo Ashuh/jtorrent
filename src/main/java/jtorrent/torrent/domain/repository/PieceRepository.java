@@ -1,11 +1,13 @@
 package jtorrent.torrent.domain.repository;
 
+import java.io.IOException;
+
 import jtorrent.torrent.domain.model.Torrent;
 
 
 public interface PieceRepository {
 
-    byte[] getPiece(Torrent torrent, int index);
+    byte[] getPiece(Torrent torrent, int index) throws IOException;
 
     /**
      * Retrieves a block of data from a torrent.
@@ -16,7 +18,7 @@ public interface PieceRepository {
      * @param length  the length of the block to retrieve
      * @return the block of data as a byte array
      */
-    byte[] getBlock(Torrent torrent, int index, int offset, int length);
+    byte[] getBlock(Torrent torrent, int index, int offset, int length) throws IOException;
 
     /**
      * Stores a block of data in a torrent.
@@ -26,5 +28,5 @@ public interface PieceRepository {
      * @param offset  the offset within the piece where the block should be stored
      * @param data    the block of data to be stored as a byte array
      */
-    void storeBlock(Torrent torrent, int index, int offset, byte[] data);
+    void storeBlock(Torrent torrent, int index, int offset, byte[] data) throws IOException;
 }

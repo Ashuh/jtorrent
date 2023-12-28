@@ -1,8 +1,11 @@
 package jtorrent.torrent.domain.model;
 
+import static jtorrent.common.domain.util.ValidationUtil.requireAtMost;
+import static jtorrent.common.domain.util.ValidationUtil.requireNonNegative;
 import static jtorrent.common.domain.util.ValidationUtil.requireNonNull;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -17,7 +20,6 @@ import java.util.stream.IntStream;
 
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.subjects.BehaviorSubject;
-import jtorrent.common.domain.util.RangeList;
 import jtorrent.common.domain.util.Sha1Hash;
 import jtorrent.common.domain.util.rx.CombinedDoubleSumObservable;
 import jtorrent.common.domain.util.rx.MutableRxObservableSet;
@@ -39,8 +41,8 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
     private final List<Sha1Hash> pieceHashes;
     private final String name;
     private final List<File> files;
+    private final List<FileInfo> fileInfos;
     private final Sha1Hash infoHash;
-    private final RangeList fileByteRanges;
     private final PieceTracker pieceTracker;
     private final AtomicInteger downloaded = new AtomicInteger(0);
     private final BehaviorSubject<Integer> downloadedSubject = BehaviorSubject.createDefault(0);
@@ -66,11 +68,41 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
         this.pieceHashes = requireNonNull(pieceHashes);
         this.name = requireNonNull(name);
         this.files = requireNonNull(files);
+        this.fileInfos = computeFileBoundaries(files, pieceSize);
         this.infoHash = requireNonNull(infoHash);
-        this.fileByteRanges = RangeList.fromRangeSizes(0, files.stream()
-                .map(File::getSize)
-                .collect(Collectors.toList()));
         this.pieceTracker = new PieceTracker();
+    }
+
+    private static List<FileInfo> computeFileBoundaries(List<File> files, long pieceSize) {
+        List<FileInfo> fileInfos = new ArrayList<>();
+
+        int prevLastPiece = 0; // inclusive
+        int prevLastPieceEnd = -1; // inclusive
+
+        for (File file : files) {
+            int firstPiece = prevLastPiece;
+            int firstPieceStart = prevLastPieceEnd + 1;
+            boolean isPrevLastPieceFullyOccupied = firstPieceStart == pieceSize;
+            if (isPrevLastPieceFullyOccupied) {
+                firstPiece++;
+                firstPieceStart = 0;
+            }
+
+            long fileStart = firstPiece * pieceSize + firstPieceStart;
+            long firstPieceBytes = pieceSize - firstPieceStart;
+            long remainingFileBytes = file.getSize() - firstPieceBytes;
+            int numRemainingPieces = (int) Math.ceil(remainingFileBytes / (double) pieceSize);
+            int lastPiece = firstPiece + numRemainingPieces;
+            int lastPieceEnd = (int) (remainingFileBytes % pieceSize) - 1;
+            long fileEnd = lastPiece * pieceSize + lastPieceEnd;
+
+            prevLastPiece = lastPiece;
+            prevLastPieceEnd = lastPieceEnd;
+            FileInfo fileInfo = new FileInfo(firstPiece, firstPieceStart, lastPiece, lastPieceEnd, fileStart, fileEnd);
+            fileInfos.add(fileInfo);
+        }
+
+        return fileInfos;
     }
 
     public Set<Tracker> getTrackers() {
@@ -167,8 +199,49 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
         return pieceHashes.size();
     }
 
-    public RangeList getFileByteRanges() {
-        return fileByteRanges;
+    /**
+     * Returns the files and their corresponding file info that fall within the given range.
+     *
+     * @param start the byte offset to start at (inclusive)
+     * @param end   the byte offset to end at (inclusive)
+     * @return a list of files and their corresponding file info that fall within the given range that is sorted by the
+     * start byte offset of the file
+     */
+    public List<Map.Entry<File, FileInfo>> getFilesInRange(long start, long end) {
+        int startIndex = getFileIndex(start); // inclusive
+        int endIndex = getFileIndex(end); // inclusive
+
+        return IntStream.range(startIndex, endIndex + 1)
+                .mapToObj(i -> Map.entry(files.get(i), fileInfos.get(i)))
+                .collect(Collectors.toList());
+    }
+
+    private int getFileIndex(long offset) {
+        requireNonNegative(offset);
+        requireAtMost(offset, getTotalSize() - 1);
+
+        int low = 0;
+        int high = files.size() - 1;
+
+        while (low < high) {
+            int mid = low + (high - low) / 2;
+            FileInfo midFileInfo = fileInfos.get(mid);
+            int midFileFirstPiece = midFileInfo.firstPiece();
+            long midStart = getPieceOffset(midFileFirstPiece) + midFileInfo.firstPieceStart();
+            int midFileLastPiece = midFileInfo.lastPiece();
+            long midEnd = getPieceOffset(midFileLastPiece) + midFileInfo.lastPieceEnd();
+            boolean isOffsetWithinMidFile = offset >= midStart && offset <= midEnd;
+
+            if (isOffsetWithinMidFile) {
+                return mid;
+            } else if (offset < midStart) {
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        return high;
     }
 
     public long getPieceOffset(int index) {

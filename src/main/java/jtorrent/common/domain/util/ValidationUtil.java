@@ -26,6 +26,13 @@ public class ValidationUtil {
         return value;
     }
 
+    public static long requireAtMost(long value, long max) {
+        if (value > max) {
+            throw new IllegalArgumentException("Value must be at most " + max);
+        }
+        return value;
+    }
+
     public static int requireInRange(int value, int min, int max) {
         if (value < min || value > max) {
             throw new IllegalArgumentException("Value must be in range [" + min + ", " + max + "]");
