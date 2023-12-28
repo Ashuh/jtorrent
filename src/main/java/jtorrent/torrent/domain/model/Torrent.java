@@ -265,10 +265,12 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
     }
 
     public void setPieceMissing(int pieceIndex) {
+        if (pieceTracker.isPieceVerified(pieceIndex)) {
+            verifiedBytes.getAndAdd(-getPieceSize(pieceIndex));
+            verifiedBytesSubject.onNext(verifiedBytes.get());
+            verifiedPiecesSubject.onNext(pieceTracker.getVerifiedPieces());
+        }
         pieceTracker.setPieceMissing(pieceIndex);
-        verifiedBytes.getAndAdd(-getPieceSize(pieceIndex));
-        verifiedBytesSubject.onNext(verifiedBytes.get());
-        verifiedPiecesSubject.onNext(pieceTracker.getVerifiedPieces());
     }
 
     public BitSet getCompletelyMissingPiecesWithUnrequestedBlocks() {
@@ -529,6 +531,10 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
             unavailableAndUnrequestedBlocks.andNot(availableBlocks);
             unavailableAndUnrequestedBlocks.andNot(requestedBlocks);
             return unavailableAndUnrequestedBlocks;
+        }
+
+        public boolean isPieceVerified(int piece) {
+            return verifiedPieces.get(piece);
         }
 
         private boolean isPieceCompletelyMissing(int piece) {
