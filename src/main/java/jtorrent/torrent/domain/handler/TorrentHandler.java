@@ -79,9 +79,9 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
     }
 
     public void start() {
+        torrent.setIsActive(true);
         CompletableFuture.runAsync(this::verifyFiles)
                 .thenAccept(ignored -> {
-                    torrent.setIsActive(true);
                     workDispatcher.start();
                     trackerHandlers.forEach(TrackerHandler::start);
                     unchokeTask.scheduleAtFixedRate(0, 10, SECONDS);
