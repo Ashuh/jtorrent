@@ -14,6 +14,7 @@ import jtorrent.common.presentation.util.BindingUtils;
 import jtorrent.common.presentation.util.DataUnitFormatter;
 import jtorrent.torrent.domain.model.File;
 import jtorrent.torrent.domain.model.FileInfo;
+import jtorrent.torrent.domain.model.FileWithInfo;
 
 public class UiFileInfo {
 
@@ -57,7 +58,10 @@ public class UiFileInfo {
         this.disposables = disposables;
     }
 
-    public static UiFileInfo fromDomain(File file, FileInfo fileInfo) {
+    public static UiFileInfo fromDomain(FileWithInfo fileWithInfo) {
+        File file = fileWithInfo.file();
+        FileInfo fileInfo = fileWithInfo.fileInfo();
+
         StringProperty path = new SimpleStringProperty(file.getPath().toString());
         StringProperty size = new SimpleStringProperty(DataUnitFormatter.formatSize(file.getSize()));
         StringProperty done = new SimpleStringProperty("");

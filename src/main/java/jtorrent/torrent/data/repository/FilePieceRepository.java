@@ -6,10 +6,10 @@ import java.lang.System.Logger.Level;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
 
 import jtorrent.torrent.domain.model.File;
 import jtorrent.torrent.domain.model.FileInfo;
+import jtorrent.torrent.domain.model.FileWithInfo;
 import jtorrent.torrent.domain.model.Torrent;
 import jtorrent.torrent.domain.repository.PieceRepository;
 
@@ -39,10 +39,10 @@ public class FilePieceRepository implements PieceRepository {
         ByteBuffer buffer = ByteBuffer.allocate(length);
         long end = start + length - 1; // inclusive
 
-        List<Map.Entry<File, FileInfo>> files = torrent.getFilesInRange(start, end);
-        for (Map.Entry<File, FileInfo> entry : files) {
-            File file = entry.getKey();
-            FileInfo fileInfo = entry.getValue();
+        List<FileWithInfo> fileWithInfos = torrent.getFileWithInfosInRange(start, end);
+        for (FileWithInfo fileWithInfo : fileWithInfos) {
+            File file = fileWithInfo.file();
+            FileInfo fileInfo = fileWithInfo.fileInfo();
             long startOffsetInFile = Math.max(start - fileInfo.start(), 0);
             long endOffsetInFile = Math.min(fileInfo.end(), end) - fileInfo.start();
             int readLength = (int) (endOffsetInFile - startOffsetInFile + 1);
@@ -59,10 +59,10 @@ public class FilePieceRepository implements PieceRepository {
         long end = start + data.length - 1; // inclusive
 
         ByteBuffer buffer = ByteBuffer.wrap(data);
-        List<Map.Entry<File, FileInfo>> files = torrent.getFilesInRange(start, end);
-        for (Map.Entry<File, FileInfo> entry : files) {
-            File file = entry.getKey();
-            FileInfo fileInfo = entry.getValue();
+        List<FileWithInfo> fileWithInfos = torrent.getFileWithInfosInRange(start, end);
+        for (FileWithInfo fileWithInfo : fileWithInfos) {
+            File file = fileWithInfo.file();
+            FileInfo fileInfo = fileWithInfo.fileInfo();
             long startOffsetInFile = Math.max(start - fileInfo.start(), 0);
             long endOffsetInFile = Math.min(fileInfo.end(), end) - fileInfo.start();
             int writeLength = (int) (endOffsetInFile - startOffsetInFile + 1);

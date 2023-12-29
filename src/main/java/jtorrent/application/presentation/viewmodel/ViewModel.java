@@ -97,7 +97,7 @@ public class ViewModel {
         });
 
         List<UiFileInfo> selectedUiFilesInfos = torrent.getFilesWithInfo().stream()
-                .map(entry -> UiFileInfo.fromDomain(entry.getKey(), entry.getValue()))
+                .map(UiFileInfo::fromDomain)
                 .toList();
         Platform.runLater(() -> {
             if (uiFileInfos.get() != null) {

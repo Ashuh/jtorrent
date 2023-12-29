@@ -1,11 +1,8 @@
 package jtorrent.torrent.domain.model;
 
-import static jtorrent.common.domain.util.ValidationUtil.requireAtMost;
-import static jtorrent.common.domain.util.ValidationUtil.requireNonNegative;
 import static jtorrent.common.domain.util.ValidationUtil.requireNonNull;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -15,7 +12,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import io.reactivex.rxjava3.core.Observable;
@@ -40,8 +36,7 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
     private final int pieceSize;
     private final List<Sha1Hash> pieceHashes;
     private final String name;
-    private final List<File> files;
-    private final List<FileInfo> fileInfos;
+    private final FileWithInfoList fileWithInfos;
     private final Sha1Hash infoHash;
     private final PieceTracker pieceTracker;
     private final AtomicInteger downloaded = new AtomicInteger(0);
@@ -67,42 +62,9 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
         this.pieceSize = pieceSize;
         this.pieceHashes = requireNonNull(pieceHashes);
         this.name = requireNonNull(name);
-        this.files = requireNonNull(files);
-        this.fileInfos = computeFileBoundaries(files, pieceSize);
+        this.fileWithInfos = FileWithInfoList.fromFilesWithPieceSize(files, pieceSize);
         this.infoHash = requireNonNull(infoHash);
         this.pieceTracker = new PieceTracker();
-    }
-
-    private static List<FileInfo> computeFileBoundaries(List<File> files, long pieceSize) {
-        List<FileInfo> fileInfos = new ArrayList<>();
-
-        int prevLastPiece = 0; // inclusive
-        int prevLastPieceEnd = -1; // inclusive
-
-        for (File file : files) {
-            int firstPiece = prevLastPiece;
-            int firstPieceStart = prevLastPieceEnd + 1;
-            boolean isPrevLastPieceFullyOccupied = firstPieceStart == pieceSize;
-            if (isPrevLastPieceFullyOccupied) {
-                firstPiece++;
-                firstPieceStart = 0;
-            }
-
-            long fileStart = firstPiece * pieceSize + firstPieceStart;
-            long firstPieceBytes = pieceSize - firstPieceStart;
-            long remainingFileBytes = file.getSize() - firstPieceBytes;
-            int numRemainingPieces = (int) Math.ceil(remainingFileBytes / (double) pieceSize);
-            int lastPiece = firstPiece + numRemainingPieces;
-            int lastPieceEnd = (int) (remainingFileBytes % pieceSize) - 1;
-            long fileEnd = lastPiece * pieceSize + lastPieceEnd;
-
-            prevLastPiece = lastPiece;
-            prevLastPieceEnd = lastPieceEnd;
-            FileInfo fileInfo = new FileInfo(firstPiece, firstPieceStart, lastPiece, lastPieceEnd, fileStart, fileEnd);
-            fileInfos.add(fileInfo);
-        }
-
-        return fileInfos;
     }
 
     public Set<Tracker> getTrackers() {
@@ -158,13 +120,15 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
     }
 
     public List<File> getFiles() {
-        return files;
+        return fileWithInfos.getFiles();
     }
 
-    public List<Map.Entry<File, FileInfo>> getFilesWithInfo() {
-        return IntStream.range(0, files.size())
-                .mapToObj(i -> Map.entry(files.get(i), fileInfos.get(i)))
-                .collect(Collectors.toList());
+    public List<FileWithInfo> getFileWithInfosInRange(long start, long end) {
+        return fileWithInfos.getInRange(start, end);
+    }
+
+    public List<FileWithInfo> getFilesWithInfo() {
+        return fileWithInfos.get();
     }
 
     @Override
@@ -188,10 +152,7 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
     }
 
     public long getTotalSize() {
-        return files.stream()
-                .map(File::getSize)
-                .mapToLong(Long::longValue)
-                .sum();
+        return fileWithInfos.getTotalFileSize();
     }
 
     private int getVerifiedBytes() {
@@ -203,51 +164,6 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
 
     public int getNumPieces() {
         return pieceHashes.size();
-    }
-
-    /**
-     * Returns the files and their corresponding file info that fall within the given range.
-     *
-     * @param start the byte offset to start at (inclusive)
-     * @param end   the byte offset to end at (inclusive)
-     * @return a list of files and their corresponding file info that fall within the given range that is sorted by the
-     * start byte offset of the file
-     */
-    public List<Map.Entry<File, FileInfo>> getFilesInRange(long start, long end) {
-        int startIndex = getFileIndex(start); // inclusive
-        int endIndex = getFileIndex(end); // inclusive
-
-        return IntStream.range(startIndex, endIndex + 1)
-                .mapToObj(i -> Map.entry(files.get(i), fileInfos.get(i)))
-                .collect(Collectors.toList());
-    }
-
-    private int getFileIndex(long offset) {
-        requireNonNegative(offset);
-        requireAtMost(offset, getTotalSize() - 1);
-
-        int low = 0;
-        int high = files.size() - 1;
-
-        while (low < high) {
-            int mid = low + (high - low) / 2;
-            FileInfo midFileInfo = fileInfos.get(mid);
-            int midFileFirstPiece = midFileInfo.firstPiece();
-            long midStart = getPieceOffset(midFileFirstPiece) + midFileInfo.firstPieceStart();
-            int midFileLastPiece = midFileInfo.lastPiece();
-            long midEnd = getPieceOffset(midFileLastPiece) + midFileInfo.lastPieceEnd();
-            boolean isOffsetWithinMidFile = offset >= midStart && offset <= midEnd;
-
-            if (isOffsetWithinMidFile) {
-                return mid;
-            } else if (offset < midStart) {
-                high = mid - 1;
-            } else {
-                low = mid + 1;
-            }
-        }
-
-        return high;
     }
 
     public long getPieceOffset(int index) {
@@ -278,10 +194,10 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
 
             long pieceStart = getPieceOffset(pieceIndex);
             long pieceEnd = pieceStart + getPieceSize(pieceIndex) - 1;
-            List<Map.Entry<File, FileInfo>> filesInRange = getFilesInRange(pieceStart, pieceEnd);
+            List<FileWithInfo> filesInRange = fileWithInfos.getInRange(pieceStart, pieceEnd);
 
-            for (Map.Entry<File, FileInfo> fileWithInfo : filesInRange) {
-                FileInfo fileInfo = fileWithInfo.getValue();
+            for (FileWithInfo fileWithInfo : filesInRange) {
+                FileInfo fileInfo = fileWithInfo.fileInfo();
                 fileInfo.setPieceNotVerified(pieceIndex - fileInfo.firstPiece());
                 long pieceBytesWithinFile = getPieceBytesInFile(pieceIndex, fileInfo);
                 fileInfo.incrementVerifiedBytes(pieceBytesWithinFile);
@@ -330,10 +246,10 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
 
         long pieceStart = getPieceOffset(pieceIndex);
         long pieceEnd = pieceStart + getPieceSize(pieceIndex) - 1;
-        List<Map.Entry<File, FileInfo>> filesInRange = getFilesInRange(pieceStart, pieceEnd);
+        List<FileWithInfo> filesInRange = fileWithInfos.getInRange(pieceStart, pieceEnd);
 
-        for (Map.Entry<File, FileInfo> fileWithInfo : filesInRange) {
-            FileInfo fileInfo = fileWithInfo.getValue();
+        for (FileWithInfo fileWithInfo : filesInRange) {
+            FileInfo fileInfo = fileWithInfo.fileInfo();
             fileInfo.setPieceVerified(pieceIndex - fileInfo.firstPiece());
             long pieceBytesWithinFile = getPieceBytesInFile(pieceIndex, fileInfo);
             fileInfo.incrementVerifiedBytes(pieceBytesWithinFile);
@@ -421,7 +337,8 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
 
     @Override
     public int hashCode() {
-        return Objects.hash(trackers, creationDate, comment, createdBy, pieceSize, pieceHashes, name, files, infoHash);
+        return Objects.hash(trackers, creationDate, comment, createdBy, pieceSize, pieceHashes, name, fileWithInfos,
+                infoHash);
     }
 
     @Override
@@ -440,7 +357,7 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
                 && createdBy.equals(torrent.createdBy)
                 && pieceHashes.equals(torrent.pieceHashes)
                 && name.equals(torrent.name)
-                && files.equals(torrent.files)
+                && fileWithInfos.equals(torrent.fileWithInfos)
                 && infoHash.equals(torrent.infoHash);
     }
 
@@ -453,7 +370,7 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
                 + ", createdBy='" + createdBy + '\''
                 + ", pieceSize=" + pieceSize
                 + ", name='" + name + '\''
-                + ", files=" + files
+                + ", fileWithInfos=" + fileWithInfos
                 + ", infoHash=" + infoHash
                 + '}';
     }
