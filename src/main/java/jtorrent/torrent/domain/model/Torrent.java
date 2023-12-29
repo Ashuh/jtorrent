@@ -155,10 +155,10 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
         return fileWithInfos.getTotalFileSize();
     }
 
-    private int getVerifiedBytes() {
+    private long getVerifiedBytes() {
         return pieceTracker.getVerifiedPieces()
                 .stream()
-                .map(this::getPieceSize)
+                .mapToLong(this::getPieceSize)
                 .sum();
     }
 
