@@ -161,6 +161,12 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
         return files;
     }
 
+    public List<Map.Entry<File, FileInfo>> getFilesWithInfo() {
+        return IntStream.range(0, files.size())
+                .mapToObj(i -> Map.entry(files.get(i), fileInfos.get(i)))
+                .collect(Collectors.toList());
+    }
+
     @Override
     public Sha1Hash getInfoHash() {
         return infoHash;
@@ -269,8 +275,27 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
             verifiedBytes.getAndAdd(-getPieceSize(pieceIndex));
             verifiedBytesSubject.onNext(verifiedBytes.get());
             verifiedPiecesSubject.onNext(pieceTracker.getVerifiedPieces());
+
+            long pieceStart = getPieceOffset(pieceIndex);
+            long pieceEnd = pieceStart + getPieceSize(pieceIndex) - 1;
+            List<Map.Entry<File, FileInfo>> filesInRange = getFilesInRange(pieceStart, pieceEnd);
+
+            for (Map.Entry<File, FileInfo> fileWithInfo : filesInRange) {
+                FileInfo fileInfo = fileWithInfo.getValue();
+                fileInfo.setPieceNotVerified(pieceIndex - fileInfo.firstPiece());
+                long pieceBytesWithinFile = getPieceBytesInFile(pieceIndex, fileInfo);
+                fileInfo.incrementVerifiedBytes(pieceBytesWithinFile);
+            }
         }
         pieceTracker.setPieceMissing(pieceIndex);
+    }
+
+    private long getPieceBytesInFile(int piece, FileInfo fileInfo) {
+        long pieceStart = getPieceOffset(piece);
+        long pieceEnd = pieceStart + getPieceSize(piece) - 1;
+        long pieceStartWithinFile = Math.max(pieceStart, fileInfo.start());
+        long pieceEndWithinFile = Math.min(pieceEnd, fileInfo.end());
+        return pieceEndWithinFile - pieceStartWithinFile + 1;
     }
 
     public BitSet getCompletelyMissingPiecesWithUnrequestedBlocks() {
@@ -294,10 +319,25 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
     }
 
     public void setPieceVerified(int pieceIndex) {
+        if (pieceTracker.isPieceVerified(pieceIndex)) {
+            return;
+        }
+
         pieceTracker.setPieceVerified(pieceIndex);
         verifiedBytes.getAndAdd(getPieceSize(pieceIndex));
         verifiedBytesSubject.onNext(verifiedBytes.get());
         verifiedPiecesSubject.onNext(pieceTracker.getVerifiedPieces());
+
+        long pieceStart = getPieceOffset(pieceIndex);
+        long pieceEnd = pieceStart + getPieceSize(pieceIndex) - 1;
+        List<Map.Entry<File, FileInfo>> filesInRange = getFilesInRange(pieceStart, pieceEnd);
+
+        for (Map.Entry<File, FileInfo> fileWithInfo : filesInRange) {
+            FileInfo fileInfo = fileWithInfo.getValue();
+            fileInfo.setPieceVerified(pieceIndex - fileInfo.firstPiece());
+            long pieceBytesWithinFile = getPieceBytesInFile(pieceIndex, fileInfo);
+            fileInfo.incrementVerifiedBytes(pieceBytesWithinFile);
+        }
     }
 
     public boolean isPieceComplete(int pieceIndex) {

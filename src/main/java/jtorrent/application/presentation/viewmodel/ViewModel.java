@@ -4,6 +4,7 @@ import static jtorrent.common.domain.util.ValidationUtil.requireNonNull;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -17,6 +18,7 @@ import jtorrent.application.domain.Client;
 import jtorrent.peer.domain.model.Peer;
 import jtorrent.peer.presentation.UiPeer;
 import jtorrent.torrent.domain.model.Torrent;
+import jtorrent.torrent.presentation.UiFileInfo;
 import jtorrent.torrent.presentation.UiTorrent;
 import jtorrent.torrent.presentation.UiTorrentInfo;
 
@@ -25,6 +27,7 @@ public class ViewModel {
     private final Client client;
     private final ObservableList<UiTorrent> uiTorrents = FXCollections.observableList(new ArrayList<>());
     private final ObservableList<UiPeer> uiPeers = FXCollections.observableList(new ArrayList<>());
+    private final ObjectProperty<ObservableList<UiFileInfo>> uiFileInfos = new SimpleObjectProperty<>();
     private final ObjectProperty<UiTorrentInfo> uiTorrentInfo = new SimpleObjectProperty<>(null);
     private final Map<UiTorrent, Torrent> uiTorrentToTorrent = new HashMap<>();
     private final Map<Peer, UiPeer> peerToUiPeer = new HashMap<>();
@@ -93,6 +96,16 @@ public class ViewModel {
             }
         });
 
+        List<UiFileInfo> selectedUiFilesInfos = torrent.getFilesWithInfo().stream()
+                .map(entry -> UiFileInfo.fromDomain(entry.getKey(), entry.getValue()))
+                .toList();
+        Platform.runLater(() -> {
+            if (uiFileInfos.get() != null) {
+                uiFileInfos.get().forEach(UiFileInfo::dispose);
+            }
+            uiFileInfos.set(FXCollections.observableList(selectedUiFilesInfos));
+        });
+
         UiTorrentInfo selectedUiTorrentInfo = UiTorrentInfo.fromDomain(torrent);
         if (uiTorrentInfo.get() != null) {
             uiTorrentInfo.get().dispose();
@@ -122,8 +135,11 @@ public class ViewModel {
         client.stopTorrent(selectedTorrent);
     }
 
+    public ObjectProperty<ObservableList<UiFileInfo>> getFileInfos() {
+        return uiFileInfos;
+    }
+
     public ObjectProperty<UiTorrentInfo> getTorrentInfo() {
         return uiTorrentInfo;
     }
-
 }

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<TableView fx:id="tableView" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="jtorrent.torrent.presentation.view.FilesView">
+    <columns>
+        <TableColumn fx:id="path" text="Path"/>
+        <TableColumn fx:id="size" text="Size"/>
+        <TableColumn fx:id="done" text="Done"/>
+        <TableColumn fx:id="percentDone" text="\%"/>
+        <TableColumn fx:id="firstPiece" text="First Piece"/>
+        <TableColumn fx:id="numPieces" text="# Pieces"/>
+        <TableColumn fx:id="pieces" text="# Pieces"/>
+        <TableColumn fx:id="priority" text="Priority"/>
+        <TableColumn fx:id="mode" text="Mode"/>
+        <TableColumn fx:id="rate" text="Rate"/>
+        <TableColumn fx:id="resolution" text="Resolution"/>
+        <TableColumn fx:id="duration" text="Duration"/>
+        <TableColumn fx:id="streamable" text="Streamable"/>
+        <TableColumn fx:id="hasHeader" text="Has Header"/>
+        <TableColumn fx:id="codecs" text="Codecs"/>
+    </columns>
+</TableView>

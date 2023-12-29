@@ -6,16 +6,14 @@ import java.util.BitSet;
 
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
-import io.reactivex.rxjava3.disposables.Disposable;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.Property;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import jtorrent.common.presentation.util.BindingUtils;
 import jtorrent.common.presentation.util.DataUnitFormatter;
-import jtorrent.common.presentation.util.UpdatePropertyConsumer;
 import jtorrent.torrent.domain.model.Torrent;
 
 public class UiTorrentInfo {
@@ -114,46 +112,41 @@ public class UiTorrentInfo {
         StringProperty comment = new SimpleStringProperty(torrent.getComment());
         CompositeDisposable disposables = new CompositeDisposable();
 
-        subscribe(torrent.getVerifiedPiecesObservable(), downloadedPieces, disposables);
-        subscribe(torrent.getAvailablePiecesObservable(), availablePieces, disposables);
+        BindingUtils.subscribe(torrent.getVerifiedPiecesObservable(), downloadedPieces, disposables);
+        BindingUtils.subscribe(torrent.getAvailablePiecesObservable(), availablePieces, disposables);
 
         Observable<String> remainingObservable = Observable.combineLatest(
                 torrent.getVerifiedBytesObservable(),
                 torrent.getDownloadRateObservable(),
                 new CalculateEtaCombiner(torrent.getTotalSize())
         ).map(Object::toString);
-        subscribe(remainingObservable, remaining, disposables);
+        BindingUtils.subscribe(remainingObservable, remaining, disposables);
 
         Observable<String> downloadedObservable = torrent.getDownloadedObservable().map(DataUnitFormatter::formatSize);
-        subscribe(downloadedObservable, downloaded, disposables);
+        BindingUtils.subscribe(downloadedObservable, downloaded, disposables);
 
         Observable<String> uploadedObservable = torrent.getUploadedObservable().map(DataUnitFormatter::formatSize);
-        subscribe(uploadedObservable, uploaded, disposables);
+        BindingUtils.subscribe(uploadedObservable, uploaded, disposables);
 
         Observable<String> downloadRateObservable = torrent.getDownloadRateObservable()
                 .map(DataUnitFormatter::formatRate);
-        subscribe(downloadRateObservable, downloadSpeed, disposables);
+        BindingUtils.subscribe(downloadRateObservable, downloadSpeed, disposables);
 
         Observable<String> uploadRateObservable = torrent.getUploadRateObservable().map(DataUnitFormatter::formatRate);
-        subscribe(uploadRateObservable, uploadSpeed, disposables);
+        BindingUtils.subscribe(uploadRateObservable, uploadSpeed, disposables);
 
         Observable<String> piecesObservable = torrent.getVerifiedPiecesObservable()
                 .map(BitSet::cardinality)
                 .map(numVerified -> formatPieces(torrent.getNumPieces(), torrent.getPieceSize(), numVerified));
-        subscribe(piecesObservable, pieces, disposables);
+        BindingUtils.subscribe(piecesObservable, pieces, disposables);
 
         Observable<String> totalSizeObservable = torrent.getVerifiedBytesObservable()
                 .map(verifiedBytes -> formatTotalSize(torrent.getTotalSize(), verifiedBytes));
-        subscribe(totalSizeObservable, totalSize, disposables);
+        BindingUtils.subscribe(totalSizeObservable, totalSize, disposables);
 
         return new UiTorrentInfo(downloadedPieces, availablePieces, totalPieces, timeElapsed, remaining, wasted,
                 downloaded, uploaded, seeds, downloadSpeed, uploadSpeed, peers, downLimit, upLimit, shareRatio,
                 status, saveAs, pieces, totalSize, createdBy, createdOn, completedOn, hash, comment, disposables);
-    }
-
-    private static <T> void subscribe(Observable<T> observable, Property<T> property, CompositeDisposable disposables) {
-        Disposable disposable = observable.subscribe(new UpdatePropertyConsumer<>(property));
-        disposables.add(disposable);
     }
 
     private static String formatTotalSize(long totalSize, long verified) {

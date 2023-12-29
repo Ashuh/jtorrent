@@ -52,7 +52,7 @@
                     <TabPane fx:id="tabPane" tabClosingPolicy="UNAVAILABLE" AnchorPane.bottomAnchor="0.0"
                              AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                         <Tab closable="false" text="Files">
-                            <AnchorPane/>
+                            <fx:include fx:id="filesView" source="FilesView.fxml"/>
                         </Tab>
                         <Tab closable="false" text="Info">
                             <fx:include fx:id="torrentInfoView" source="TorrentInfoView.fxml"/>
