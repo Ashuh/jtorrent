@@ -12,6 +12,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
 import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.ProgressBarTableCell;
 import jtorrent.application.presentation.viewmodel.ViewModel;
@@ -46,7 +47,10 @@ public class TorrentsTableView implements Initializable {
     @FXML
     private Button stopButton;
 
+    private ViewModel viewModel;
+
     public void setViewModel(ViewModel viewModel) {
+        this.viewModel = viewModel;
         SortedList<UiTorrent> sortedList = new SortedList<>(viewModel.getTorrents());
         sortedList.comparatorProperty().bind(tableView.comparatorProperty());
         tableView.setItems(sortedList);
@@ -74,6 +78,8 @@ public class TorrentsTableView implements Initializable {
         StopButtonDisabledBinding stopButtonDisabledBinding =
                 new StopButtonDisabledBinding(tableView.getSelectionModel().selectedItemProperty());
         stopButton.disableProperty().bind(stopButtonDisabledBinding);
+
+        tableView.setRowFactory(param -> new TorrentTableRow());
     }
 
     private abstract static class ButtonDisabledBinding extends BooleanBinding implements ChangeListener<UiTorrent> {
@@ -123,6 +129,18 @@ public class TorrentsTableView implements Initializable {
         @Override
         protected boolean computeValue() {
             return selectedTorrent == null || !selectedTorrent.isActiveProperty().get();
+        }
+    }
+
+    private class TorrentTableRow extends TableRow<UiTorrent> {
+
+        public TorrentTableRow() {
+            setOnMouseClicked(event -> {
+                if (event.getClickCount() == 2 && !isEmpty()) {
+                    UiTorrent torrent = getItem();
+                    viewModel.showTorrentInFileExplorer(torrent);
+                }
+            });
         }
     }
 }

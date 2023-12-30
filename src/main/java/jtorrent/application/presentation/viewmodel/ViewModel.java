@@ -2,6 +2,9 @@ package jtorrent.application.presentation.viewmodel;
 
 import static jtorrent.common.domain.util.ValidationUtil.requireNonNull;
 
+import java.io.IOException;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -23,6 +26,9 @@ import jtorrent.torrent.presentation.UiTorrent;
 import jtorrent.torrent.presentation.UiTorrentInfo;
 
 public class ViewModel {
+
+    private static final Logger LOGGER = System.getLogger(ViewModel.class.getName());
+    private static final String EXPLORER_EXE = "explorer.exe";
 
     private final Client client;
     private final ObservableList<UiTorrent> uiTorrents = FXCollections.observableList(new ArrayList<>());
@@ -113,14 +119,6 @@ public class ViewModel {
         Platform.runLater(() -> uiTorrentInfo.set(selectedUiTorrentInfo));
     }
 
-    public ObservableList<UiTorrent> getTorrents() {
-        return FXCollections.unmodifiableObservableList(uiTorrents);
-    }
-
-    public ObservableList<UiPeer> getPeers() {
-        return FXCollections.unmodifiableObservableList(uiPeers);
-    }
-
     public void startSelectedTorrent() {
         if (selectedTorrent == null) {
             return;
@@ -133,6 +131,26 @@ public class ViewModel {
             return;
         }
         client.stopTorrent(selectedTorrent);
+    }
+
+    public void showTorrentInFileExplorer(UiTorrent uiTorrent) {
+        Torrent torrent = uiTorrentToTorrent.get(uiTorrent);
+
+        // only works on windows. Doing this because Desktop::browseFileDirectory doesn't work on Windows 10
+        final String command = EXPLORER_EXE + " /SELECT,\"" + torrent.getSaveDirectory().toAbsolutePath() + "\"";
+        try {
+            Runtime.getRuntime().exec(command);
+        } catch (IOException e) {
+            LOGGER.log(Level.ERROR, "Failed to open file explorer", e);
+        }
+    }
+
+    public ObservableList<UiTorrent> getTorrents() {
+        return FXCollections.unmodifiableObservableList(uiTorrents);
+    }
+
+    public ObservableList<UiPeer> getPeers() {
+        return FXCollections.unmodifiableObservableList(uiPeers);
     }
 
     public ObjectProperty<ObservableList<UiFileInfo>> getFileInfos() {
