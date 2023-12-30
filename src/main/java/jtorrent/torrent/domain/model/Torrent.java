@@ -2,6 +2,8 @@ package jtorrent.torrent.domain.model;
 
 import static jtorrent.common.domain.util.ValidationUtil.requireNonNull;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.BitSet;
 import java.util.HashMap;
@@ -51,6 +53,7 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
     private final BehaviorSubject<BitSet> verifiedPiecesSubject = BehaviorSubject.createDefault(new BitSet());
     private final BehaviorSubject<BitSet> availablePiecesSubject = BehaviorSubject.createDefault(new BitSet());
     private final BehaviorSubject<Boolean> isActiveSubject = BehaviorSubject.createDefault(false);
+    private final Path saveDirectory = Paths.get("download").toAbsolutePath(); // TODO: make configurable
     private boolean isActive = false;
 
     public Torrent(Set<Tracker> trackers, LocalDateTime creationDate, String comment, String createdBy,
@@ -65,6 +68,10 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
         this.fileWithInfos = FileWithInfoList.fromFilesWithPieceSize(files, pieceSize);
         this.infoHash = requireNonNull(infoHash);
         this.pieceTracker = new PieceTracker();
+    }
+
+    public Path getSaveDirectory() {
+        return saveDirectory;
     }
 
     public Set<Tracker> getTrackers() {
