@@ -52,6 +52,7 @@
             <TableColumn fx:id="downSpeed" minWidth="0.0" prefWidth="121.0" text="Down Speed"/>
             <TableColumn fx:id="upSpeed" minWidth="0.0" prefWidth="121.0" text="Up Speed"/>
             <TableColumn fx:id="eta" minWidth="0.0" prefWidth="121.0" text="ETA"/>
+            <TableColumn fx:id="saveDirectory" minWidth="0.0" prefWidth="121.0" text="Save Directory"/>
         </columns>
     </TableView>
 </VBox>

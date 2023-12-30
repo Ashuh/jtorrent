@@ -35,6 +35,9 @@ public class TorrentsTableView implements Initializable {
     @FXML
     private TableColumn<UiTorrent, Double> eta;
     @FXML
+    private TableColumn<UiTorrent, String> saveDirectory;
+
+    @FXML
     private Button addButton;
     @FXML
     private Button addUrlButton;
@@ -70,6 +73,7 @@ public class TorrentsTableView implements Initializable {
         downSpeed.setCellValueFactory(cd -> cd.getValue().downSpeedProperty());
         upSpeed.setCellValueFactory(cd -> cd.getValue().upSpeedProperty());
         eta.setCellValueFactory(cd -> cd.getValue().etaProperty().asObject());
+        saveDirectory.setCellValueFactory(cd -> cd.getValue().saveDirectoryProperty());
 
         StartButtonDisabledBinding startButtonDisabledBinding =
                 new StartButtonDisabledBinding(tableView.getSelectionModel().selectedItemProperty());

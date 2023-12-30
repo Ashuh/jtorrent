@@ -21,16 +21,18 @@ public class UiTorrent {
     private final StringProperty downSpeed;
     private final StringProperty upSpeed;
     private final DoubleProperty eta;
+    private final StringProperty saveDirectory;
     private final BooleanProperty isActive;
 
     public UiTorrent(StringProperty name, StringProperty size, DoubleProperty progress, StringProperty downSpeed,
-            StringProperty upSpeed, DoubleProperty eta, BooleanProperty isActive) {
+            StringProperty upSpeed, DoubleProperty eta, StringProperty saveDirectory, BooleanProperty isActive) {
         this.name = requireNonNull(name);
         this.size = requireNonNull(size);
         this.progress = requireNonNull(progress);
         this.downSpeed = requireNonNull(downSpeed);
         this.upSpeed = requireNonNull(upSpeed);
         this.eta = requireNonNull(eta);
+        this.saveDirectory = requireNonNull(saveDirectory);
         this.isActive = requireNonNull(isActive);
     }
 
@@ -43,6 +45,7 @@ public class UiTorrent {
         StringProperty downSpeed = new SimpleStringProperty("");
         StringProperty upSpeed = new SimpleStringProperty("");
         DoubleProperty eta = new SimpleDoubleProperty(Double.POSITIVE_INFINITY);
+        StringProperty saveDirectory = new SimpleStringProperty(torrent.getSaveDirectory().toString());
         BooleanProperty isActive = new SimpleBooleanProperty(false);
 
         Observable<Integer> downloadedObservable = torrent.getDownloadedObservable();
@@ -66,7 +69,7 @@ public class UiTorrent {
 
         isActiveObservable.subscribe(new UpdatePropertyConsumer<>(isActive));
 
-        return new UiTorrent(name, size, progress, downSpeed, upSpeed, eta, isActive);
+        return new UiTorrent(name, size, progress, downSpeed, upSpeed, eta, saveDirectory, isActive);
     }
 
     private static String formatRate(double bytes) {
@@ -122,6 +125,14 @@ public class UiTorrent {
 
     public DoubleProperty etaProperty() {
         return eta;
+    }
+
+    public String getSaveDirectory() {
+        return saveDirectory.get();
+    }
+
+    public StringProperty saveDirectoryProperty() {
+        return saveDirectory;
     }
 
     public boolean isActive() {
