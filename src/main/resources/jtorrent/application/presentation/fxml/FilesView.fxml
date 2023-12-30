@@ -11,7 +11,7 @@
         <TableColumn fx:id="percentDone" text="\%"/>
         <TableColumn fx:id="firstPiece" text="First Piece"/>
         <TableColumn fx:id="numPieces" text="# Pieces"/>
-        <TableColumn fx:id="pieces" text="# Pieces"/>
+        <TableColumn fx:id="pieces" text="Pieces"/>
         <TableColumn fx:id="priority" text="Priority"/>
         <TableColumn fx:id="mode" text="Mode"/>
         <TableColumn fx:id="rate" text="Rate"/>
