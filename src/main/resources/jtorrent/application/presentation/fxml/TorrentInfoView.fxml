@@ -27,10 +27,10 @@
         </rowConstraints>
         <Text text="Downloaded:"/>
         <DataStatusBar fx:id="downloadedDataStatusBar" GridPane.columnIndex="1"/>
-        <Text text="0.00 %" GridPane.columnIndex="2"/>
+        <Text fx:id="downloadedPercentage" text="0.00 %" GridPane.columnIndex="2"/>
         <Text text="Availability:" GridPane.rowIndex="1"/>
         <DataStatusBar fx:id="availableDataStatusBar" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
-        <Text text="0.000" GridPane.columnIndex="2" GridPane.rowIndex="1"/>
+        <Text fx:id="availablePercentage" text="0.000" GridPane.columnIndex="2" GridPane.rowIndex="1"/>
     </GridPane>
     <ScrollPane fitToWidth="true">
         <VBox.margin>

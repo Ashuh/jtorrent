@@ -20,7 +20,11 @@ public class TorrentInfoView implements Initializable {
     @FXML
     private DataStatusBar downloadedDataStatusBar;
     @FXML
+    private Text downloadedPercentage;
+    @FXML
     private DataStatusBar availableDataStatusBar;
+    @FXML
+    private Text availablePercentage;
     @FXML
     private Text timeElapsed;
     @FXML
@@ -68,9 +72,11 @@ public class TorrentInfoView implements Initializable {
     public void initialize(URL url, ResourceBundle resourceBundle) {
         bind(downloadedDataStatusBar.availabilityProperty(), UiTorrentInfo::downloadedPiecesProperty, new BitSet());
         bind(downloadedDataStatusBar.totalSegmentsProperty(), UiTorrentInfo::totalPiecesProperty, 0);
+        bindText(downloadedPercentage, UiTorrentInfo::downloadedPercentageProperty, "");
 
         bind(availableDataStatusBar.availabilityProperty(), UiTorrentInfo::availablePiecesProperty, new BitSet());
         bind(availableDataStatusBar.totalSegmentsProperty(), UiTorrentInfo::totalPiecesProperty, 0);
+        bindText(availablePercentage, UiTorrentInfo::availablePercentageProperty, "");
 
         bindText(timeElapsed, UiTorrentInfo::timeElapsedProperty, "");
         bindText(remaining, UiTorrentInfo::remainingProperty, "");

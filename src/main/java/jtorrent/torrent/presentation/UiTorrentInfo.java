@@ -20,7 +20,9 @@ public class UiTorrentInfo {
 
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("d/M/y h:mm:ss a");
     private final ObjectProperty<BitSet> downloadedPieces;
+    private final StringProperty downloadedPercentage;
     private final ObjectProperty<BitSet> availablePieces;
+    private final StringProperty availablePercentage;
     private final IntegerProperty totalPieces;
     private final StringProperty timeElapsed;
     private final StringProperty remaining;
@@ -45,15 +47,18 @@ public class UiTorrentInfo {
     private final StringProperty comment;
     private final CompositeDisposable disposables;
 
-    private UiTorrentInfo(ObjectProperty<BitSet> downloadedPieces, ObjectProperty<BitSet> availablePieces,
-            IntegerProperty totalPieces, StringProperty timeElapsed, StringProperty remaining, StringProperty wasted,
-            StringProperty downloaded, StringProperty uploaded, StringProperty seeds, StringProperty downloadSpeed,
-            StringProperty uploadSpeed, StringProperty peers, StringProperty downLimit, StringProperty upLimit,
-            StringProperty shareRatio, StringProperty status, StringProperty saveAs, StringProperty pieces,
-            StringProperty totalSize, StringProperty createdBy, StringProperty createdOn, StringProperty completedOn,
-            StringProperty hash, StringProperty comment, CompositeDisposable disposables) {
+    private UiTorrentInfo(ObjectProperty<BitSet> downloadedPieces, StringProperty downloadedPercentage,
+            ObjectProperty<BitSet> availablePieces, StringProperty availablePercentage, IntegerProperty totalPieces,
+            StringProperty timeElapsed, StringProperty remaining, StringProperty wasted, StringProperty downloaded,
+            StringProperty uploaded, StringProperty seeds, StringProperty downloadSpeed, StringProperty uploadSpeed,
+            StringProperty peers, StringProperty downLimit, StringProperty upLimit, StringProperty shareRatio,
+            StringProperty status, StringProperty saveAs, StringProperty pieces, StringProperty totalSize,
+            StringProperty createdBy, StringProperty createdOn, StringProperty completedOn, StringProperty hash,
+            StringProperty comment, CompositeDisposable disposables) {
         this.downloadedPieces = downloadedPieces;
+        this.downloadedPercentage = downloadedPercentage;
         this.availablePieces = availablePieces;
+        this.availablePercentage = availablePercentage;
         this.totalPieces = totalPieces;
         this.timeElapsed = timeElapsed;
         this.remaining = remaining;
@@ -81,7 +86,9 @@ public class UiTorrentInfo {
 
     public static UiTorrentInfo fromDomain(Torrent torrent) {
         ObjectProperty<BitSet> downloadedPieces = new SimpleObjectProperty<>();
+        StringProperty downloadedPercentage = new SimpleStringProperty();
         ObjectProperty<BitSet> availablePieces = new SimpleObjectProperty<>();
+        StringProperty availablePercentage = new SimpleStringProperty();
         IntegerProperty totalPieces = new SimpleIntegerProperty(torrent.getNumPieces());
         StringProperty timeElapsed = new SimpleStringProperty();
         StringProperty remaining = new SimpleStringProperty();
@@ -113,7 +120,16 @@ public class UiTorrentInfo {
         CompositeDisposable disposables = new CompositeDisposable();
 
         BindingUtils.subscribe(torrent.getVerifiedPiecesObservable(), downloadedPieces, disposables);
+
+        Observable<String> downloadedPercentageObservable = torrent.getVerifiedPiecesObservable()
+                .map(BitSet::cardinality)
+                .map(downloadedSize -> formatPercentage(downloadedSize, torrent.getNumPieces()));
+        BindingUtils.subscribe(downloadedPercentageObservable, downloadedPercentage, disposables);
+
         BindingUtils.subscribe(torrent.getAvailablePiecesObservable(), availablePieces, disposables);
+
+        Observable<String> availablePercentageObservable = Observable.just(""); // placeholder
+        BindingUtils.subscribe(availablePercentageObservable, availablePercentage, disposables);
 
         Observable<String> remainingObservable = Observable.combineLatest(
                 torrent.getVerifiedBytesObservable(),
@@ -144,9 +160,10 @@ public class UiTorrentInfo {
                 .map(verifiedBytes -> formatTotalSize(torrent.getTotalSize(), verifiedBytes));
         BindingUtils.subscribe(totalSizeObservable, totalSize, disposables);
 
-        return new UiTorrentInfo(downloadedPieces, availablePieces, totalPieces, timeElapsed, remaining, wasted,
-                downloaded, uploaded, seeds, downloadSpeed, uploadSpeed, peers, downLimit, upLimit, shareRatio,
-                status, saveAs, pieces, totalSize, createdBy, createdOn, completedOn, hash, comment, disposables);
+        return new UiTorrentInfo(downloadedPieces, downloadedPercentage, availablePieces, availablePercentage,
+                totalPieces, timeElapsed, remaining, wasted, downloaded, uploaded, seeds, downloadSpeed, uploadSpeed,
+                peers, downLimit, upLimit, shareRatio, status, saveAs, pieces, totalSize, createdBy, createdOn,
+                completedOn, hash, comment, disposables);
     }
 
     private static String formatTotalSize(long totalSize, long verified) {
@@ -161,6 +178,10 @@ public class UiTorrentInfo {
         return numPieces + " x " + DataUnitFormatter.formatSize(pieceSize) + " (" + numVerifiedPieces + " done)";
     }
 
+    private static String formatPercentage(long value, long total) {
+        return String.format("%.1f%%", value / (double) total * 100);
+    }
+
     public void dispose() {
         disposables.dispose();
     }
@@ -173,12 +194,28 @@ public class UiTorrentInfo {
         return downloadedPieces;
     }
 
+    public String getDownloadedPercentage() {
+        return downloadedPercentage.get();
+    }
+
+    public StringProperty downloadedPercentageProperty() {
+        return downloadedPercentage;
+    }
+
     public BitSet getAvailablePieces() {
         return availablePieces.get();
     }
 
     public ObjectProperty<BitSet> availablePiecesProperty() {
         return availablePieces;
+    }
+
+    public String getAvailablePercentage() {
+        return availablePercentage.get();
+    }
+
+    public StringProperty availablePercentageProperty() {
+        return availablePercentage;
     }
 
     public int getTotalPieces() {
