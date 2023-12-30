@@ -7,7 +7,6 @@ import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
-import javafx.collections.ObservableList;
 import javafx.collections.transformation.SortedList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -15,6 +14,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.ProgressBarTableCell;
+import jtorrent.application.presentation.viewmodel.ViewModel;
 import jtorrent.torrent.presentation.UiTorrent;
 
 public class TorrentsTableView implements Initializable {
@@ -46,22 +46,15 @@ public class TorrentsTableView implements Initializable {
     @FXML
     private Button stopButton;
 
-    public TableView.TableViewSelectionModel<UiTorrent> getSelectionModel() {
-        return tableView.getSelectionModel();
-    }
-
-    public void setItems(ObservableList<UiTorrent> torrents) {
-        SortedList<UiTorrent> sortedList = new SortedList<>(torrents);
+    public void setViewModel(ViewModel viewModel) {
+        SortedList<UiTorrent> sortedList = new SortedList<>(viewModel.getTorrents());
         sortedList.comparatorProperty().bind(tableView.comparatorProperty());
         tableView.setItems(sortedList);
-    }
-
-    public void setOnStartButtonClickedCallback(Runnable callback) {
-        startButton.setOnMouseClicked(event -> callback.run());
-    }
-
-    public void setOnStopButtonClickedCallback(Runnable callback) {
-        stopButton.setOnMouseClicked(event -> callback.run());
+        tableView.getSelectionModel()
+                .selectedItemProperty()
+                .addListener((observable, oldValue, newValue) -> viewModel.setTorrentSelected(newValue));
+        startButton.setOnMouseClicked(event -> viewModel.startSelectedTorrent());
+        stopButton.setOnMouseClicked(event -> viewModel.stopSelectedTorrent());
     }
 
     @Override

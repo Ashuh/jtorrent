@@ -22,12 +22,7 @@ public class MainWindow {
     private FilesView filesViewController;
 
     public void setViewModel(ViewModel viewModel) {
-        torrentsTableViewController.setItems(viewModel.getTorrents());
-        torrentsTableViewController.getSelectionModel()
-                .selectedItemProperty()
-                .addListener((observable, oldValue, newValue) -> viewModel.setTorrentSelected(newValue));
-        torrentsTableViewController.setOnStartButtonClickedCallback(viewModel::startSelectedTorrent);
-        torrentsTableViewController.setOnStopButtonClickedCallback(viewModel::stopSelectedTorrent);
+        torrentsTableViewController.setViewModel(viewModel);
         peersTableViewController.setItems(viewModel.getPeers());
         filesViewController.itemsProperty().bind(viewModel.getFileInfos());
         torrentInfoViewController.torrentInfoProperty().bind(viewModel.getTorrentInfo());
