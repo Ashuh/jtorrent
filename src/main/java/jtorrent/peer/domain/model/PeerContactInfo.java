@@ -38,6 +38,22 @@ public class PeerContactInfo {
         return new PeerContactInfo(address, port);
     }
 
+    public static PeerContactInfo fromString(String ipPort) throws UnknownHostException {
+        String[] split = ipPort.split(":");
+        if (split.length != 2) {
+            throw new IllegalArgumentException("Invalid IP:PORT format");
+        }
+        String ip = split[0];
+        int port;
+        try {
+            port = Integer.parseInt(split[1]);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Invalid IP:PORT format", e);
+        }
+        InetAddress address = InetAddress.getByName(ip);
+        return new PeerContactInfo(address, port);
+    }
+
     public InetAddress getAddress() {
         return address;
     }

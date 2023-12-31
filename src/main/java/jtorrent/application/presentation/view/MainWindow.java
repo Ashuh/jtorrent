@@ -23,7 +23,7 @@ public class MainWindow {
 
     public void setViewModel(ViewModel viewModel) {
         torrentsTableViewController.setViewModel(viewModel);
-        peersTableViewController.setItems(viewModel.getPeers());
+        peersTableViewController.setViewModel(viewModel);
         filesViewController.itemsProperty().bind(viewModel.getFileInfos());
         torrentInfoViewController.torrentInfoProperty().bind(viewModel.getTorrentInfo());
     }

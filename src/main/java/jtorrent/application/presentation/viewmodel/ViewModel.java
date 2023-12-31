@@ -5,6 +5,7 @@ import static jtorrent.common.domain.util.ValidationUtil.requireNonNull;
 import java.io.IOException;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -19,6 +20,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import jtorrent.application.domain.Client;
 import jtorrent.peer.domain.model.Peer;
+import jtorrent.peer.domain.model.PeerContactInfo;
 import jtorrent.peer.presentation.UiPeer;
 import jtorrent.torrent.domain.model.Torrent;
 import jtorrent.torrent.presentation.UiFileInfo;
@@ -117,6 +119,19 @@ public class ViewModel {
             uiTorrentInfo.get().dispose();
         }
         Platform.runLater(() -> uiTorrentInfo.set(selectedUiTorrentInfo));
+    }
+
+    public boolean hasSelectedTorrent() {
+        return selectedTorrent != null;
+    }
+
+    public void addPeerForSelectedTorrent(String ipPort) throws UnknownHostException {
+        if (selectedTorrent == null) {
+            return;
+        }
+
+        PeerContactInfo peerContactInfo = PeerContactInfo.fromString(ipPort);
+        client.addPeer(selectedTorrent, peerContactInfo);
     }
 
     public void startSelectedTorrent() {

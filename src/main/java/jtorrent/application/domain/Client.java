@@ -135,6 +135,14 @@ public class Client implements LocalServiceDiscoveryManager.Listener, TorrentHan
         peers.forEach(torrentHandler::handleDiscoveredPeerContact);
     }
 
+    public void addPeer(Torrent torrent, PeerContactInfo peerContactInfo) {
+        // TODO: only works if the torrent is active. If it is not active, should we store it somewhere else first?
+        TorrentHandler torrentHandler = infoHashToTorrentHandler.get(torrent.getInfoHash());
+        if (torrentHandler != null) {
+            torrentHandler.handleDiscoveredPeerContact(peerContactInfo);
+        }
+    }
+
     private class HandleInboundConnectionsTask extends BackgroundTask {
 
         @Override
