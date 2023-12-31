@@ -343,12 +343,6 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
     }
 
     @Override
-    public int hashCode() {
-        return Objects.hash(trackers, creationDate, comment, createdBy, pieceSize, pieceHashes, name, fileWithInfos,
-                infoHash);
-    }
-
-    @Override
     public boolean equals(Object o) {
         if (this == o) {
             return true;
@@ -357,15 +351,12 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
             return false;
         }
         Torrent torrent = (Torrent) o;
-        return pieceSize == torrent.pieceSize
-                && trackers.equals(torrent.trackers)
-                && creationDate.equals(torrent.creationDate)
-                && comment.equals(torrent.comment)
-                && createdBy.equals(torrent.createdBy)
-                && pieceHashes.equals(torrent.pieceHashes)
-                && name.equals(torrent.name)
-                && fileWithInfos.equals(torrent.fileWithInfos)
-                && infoHash.equals(torrent.infoHash);
+        return Objects.equals(infoHash, torrent.infoHash);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(infoHash);
     }
 
     @Override
