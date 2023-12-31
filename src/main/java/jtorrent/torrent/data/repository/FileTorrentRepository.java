@@ -2,7 +2,6 @@ package jtorrent.torrent.data.repository;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
@@ -21,23 +20,22 @@ public class FileTorrentRepository implements TorrentRepository {
     public FileTorrentRepository() {
         // TODO: temporary
         try {
-            Torrent torrent = loadTorrent(Path.of("ubuntu-23.04-desktop-amd64.iso.torrent"));
-            torrents.add(torrent);
+            loadTorrent(Path.of("ubuntu-23.04-desktop-amd64.iso.torrent"));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public static Torrent loadTorrent(Path path) throws IOException {
+    public void loadTorrent(Path path) throws IOException {
         File file = path.toFile();
+        loadTorrent(file);
+    }
 
-        if (!file.exists()) {
-            throw new FileNotFoundException("Unable to find file " + path);
-        }
-
+    @Override
+    public void loadTorrent(File file) throws IOException {
         InputStream inputStream = new FileInputStream(file);
         BencodedTorrent bencodedTorrent = BencodedTorrent.decode(inputStream);
-        return bencodedTorrent.toDomain();
+        addTorrent(bencodedTorrent.toDomain());
     }
 
     @Override

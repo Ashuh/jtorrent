@@ -1,5 +1,6 @@
 package jtorrent.application.domain;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
@@ -82,6 +83,10 @@ public class Client implements LocalServiceDiscoveryManager.Listener, TorrentHan
 
     public void addTorrent(Torrent torrent) {
         torrentRepository.addTorrent(torrent);
+    }
+
+    public void loadTorrent(File file) throws IOException {
+        torrentRepository.loadTorrent(file);
     }
 
     public void startTorrent(Torrent torrent) {

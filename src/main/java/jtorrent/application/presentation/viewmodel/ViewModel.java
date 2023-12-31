@@ -2,6 +2,7 @@ package jtorrent.application.presentation.viewmodel;
 
 import static jtorrent.common.domain.util.ValidationUtil.requireNonNull;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
@@ -158,6 +159,10 @@ public class ViewModel {
         } catch (IOException e) {
             LOGGER.log(Level.ERROR, "Failed to open file explorer", e);
         }
+    }
+
+    public void loadTorrent(File file) throws IOException {
+        client.loadTorrent(file);
     }
 
     public ObservableList<UiTorrent> getTorrents() {

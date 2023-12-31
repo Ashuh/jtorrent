@@ -1,7 +1,5 @@
 package jtorrent.peer.presentation.view;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.Optional;
@@ -10,17 +8,13 @@ import java.util.ResourceBundle;
 import javafx.collections.transformation.SortedList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.Alert;
 import javafx.scene.control.ContextMenu;
-import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
-import javafx.scene.control.TextArea;
 import javafx.scene.control.TextInputDialog;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.Priority;
 import jtorrent.application.presentation.viewmodel.ViewModel;
+import jtorrent.common.presentation.ExceptionAlert;
 import jtorrent.peer.presentation.UiPeer;
 
 public class PeersTableView implements Initializable {
@@ -80,36 +74,7 @@ public class PeersTableView implements Initializable {
     }
 
     private void showExceptionDialog(Exception e) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle("Error");
-        alert.setHeaderText("Failed to add peer");
-
-        if (e instanceof UnknownHostException) {
-            alert.setContentText("Unknown host. Please ensure the host IP is correct");
-        } else if (e instanceof IllegalArgumentException) {
-            alert.setContentText("Invalid format. Please ensure the input is in the format IP:port.");
-        } else {
-            alert.setContentText("An unknown error occurred");
-        }
-
-        StringWriter stringWriter = new StringWriter();
-        PrintWriter printWriter = new PrintWriter(stringWriter);
-        e.printStackTrace(printWriter);
-
-        var textArea = new TextArea(stringWriter.toString());
-        textArea.setEditable(false);
-        textArea.setWrapText(false);
-        textArea.setMaxWidth(Double.MAX_VALUE);
-        textArea.setMaxHeight(Double.MAX_VALUE);
-        GridPane.setVgrow(textArea, Priority.ALWAYS);
-        GridPane.setHgrow(textArea, Priority.ALWAYS);
-
-        GridPane content = new GridPane();
-        content.setMaxWidth(Double.MAX_VALUE);
-        content.add(new Label("Full stacktrace:"), 0, 0);
-        content.add(textArea, 0, 1);
-
-        alert.getDialogPane().setExpandableContent(content);
+        ExceptionAlert alert = new ExceptionAlert("Error", "Failed to add peer", e);
         alert.showAndWait();
     }
 }
