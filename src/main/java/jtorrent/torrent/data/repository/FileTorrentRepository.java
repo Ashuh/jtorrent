@@ -24,22 +24,22 @@ public class FileTorrentRepository implements TorrentRepository {
     public FileTorrentRepository() {
         // TODO: temporary
         try {
-            loadTorrent(Path.of("ubuntu-23.04-desktop-amd64.iso.torrent"));
+            addTorrent(loadTorrent(Path.of("ubuntu-23.04-desktop-amd64.iso.torrent")));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public void loadTorrent(Path path) throws IOException {
+    public Torrent loadTorrent(Path path) throws IOException {
         File file = path.toFile();
-        loadTorrent(file);
+        return loadTorrent(file);
     }
 
     @Override
-    public void loadTorrent(File file) throws IOException {
+    public Torrent loadTorrent(File file) throws IOException {
         InputStream inputStream = new FileInputStream(file);
         BencodedTorrent bencodedTorrent = BencodedTorrent.decode(inputStream);
-        addTorrent(bencodedTorrent.toDomain());
+        return bencodedTorrent.toDomain();
     }
 
     @Override

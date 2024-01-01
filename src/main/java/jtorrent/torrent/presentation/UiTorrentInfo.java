@@ -1,7 +1,6 @@
 package jtorrent.torrent.presentation;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.BitSet;
 
 import io.reactivex.rxjava3.core.Observable;
@@ -14,11 +13,11 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import jtorrent.common.presentation.util.BindingUtils;
 import jtorrent.common.presentation.util.DataUnitFormatter;
+import jtorrent.common.presentation.util.DateFormatter;
 import jtorrent.torrent.domain.model.Torrent;
 
 public class UiTorrentInfo {
 
-    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("d/M/y h:mm:ss a");
     private final ObjectProperty<BitSet> downloadedPieces;
     private final StringProperty downloadedPercentage;
     private final ObjectProperty<BitSet> availablePieces;
@@ -171,7 +170,7 @@ public class UiTorrentInfo {
     }
 
     private static String formatDate(LocalDateTime localDateTime) {
-        return localDateTime.format(FORMATTER);
+        return DateFormatter.format(localDateTime);
     }
 
     private static String formatPieces(int numPieces, long pieceSize, int numVerifiedPieces) {

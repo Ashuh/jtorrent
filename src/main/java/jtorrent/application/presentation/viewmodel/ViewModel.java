@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
 import java.net.UnknownHostException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -26,7 +27,9 @@ import jtorrent.peer.presentation.UiPeer;
 import jtorrent.torrent.domain.model.Torrent;
 import jtorrent.torrent.presentation.UiFileInfo;
 import jtorrent.torrent.presentation.UiTorrent;
+import jtorrent.torrent.presentation.UiTorrentContents;
 import jtorrent.torrent.presentation.UiTorrentInfo;
+import jtorrent.torrent.presentation.view.AddNewTorrentDialog;
 
 public class ViewModel {
 
@@ -162,7 +165,14 @@ public class ViewModel {
     }
 
     public void loadTorrent(File file) throws IOException {
-        client.loadTorrent(file);
+        Torrent torrent = client.loadTorrent(file);
+        UiTorrentContents torrentContents = UiTorrentContents.forTorrent(torrent);
+        AddNewTorrentDialog dialog = new AddNewTorrentDialog(torrentContents);
+        dialog.showAndWait().ifPresent(r -> {
+            torrent.setSaveDirectory(Path.of(r.saveDirectory()));
+            torrent.setName(r.name());
+        });
+        client.addTorrent(torrent);
     }
 
     public ObservableList<UiTorrent> getTorrents() {

@@ -85,8 +85,8 @@ public class Client implements LocalServiceDiscoveryManager.Listener, TorrentHan
         torrentRepository.addTorrent(torrent);
     }
 
-    public void loadTorrent(File file) throws IOException {
-        torrentRepository.loadTorrent(file);
+    public Torrent loadTorrent(File file) throws IOException {
+        return torrentRepository.loadTorrent(file);
     }
 
     public void startTorrent(Torrent torrent) {

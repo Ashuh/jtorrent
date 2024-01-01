@@ -37,7 +37,7 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
     private final String createdBy;
     private final int pieceSize;
     private final List<Sha1Hash> pieceHashes;
-    private final String name;
+    private String name;
     private final FileWithInfoList fileWithInfos;
     private final Sha1Hash infoHash;
     private final PieceTracker pieceTracker;
@@ -53,7 +53,7 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
     private final BehaviorSubject<BitSet> verifiedPiecesSubject = BehaviorSubject.createDefault(new BitSet());
     private final BehaviorSubject<BitSet> availablePiecesSubject = BehaviorSubject.createDefault(new BitSet());
     private final BehaviorSubject<Boolean> isActiveSubject = BehaviorSubject.createDefault(false);
-    private final Path saveDirectory = Paths.get("download").toAbsolutePath(); // TODO: make configurable
+    private Path saveDirectory = Paths.get("download").toAbsolutePath(); // TODO: use default downloads folder?
     private boolean isActive = false;
 
     public Torrent(Set<Tracker> trackers, LocalDateTime creationDate, String comment, String createdBy,
@@ -72,6 +72,10 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
 
     public Path getSaveDirectory() {
         return saveDirectory;
+    }
+
+    public void setSaveDirectory(Path saveDirectory) {
+        this.saveDirectory = saveDirectory;
     }
 
     public Set<Tracker> getTrackers() {
@@ -124,6 +128,10 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
 
     public String getName() {
         return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public List<File> getFiles() {

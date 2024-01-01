@@ -10,7 +10,7 @@ public interface TorrentRepository {
 
     void addTorrent(Torrent torrent);
 
-    void loadTorrent(File file) throws IOException;
+    Torrent loadTorrent(File file) throws IOException;
 
     void removeTorrent(Torrent torrent);
 
