@@ -4,7 +4,7 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.control.Dialog;
 import jtorrent.torrent.presentation.UiTorrentContents;
 
-public class AddNewTorrentDialog extends Dialog<AddNewTorrentDialog.Result> {
+public class AddNewTorrentDialog extends Dialog<AddNewTorrentDialog.Options> {
 
     private final AddNewTorrentDialogPane dialogPane;
 
@@ -16,16 +16,16 @@ public class AddNewTorrentDialog extends Dialog<AddNewTorrentDialog.Result> {
         setResizable(true);
     }
 
-    private Result convertResult(ButtonType dialogButton) {
+    private Options convertResult(ButtonType dialogButton) {
         if (dialogButton == ButtonType.OK) {
             String name = dialogPane.getName();
             String saveDirectory = dialogPane.getSaveDirectory();
-            return new Result(name, saveDirectory);
+            return new Options(name, saveDirectory);
         } else {
             return null;
         }
     }
 
-    public record Result(String name, String saveDirectory) {
+    public record Options(String name, String saveDirectory) {
     }
 }

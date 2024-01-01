@@ -164,14 +164,15 @@ public class ViewModel {
         }
     }
 
-    public void loadTorrent(File file) throws IOException {
+    public UiTorrentContents loadTorrentContents(File file) throws IOException {
         Torrent torrent = client.loadTorrent(file);
-        UiTorrentContents torrentContents = UiTorrentContents.forTorrent(torrent);
-        AddNewTorrentDialog dialog = new AddNewTorrentDialog(torrentContents);
-        dialog.showAndWait().ifPresent(r -> {
-            torrent.setSaveDirectory(Path.of(r.saveDirectory()));
-            torrent.setName(r.name());
-        });
+        return UiTorrentContents.forTorrent(torrent);
+    }
+
+    public void addTorrentFromFile(File file, AddNewTorrentDialog.Options options) throws IOException {
+        Torrent torrent = client.loadTorrent(file);
+        torrent.setSaveDirectory(Path.of(options.saveDirectory()));
+        torrent.setName(options.name());
         client.addTorrent(torrent);
     }
 

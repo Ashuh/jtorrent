@@ -1,7 +1,5 @@
 package jtorrent.torrent.presentation.view;
 
-import java.io.File;
-import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
 
@@ -17,9 +15,7 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.ProgressBarTableCell;
-import javafx.stage.FileChooser;
 import jtorrent.application.presentation.viewmodel.ViewModel;
-import jtorrent.common.presentation.ExceptionAlert;
 import jtorrent.torrent.presentation.UiTorrent;
 
 public class TorrentsTableView implements Initializable {
@@ -66,6 +62,7 @@ public class TorrentsTableView implements Initializable {
                 .addListener((observable, oldValue, newValue) -> viewModel.setTorrentSelected(newValue));
         startButton.setOnMouseClicked(event -> viewModel.startSelectedTorrent());
         stopButton.setOnMouseClicked(event -> viewModel.stopSelectedTorrent());
+        addButton.setOnMouseClicked(new AddNewTorrentEventHandler(viewModel));
     }
 
     @Override
@@ -78,24 +75,6 @@ public class TorrentsTableView implements Initializable {
         upSpeed.setCellValueFactory(cd -> cd.getValue().upSpeedProperty());
         eta.setCellValueFactory(cd -> cd.getValue().etaProperty().asObject());
         saveDirectory.setCellValueFactory(cd -> cd.getValue().saveDirectoryProperty());
-
-        addButton.setOnMouseClicked(event -> {
-            FileChooser chooser = new FileChooser();
-            FileChooser.ExtensionFilter extFilter =
-                    new FileChooser.ExtensionFilter("Torrents (*.torrent)", "*.torrent");
-            chooser.getExtensionFilters().add(extFilter);
-            chooser.setTitle("Select a .torrent to open");
-            File file = chooser.showOpenDialog(null);
-
-            if (file != null) {
-                try {
-                    viewModel.loadTorrent(file);
-                } catch (IOException e) {
-                    ExceptionAlert alert = new ExceptionAlert("Error", "Failed to load torrent", e);
-                    alert.showAndWait();
-                }
-            }
-        });
 
         StartButtonDisabledBinding startButtonDisabledBinding =
                 new StartButtonDisabledBinding(tableView.getSelectionModel().selectedItemProperty());
