@@ -33,7 +33,7 @@ public class FileWithInfoList {
             }
 
             long fileStart = firstPiece * pieceSize + firstPieceStart;
-            long firstPieceBytes = pieceSize - firstPieceStart;
+            long firstPieceBytes = Math.min(file.getSize(), pieceSize) - firstPieceStart;
             long remainingFileBytes = file.getSize() - firstPieceBytes;
             int numRemainingPieces = (int) Math.ceil(remainingFileBytes / (double) pieceSize);
             int lastPiece = firstPiece + numRemainingPieces;
