@@ -15,6 +15,8 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.ProgressBarTableCell;
+import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
 import jtorrent.application.presentation.viewmodel.ViewModel;
 import jtorrent.torrent.presentation.UiTorrent;
 
@@ -62,7 +64,12 @@ public class TorrentsTableView implements Initializable {
                 .addListener((observable, oldValue, newValue) -> viewModel.setTorrentSelected(newValue));
         startButton.setOnMouseClicked(event -> viewModel.startSelectedTorrent());
         stopButton.setOnMouseClicked(event -> viewModel.stopSelectedTorrent());
-        addButton.setOnMouseClicked(new AddNewTorrentEventHandler(viewModel));
+        addButton.setOnMouseClicked(new AddNewTorrentEventHandler<>(viewModel) {
+            @Override
+            protected boolean shouldHandle(MouseEvent event) {
+                return event.getButton() == MouseButton.PRIMARY;
+            }
+        });
     }
 
     @Override

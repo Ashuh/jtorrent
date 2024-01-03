@@ -6,14 +6,14 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Optional;
 
+import javafx.event.Event;
 import javafx.event.EventHandler;
-import javafx.scene.input.MouseEvent;
 import javafx.stage.FileChooser;
 import jtorrent.application.presentation.viewmodel.ViewModel;
 import jtorrent.common.presentation.ExceptionAlert;
 import jtorrent.torrent.presentation.UiTorrentContents;
 
-public class AddNewTorrentEventHandler implements EventHandler<MouseEvent> {
+public abstract class AddNewTorrentEventHandler<E extends Event> implements EventHandler<E> {
 
     private static final String DESCRIPTION = "Torrents (*.torrent)";
     private static final String EXTENSION = "*.torrent";
@@ -21,12 +21,18 @@ public class AddNewTorrentEventHandler implements EventHandler<MouseEvent> {
 
     private final ViewModel viewModel;
 
-    AddNewTorrentEventHandler(ViewModel viewModel) {
+    protected AddNewTorrentEventHandler(ViewModel viewModel) {
         this.viewModel = requireNonNull(viewModel);
     }
 
     @Override
-    public void handle(MouseEvent event) {
+    public void handle(E event) {
+        if (shouldHandle(event)) {
+            handle();
+        }
+    }
+
+    private void handle() {
         FileChooser chooser = createFileChooser();
         File file = chooser.showOpenDialog(null);
 
@@ -52,4 +58,6 @@ public class AddNewTorrentEventHandler implements EventHandler<MouseEvent> {
         chooser.setTitle(TITLE);
         return chooser;
     }
+
+    protected abstract boolean shouldHandle(E event);
 }

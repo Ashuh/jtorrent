@@ -14,7 +14,7 @@
     <top>
         <MenuBar fx:id="menuBar" BorderPane.alignment="CENTER">
             <Menu mnemonicParsing="false" text="File">
-                <MenuItem mnemonicParsing="false" text="New"/>
+                <MenuItem fx:id="newMenuItem" mnemonicParsing="false" text="New"/>
                 <MenuItem mnemonicParsing="false" text="Open…"/>
                 <Menu mnemonicParsing="false" text="Open Recent"/>
                 <SeparatorMenuItem mnemonicParsing="false"/>
