@@ -17,6 +17,7 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.cell.ProgressBarTableCell;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
+import javafx.stage.Window;
 import jtorrent.application.presentation.viewmodel.ViewModel;
 import jtorrent.torrent.presentation.UiTorrent;
 
@@ -68,6 +69,11 @@ public class TorrentsTableView implements Initializable {
             @Override
             protected boolean shouldHandle(MouseEvent event) {
                 return event.getButton() == MouseButton.PRIMARY;
+            }
+
+            @Override
+            protected Window getOwnerWindow() {
+                return addButton.getScene().getWindow();
             }
         });
     }

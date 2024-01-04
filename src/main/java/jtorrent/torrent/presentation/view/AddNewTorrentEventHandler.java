@@ -9,6 +9,7 @@ import java.util.Optional;
 import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.stage.FileChooser;
+import javafx.stage.Window;
 import jtorrent.application.presentation.viewmodel.ViewModel;
 import jtorrent.common.presentation.ExceptionAlert;
 import jtorrent.torrent.presentation.UiTorrentContents;
@@ -34,7 +35,7 @@ public abstract class AddNewTorrentEventHandler<E extends Event> implements Even
 
     private void handle() {
         FileChooser chooser = createFileChooser();
-        File file = chooser.showOpenDialog(null);
+        File file = chooser.showOpenDialog(getOwnerWindow());
 
         if (file != null) {
             try {
@@ -58,6 +59,8 @@ public abstract class AddNewTorrentEventHandler<E extends Event> implements Even
         chooser.setTitle(TITLE);
         return chooser;
     }
+
+    protected abstract Window getOwnerWindow();
 
     protected abstract boolean shouldHandle(E event);
 }

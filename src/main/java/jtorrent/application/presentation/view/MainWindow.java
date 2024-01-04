@@ -8,6 +8,7 @@ import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
+import javafx.stage.Window;
 import jtorrent.application.presentation.viewmodel.ViewModel;
 import jtorrent.peer.presentation.view.PeersTableView;
 import jtorrent.torrent.presentation.view.AddNewTorrentEventHandler;
@@ -43,6 +44,11 @@ public class MainWindow {
             @Override
             protected boolean shouldHandle(ActionEvent event) {
                 return true;
+            }
+
+            @Override
+            protected Window getOwnerWindow() {
+                return menuBar.getScene().getWindow();
             }
         });
 
