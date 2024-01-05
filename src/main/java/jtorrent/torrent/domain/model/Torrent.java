@@ -78,6 +78,25 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
         this.saveDirectory = saveDirectory;
     }
 
+    /**
+     * Gets the root save directory for this torrent.
+     * The paths of the files in the torrent are relative to the root save directory.
+     * If the torrent is a single-file torrent, the root save directory is the same as the save directory.
+     * If the torrent is a multi-file torrent, the root save directory is the save directory appended with the torrent name.
+     *
+     * @return the root save directory for this torrent
+     */
+    public Path getRootSaveDirectory() {
+        if (isSingleFileTorrent()) {
+            return saveDirectory;
+        }
+        return saveDirectory.resolve(name);
+    }
+
+    public boolean isSingleFileTorrent() {
+        return fileWithInfos.size() == 1;
+    }
+
     public Set<Tracker> getTrackers() {
         return trackers;
     }

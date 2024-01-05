@@ -46,7 +46,7 @@ public class FilePieceRepository implements PieceRepository {
             long startOffsetInFile = Math.max(start - fileInfo.start(), 0);
             long endOffsetInFile = Math.min(fileInfo.end(), end) - fileInfo.start();
             int readLength = (int) (endOffsetInFile - startOffsetInFile + 1);
-            Path path = torrent.getSaveDirectory().resolve(file.getPath());
+            Path path = torrent.getRootSaveDirectory().resolve(file.getPath());
             buffer.put(read(path, startOffsetInFile, readLength));
         }
         return buffer.array();
@@ -69,7 +69,7 @@ public class FilePieceRepository implements PieceRepository {
             int writeLength = (int) (endOffsetInFile - startOffsetInFile + 1);
             byte[] fileData = new byte[writeLength];
             buffer.get(fileData);
-            Path path = torrent.getSaveDirectory().resolve(file.getPath());
+            Path path = torrent.getRootSaveDirectory().resolve(file.getPath());
             write(path, startOffsetInFile, fileData);
         }
     }

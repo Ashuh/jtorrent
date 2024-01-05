@@ -105,7 +105,7 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
 
     private void createSaveDirectory() {
         try {
-            Files.createDirectories(torrent.getSaveDirectory());
+            Files.createDirectories(torrent.getRootSaveDirectory());
         } catch (IOException e) {
             log(Level.ERROR, String.format("Failed to create save directory %s", torrent.getSaveDirectory()), e);
         }
