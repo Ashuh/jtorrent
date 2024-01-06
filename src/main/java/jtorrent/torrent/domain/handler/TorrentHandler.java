@@ -575,6 +575,9 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
                 repository.storeBlock(torrent, pieceIndex, offset, data);
             } catch (IOException e) {
                 log(Level.ERROR, String.format("Failed to store block %d of piece %d", blockIndex, pieceIndex), e);
+                synchronized (pieceStateLock) {
+                    torrent.setBlockNotRequested(pieceIndex, blockIndex);
+                }
                 return;
             }
 
