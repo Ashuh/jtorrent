@@ -234,7 +234,7 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
                 FileInfo fileInfo = fileWithInfo.fileInfo();
                 fileInfo.setPieceNotVerified(pieceIndex - fileInfo.firstPiece());
                 long pieceBytesWithinFile = getPieceBytesInFile(pieceIndex, fileInfo);
-                fileInfo.incrementVerifiedBytes(pieceBytesWithinFile);
+                fileInfo.incrementVerifiedBytes(-pieceBytesWithinFile);
             }
         }
         pieceTracker.setPieceMissing(pieceIndex);
