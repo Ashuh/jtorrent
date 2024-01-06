@@ -224,7 +224,6 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
         if (pieceTracker.isPieceVerified(pieceIndex)) {
             verifiedBytes.getAndAdd(-getPieceSize(pieceIndex));
             verifiedBytesSubject.onNext(verifiedBytes.get());
-            verifiedPiecesSubject.onNext(pieceTracker.getVerifiedPieces());
 
             long pieceStart = getPieceOffset(pieceIndex);
             long pieceEnd = pieceStart + getPieceSize(pieceIndex) - 1;
@@ -238,6 +237,7 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
             }
         }
         pieceTracker.setPieceMissing(pieceIndex);
+        verifiedPiecesSubject.onNext(pieceTracker.getVerifiedPieces());
     }
 
     private long getPieceBytesInFile(int piece, FileInfo fileInfo) {
