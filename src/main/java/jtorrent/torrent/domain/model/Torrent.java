@@ -78,18 +78,28 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
     /**
      * Gets the root save directory for this torrent.
      * The paths of the files in the torrent are relative to the root save directory.
-     * If the torrent is a single-file torrent, the root save directory is the same as the save directory.
-     * If the torrent is a multi-file torrent, the root save directory is the save directory appended with the torrent name.
+     * If the torrent is a single-file torrent, the root save directory is the save directory.
+     * If the torrent is a multi-file torrent, the root save directory is a subdirectory of the save directory.
      *
      * @return the root save directory for this torrent
      */
     public Path getRootSaveDirectory() {
-        if (isSingleFileTorrent()) {
-            return saveDirectory;
-        }
-        return saveDirectory.resolve(name);
+        return fileInfo.getDirectory()
+                .map(dir -> saveDirectory.resolve(dir))
+                .orElse(saveDirectory);
     }
 
+    /**
+     * Checks whether this torrent is a single-file torrent or a multi-file torrent.
+     * <p>
+     * Note: A multi-file torrent does not necessarily have multiple files.
+     * The difference between the two is that a multi-file torrent is a torrent created from a directory,
+     * containing one or more files, whereas a single-file torrent is a torrent created from a single file.
+     * The contents of a multi-file torrent are stored in a subdirectory of the save directory,
+     * whereas the contents of a single-file torrent are stored in the save directory itself.
+     *
+     * @return true if this torrent is a single-file torrent, false if it is a multi-file torrent
+     */
     public boolean isSingleFileTorrent() {
         return fileInfo.isSingleFile();
     }
