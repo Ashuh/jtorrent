@@ -81,7 +81,7 @@ public final class FileInfo {
 
     public void setPieceNotVerified(int piece) {
         verifiedPieces.clear(piece);
-        verifiedPiecesSubject.onNext(verifiedPieces);
+        verifiedPiecesSubject.onNext((BitSet) verifiedPieces.clone());
     }
 
     public Observable<BitSet> getVerifiedPiecesObservable() {
