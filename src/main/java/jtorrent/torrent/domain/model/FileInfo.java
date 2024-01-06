@@ -1,90 +1,146 @@
 package jtorrent.torrent.domain.model;
 
-import java.util.BitSet;
-import java.util.concurrent.atomic.AtomicLong;
+import static jtorrent.common.domain.util.ValidationUtil.requireAtMost;
+import static jtorrent.common.domain.util.ValidationUtil.requireNonNegative;
+import static jtorrent.common.domain.util.ValidationUtil.requireNonNull;
 
-import io.reactivex.rxjava3.core.Observable;
-import io.reactivex.rxjava3.subjects.BehaviorSubject;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.IntStream;
 
-public final class FileInfo {
+import jtorrent.common.domain.util.Sha1Hash;
 
-    private final int firstPiece;
-    private final int firstPieceStart;
-    private final int lastPiece;
-    private final int lastPieceEnd;
-    private final long start;
-    private final long end;
-    private final AtomicLong verifiedBytes = new AtomicLong(0L);
-    private final BehaviorSubject<Long> verifiedBytesSubject = BehaviorSubject.createDefault(0L);
-    private final BitSet verifiedPieces = new BitSet();
-    private final BehaviorSubject<BitSet> verifiedPiecesSubject = BehaviorSubject.createDefault(new BitSet());
+public abstract class FileInfo {
+
+    private final List<FileWithPieceInfo> fileWithPieceInfos;
+    private final List<Sha1Hash> pieceHashes;
+    private final int pieceSize;
+    private final long totalFileSize;
+
+    protected FileInfo(List<FileWithPieceInfo> fileWithPieceInfos, int pieceSize, long totalFileSize,
+            List<Sha1Hash> pieceHashes) {
+        this.fileWithPieceInfos = fileWithPieceInfos;
+        this.pieceSize = pieceSize;
+        this.totalFileSize = totalFileSize;
+        this.pieceHashes = requireNonNull(pieceHashes);
+    }
+
+    protected static List<FileWithPieceInfo> build(List<File> files, int pieceSize) {
+        List<FileWithPieceInfo> fileWithPieceInfos = new ArrayList<>();
+
+        int prevLastPiece = 0; // inclusive
+        int prevLastPieceEnd = -1; // inclusive
+
+        for (File file : files) {
+            int firstPiece = prevLastPiece;
+            int firstPieceStart = prevLastPieceEnd + 1;
+            boolean isPrevLastPieceFullyOccupied = firstPieceStart == pieceSize;
+            if (isPrevLastPieceFullyOccupied) {
+                firstPiece++;
+                firstPieceStart = 0;
+            }
+
+            long fileStart = firstPiece * pieceSize + firstPieceStart;
+            long firstPieceBytes = Math.min(pieceSize - firstPieceStart, file.getSize());
+            long remainingFileBytes = file.getSize() - firstPieceBytes;
+            int numRemainingPieces = (int) Math.ceil(remainingFileBytes / (double) pieceSize);
+            int lastPiece = firstPiece + numRemainingPieces;
+            long fileEnd = fileStart + file.getSize() - 1;
+            int lastPieceEnd = (int) (fileEnd % pieceSize);
+
+            prevLastPiece = lastPiece;
+            prevLastPieceEnd = lastPieceEnd;
+            FilePieceInfo filePieceInfo =
+                    new FilePieceInfo(firstPiece, firstPieceStart, lastPiece, lastPieceEnd, fileStart, fileEnd);
+            fileWithPieceInfos.add(new FileWithPieceInfo(file, filePieceInfo));
+        }
+
+        return fileWithPieceInfos;
+    }
 
     /**
-     * @param firstPiece      the first piece index (zero-based, inclusive)
-     * @param firstPieceStart the start offset in the first piece (zero-based, inclusive), i.e., where the file starts
-     *                        in the first piece
-     * @param lastPiece       the last piece index (zero-based, inclusive)
-     * @param lastPieceEnd    the end offset in the last piece (zero-based, inclusive), i.e., where the file ends
-     *                        in the last piece
-     * @param start           the start offset of the file (zero-based, inclusive), i.e., the first byte of the file
-     * @param end             the end offset of the file (zero-based, inclusive), i.e., the last byte of the file
+     * Returns a list of {@link FileWithPieceInfo} that fall within the given byte range.
+     * The returned list is sorted by the start byte offset of the file.
+     *
+     * @param start the byte offset to start at (inclusive)
+     * @param end   the byte offset to end at (inclusive)
+     * @return a list of {@link FileWithPieceInfo} that fall within the given byte range
      */
-    public FileInfo(int firstPiece, int firstPieceStart, int lastPiece, int lastPieceEnd, long start, long end) {
-        this.firstPiece = firstPiece;
-        this.firstPieceStart = firstPieceStart;
-        this.lastPiece = lastPiece;
-        this.lastPieceEnd = lastPieceEnd;
-        this.start = start;
-        this.end = end;
+    public List<FileWithPieceInfo> getInRange(long start, long end) {
+        int startIndex = getFileIndex(start); // inclusive
+        int endIndex = getFileIndex(end); // inclusive
+
+        return IntStream.range(startIndex, endIndex + 1)
+                .mapToObj(fileWithPieceInfos::get)
+                .toList();
     }
 
-    public int numPieces() {
-        return lastPiece - firstPiece + 1;
+    private int getFileIndex(long offset) {
+        requireNonNegative(offset);
+        requireAtMost(offset, totalFileSize - 1);
+
+        int low = 0;
+        int high = getNumFiles() - 1;
+
+        while (low < high) {
+            int mid = low + (high - low) / 2;
+            FilePieceInfo midFilePieceInfo = getFileInfo(mid);
+            long midStart = midFilePieceInfo.start();
+            long midEnd = midFilePieceInfo.end();
+            boolean isOffsetWithinMidFile = offset >= midStart && offset <= midEnd;
+
+            if (isOffsetWithinMidFile) {
+                return mid;
+            } else if (offset < midStart) {
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        return high;
     }
 
-    public int firstPiece() {
-        return firstPiece;
+    public int getNumFiles() {
+        return fileWithPieceInfos.size();
     }
 
-    public int firstPieceStart() {
-        return firstPieceStart;
+    public FilePieceInfo getFileInfo(int index) {
+        return fileWithPieceInfos.get(index).filePieceInfo();
     }
 
-    public int lastPiece() {
-        return lastPiece;
+    public abstract Optional<String> getDirectory();
+
+    public abstract boolean isSingleFile();
+
+    public List<FileWithPieceInfo> getFileWithInfos() {
+        return fileWithPieceInfos;
     }
 
-    public int lastPieceEnd() {
-        return lastPieceEnd;
+    public int getPieceSize() {
+        return pieceSize;
     }
 
-    public long start() {
-        return start;
+    public long getTotalFileSize() {
+        return totalFileSize;
     }
 
-    public long end() {
-        return end;
+    public List<File> getFiles() {
+        return fileWithPieceInfos.stream()
+                .map(FileWithPieceInfo::file)
+                .toList();
     }
 
-    public void incrementVerifiedBytes(long bytes) {
-        verifiedBytesSubject.onNext(verifiedBytes.addAndGet(bytes));
+    public List<Sha1Hash> getPieceHashes() {
+        return pieceHashes;
     }
 
-    public Observable<Long> getVerifiedBytesObservable() {
-        return verifiedBytesSubject;
+    public Sha1Hash getPieceHash(int index) {
+        return pieceHashes.get(index);
     }
 
-    public void setPieceVerified(int piece) {
-        verifiedPieces.set(piece);
-        verifiedPiecesSubject.onNext((BitSet) verifiedPieces.clone());
-    }
-
-    public void setPieceNotVerified(int piece) {
-        verifiedPieces.clear(piece);
-        verifiedPiecesSubject.onNext((BitSet) verifiedPieces.clone());
-    }
-
-    public Observable<BitSet> getVerifiedPiecesObservable() {
-        return verifiedPiecesSubject;
+    public int getNumPieces() {
+        return pieceHashes.size();
     }
 }

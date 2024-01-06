@@ -1,46 +1,52 @@
 package jtorrent.torrent.data.model;
 
 import static jtorrent.torrent.data.model.util.MapUtil.getValueAsByteArray;
-import static jtorrent.torrent.data.model.util.MapUtil.getValueAsList;
 import static jtorrent.torrent.data.model.util.MapUtil.getValueAsLong;
 import static jtorrent.torrent.data.model.util.MapUtil.getValueAsString;
 
 import java.nio.ByteBuffer;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
-public class MultiFileInfo extends BencodedInfo {
+import jtorrent.torrent.domain.model.File;
+import jtorrent.torrent.domain.model.FileInfo;
+import jtorrent.torrent.domain.model.SingleFileInfo;
 
-    private final List<BencodedFile> files;
+public class BencodedSingleFileInfo extends BencodedInfo {
 
-    public MultiFileInfo(int pieceLength, byte[] pieces, String name, List<BencodedFile> files) {
+    private final long length;
+
+    public BencodedSingleFileInfo(int pieceLength, byte[] pieces, String name, long length) {
         super(pieceLength, pieces, name);
-        this.files = files;
+        this.length = length;
     }
 
-    public static MultiFileInfo fromMap(Map<String, Object> map) {
+    public static BencodedSingleFileInfo fromMap(Map<String, Object> map) {
         int pieceLength = getValueAsLong(map, KEY_PIECE_LENGTH).orElseThrow().intValue();
         byte[] pieces = getValueAsByteArray(map, KEY_PIECES).orElseThrow();
         String name = getValueAsString(map, KEY_NAME).orElseThrow();
-        List<Map<String, Object>> filesRaw = getValueAsList(map, KEY_FILES);
-        List<BencodedFile> files = filesRaw.stream()
-                .map(BencodedFile::fromMap)
-                .collect(Collectors.toList());
+        long length = getValueAsLong(map, KEY_LENGTH).orElseThrow();
 
-        return new MultiFileInfo(pieceLength, pieces, name, files);
+        return new BencodedSingleFileInfo(pieceLength, pieces, name, length);
     }
 
     @Override
     public List<BencodedFile> getFiles() {
-        return files;
+        return List.of(new BencodedFile(length, List.of(name)));
+    }
+
+    @Override
+    public FileInfo toDomain() {
+        File domainFile = new File(length, Path.of(name));
+        return SingleFileInfo.build(domainFile, pieceLength, getDomainPieceHashes());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), files);
+        return Objects.hash(super.hashCode(), length);
     }
 
     @Override
@@ -54,8 +60,12 @@ public class MultiFileInfo extends BencodedInfo {
         if (!super.equals(o)) {
             return false;
         }
-        MultiFileInfo that = (MultiFileInfo) o;
-        return Objects.equals(files, that.files);
+        BencodedSingleFileInfo that = (BencodedSingleFileInfo) o;
+        return length == that.length;
+    }
+
+    public long getLength() {
+        return length;
     }
 
     @Override
@@ -64,17 +74,17 @@ public class MultiFileInfo extends BencodedInfo {
                 KEY_PIECE_LENGTH, pieceLength,
                 KEY_PIECES, ByteBuffer.wrap(pieces),
                 KEY_NAME, name,
-                KEY_FILES, files.stream().map(BencodedFile::toMap).collect(Collectors.toList())
+                KEY_LENGTH, length
         );
     }
 
     @Override
     public String toString() {
-        return "MultiFileInfo{"
+        return "SingleFIleInfo{"
                 + "pieceLength=" + pieceLength
                 + ", pieces=" + Arrays.toString(pieces)
                 + ", name='" + name + '\''
-                + ", files=" + files
+                + ", length=" + length
                 + '}';
     }
 }

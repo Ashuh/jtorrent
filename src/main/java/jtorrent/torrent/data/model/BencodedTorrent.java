@@ -12,7 +12,6 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -25,7 +24,7 @@ import com.dampcake.bencode.BencodeInputStream;
 import jtorrent.common.domain.util.Sha1Hash;
 import jtorrent.common.domain.util.bencode.BencodedObject;
 import jtorrent.torrent.data.model.exception.MappingException;
-import jtorrent.torrent.domain.model.File;
+import jtorrent.torrent.domain.model.FileInfo;
 import jtorrent.torrent.domain.model.Torrent;
 import jtorrent.tracker.domain.model.Tracker;
 import jtorrent.tracker.domain.model.factory.TrackerFactory;
@@ -118,32 +117,13 @@ public class BencodedTorrent extends BencodedObject {
 
             LocalDateTime creationDateTime = LocalDateTime.ofEpochSecond(creationDate, 0,
                     OffsetDateTime.now().getOffset());
-            List<Sha1Hash> pieceHashes = mapPieces(info.getPieces());
-            int pieceLength = info.getPieceLength();
             String name = info.getName();
-            List<File> files = mapFiles(info.getFiles());
+            FileInfo fileInfo = info.toDomain();
             Sha1Hash infoHash = new Sha1Hash(info.getInfoHash());
-            return new Torrent(trackers, creationDateTime, comment, createdBy,
-                    pieceLength, pieceHashes, name, files, infoHash);
+            return new Torrent(trackers, creationDateTime, comment, createdBy, name, fileInfo, infoHash);
         } catch (Exception e) {
             throw new MappingException("Failed to map BencodedTorrent to Torrent", e);
         }
-    }
-
-    private List<Sha1Hash> mapPieces(byte[] pieces) {
-        List<Sha1Hash> pieceHashes = new ArrayList<>();
-        for (int i = 0; i < pieces.length; i += Sha1Hash.HASH_SIZE) {
-            byte[] pieceHash = new byte[Sha1Hash.HASH_SIZE];
-            System.arraycopy(pieces, i, pieceHash, 0, Sha1Hash.HASH_SIZE);
-            pieceHashes.add(new Sha1Hash(pieceHash));
-        }
-        return pieceHashes;
-    }
-
-    private List<File> mapFiles(List<BencodedFile> files) {
-        return files.stream()
-                .map(BencodedFile::toDomain)
-                .collect(Collectors.toList());
     }
 
     @Override

@@ -3,11 +3,14 @@ package jtorrent.torrent.data.model;
 import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
+import jtorrent.common.domain.util.Sha1Hash;
 import jtorrent.common.domain.util.bencode.BencodedObject;
+import jtorrent.torrent.domain.model.FileInfo;
 
 public abstract class BencodedInfo extends BencodedObject {
 
@@ -19,12 +22,25 @@ public abstract class BencodedInfo extends BencodedObject {
 
     protected final int pieceLength;
     protected final byte[] pieces;
+    /**
+     * The name of the file or directory
+     */
     protected final String name;
 
     protected BencodedInfo(int pieceLength, byte[] pieces, String name) {
         this.pieceLength = pieceLength;
         this.pieces = pieces;
         this.name = name;
+    }
+
+    protected List<Sha1Hash> getDomainPieceHashes() {
+        List<Sha1Hash> pieceHashes = new ArrayList<>();
+        for (int i = 0; i < pieces.length; i += Sha1Hash.HASH_SIZE) {
+            byte[] pieceHash = new byte[Sha1Hash.HASH_SIZE];
+            System.arraycopy(pieces, i, pieceHash, 0, Sha1Hash.HASH_SIZE);
+            pieceHashes.add(new Sha1Hash(pieceHash));
+        }
+        return pieceHashes;
     }
 
     public int getPieceLength() {
@@ -45,6 +61,8 @@ public abstract class BencodedInfo extends BencodedObject {
     }
 
     public abstract List<BencodedFile> getFiles();
+
+    public abstract FileInfo toDomain();
 
     @Override
     public int hashCode() {

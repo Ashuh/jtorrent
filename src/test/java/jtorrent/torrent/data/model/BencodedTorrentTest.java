@@ -141,7 +141,7 @@ class BencodedTorrentTest {
         bos.writeDictionary(map);
         byte[] expected = baos.toByteArray();
 
-        SingleFileInfo singleFileInfo = new SingleFileInfoBuilder()
+        BencodedSingleFileInfo bencodedSingleFileInfo = new SingleFileInfoBuilder()
                 .setPieceLength(100)
                 .setLength(100)
                 .setName("name")
@@ -153,7 +153,7 @@ class BencodedTorrentTest {
                 .setCreationDate(123456789L)
                 .setComment("comment")
                 .setCreatedBy("created by")
-                .setInfo(singleFileInfo)
+                .setInfo(bencodedSingleFileInfo)
                 .build();
         byte[] actual = bencodedTorrent.bencode();
 
@@ -199,7 +199,7 @@ class BencodedTorrentTest {
                         .setPath(List.of("path3", "path4"))
                         .build()
         );
-        MultiFileInfo multiFileInfo = new MultiFileInfoBuilder()
+        BencodedMultiFileInfo bencodedMultiFileInfo = new MultiFileInfoBuilder()
                 .setPieceLength(100)
                 .setPieces(new byte[20])
                 .setName("name")
@@ -211,7 +211,7 @@ class BencodedTorrentTest {
                 .setCreationDate(123456789L)
                 .setComment("comment")
                 .setCreatedBy("created by")
-                .setInfo(multiFileInfo)
+                .setInfo(bencodedMultiFileInfo)
                 .build();
         byte[] actual = bencodedTorrent.bencode();
 
@@ -220,7 +220,7 @@ class BencodedTorrentTest {
 
     @Test
     void toDomain_singleFile() throws NoSuchAlgorithmException, IOException {
-        SingleFileInfo info = new SingleFileInfoBuilder()
+        BencodedSingleFileInfo info = new SingleFileInfoBuilder()
                 .setPieceLength(100)
                 .setLength(100)
                 .setName("name")
@@ -258,7 +258,7 @@ class BencodedTorrentTest {
 
     @Test
     void toDomain_multiFile() throws NoSuchAlgorithmException, IOException {
-        MultiFileInfo info = new MultiFileInfoBuilder()
+        BencodedMultiFileInfo info = new MultiFileInfoBuilder()
                 .setPieceLength(100)
                 .setPieces(new byte[20])
                 .setName("name")
@@ -378,8 +378,8 @@ class BencodedTorrentTest {
             return this;
         }
 
-        public SingleFileInfo build() {
-            return new SingleFileInfo(pieceLength, pieces, name, length);
+        public BencodedSingleFileInfo build() {
+            return new BencodedSingleFileInfo(pieceLength, pieces, name, length);
         }
     }
 
@@ -410,8 +410,8 @@ class BencodedTorrentTest {
             return this;
         }
 
-        public MultiFileInfo build() {
-            return new MultiFileInfo(pieceLength, pieces, name, files);
+        public BencodedMultiFileInfo build() {
+            return new BencodedMultiFileInfo(pieceLength, pieces, name, files);
         }
     }
 

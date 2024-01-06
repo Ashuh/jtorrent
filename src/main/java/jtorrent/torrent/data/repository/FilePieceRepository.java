@@ -9,8 +9,8 @@ import java.nio.file.Path;
 import java.util.List;
 
 import jtorrent.torrent.domain.model.File;
-import jtorrent.torrent.domain.model.FileInfo;
-import jtorrent.torrent.domain.model.FileWithInfo;
+import jtorrent.torrent.domain.model.FilePieceInfo;
+import jtorrent.torrent.domain.model.FileWithPieceInfo;
 import jtorrent.torrent.domain.model.Torrent;
 import jtorrent.torrent.domain.repository.PieceRepository;
 
@@ -40,12 +40,12 @@ public class FilePieceRepository implements PieceRepository {
         ByteBuffer buffer = ByteBuffer.allocate(length);
         long end = start + length - 1; // inclusive
 
-        List<FileWithInfo> fileWithInfos = torrent.getFileWithInfosInRange(start, end);
-        for (FileWithInfo fileWithInfo : fileWithInfos) {
-            File file = fileWithInfo.file();
-            FileInfo fileInfo = fileWithInfo.fileInfo();
-            long startOffsetInFile = Math.max(start - fileInfo.start(), 0);
-            long endOffsetInFile = Math.min(fileInfo.end(), end) - fileInfo.start();
+        List<FileWithPieceInfo> fileWithPieceInfos = torrent.getFileWithInfosInRange(start, end);
+        for (FileWithPieceInfo fileWithPieceInfo : fileWithPieceInfos) {
+            File file = fileWithPieceInfo.file();
+            FilePieceInfo filePieceInfo = fileWithPieceInfo.filePieceInfo();
+            long startOffsetInFile = Math.max(start - filePieceInfo.start(), 0);
+            long endOffsetInFile = Math.min(filePieceInfo.end(), end) - filePieceInfo.start();
             int readLength = (int) (endOffsetInFile - startOffsetInFile + 1);
             Path path = torrent.getRootSaveDirectory().resolve(file.getPath());
             buffer.put(read(path, startOffsetInFile, readLength));
@@ -61,12 +61,12 @@ public class FilePieceRepository implements PieceRepository {
         long end = start + data.length - 1; // inclusive
 
         ByteBuffer buffer = ByteBuffer.wrap(data);
-        List<FileWithInfo> fileWithInfos = torrent.getFileWithInfosInRange(start, end);
-        for (FileWithInfo fileWithInfo : fileWithInfos) {
-            File file = fileWithInfo.file();
-            FileInfo fileInfo = fileWithInfo.fileInfo();
-            long startOffsetInFile = Math.max(start - fileInfo.start(), 0);
-            long endOffsetInFile = Math.min(fileInfo.end(), end) - fileInfo.start();
+        List<FileWithPieceInfo> fileWithPieceInfos = torrent.getFileWithInfosInRange(start, end);
+        for (FileWithPieceInfo fileWithPieceInfo : fileWithPieceInfos) {
+            File file = fileWithPieceInfo.file();
+            FilePieceInfo filePieceInfo = fileWithPieceInfo.filePieceInfo();
+            long startOffsetInFile = Math.max(start - filePieceInfo.start(), 0);
+            long endOffsetInFile = Math.min(filePieceInfo.end(), end) - filePieceInfo.start();
             int writeLength = (int) (endOffsetInFile - startOffsetInFile + 1);
             byte[] fileData = new byte[writeLength];
             buffer.get(fileData);

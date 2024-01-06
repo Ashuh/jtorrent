@@ -35,10 +35,9 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
     private final LocalDateTime creationDate;
     private final String comment;
     private final String createdBy;
-    private final int pieceSize;
-    private final List<Sha1Hash> pieceHashes;
     private String name;
-    private final FileWithInfoList fileWithInfos;
+    private final BehaviorSubject<String> nameSubject = BehaviorSubject.createDefault("");
+    private final FileInfo fileInfo;
     private final Sha1Hash infoHash;
     private final PieceTracker pieceTracker;
     private final AtomicInteger downloaded = new AtomicInteger(0);
@@ -57,15 +56,13 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
     private boolean isActive = false;
 
     public Torrent(Set<Tracker> trackers, LocalDateTime creationDate, String comment, String createdBy,
-            int pieceSize, List<Sha1Hash> pieceHashes, String name, List<File> files, Sha1Hash infoHash) {
+            String name, FileInfo fileInfo, Sha1Hash infoHash) {
         this.trackers = requireNonNull(trackers);
         this.creationDate = requireNonNull(creationDate);
         this.comment = requireNonNull(comment);
         this.createdBy = requireNonNull(createdBy);
-        this.pieceSize = pieceSize;
-        this.pieceHashes = requireNonNull(pieceHashes);
         this.name = requireNonNull(name);
-        this.fileWithInfos = FileWithInfoList.fromFilesWithPieceSize(files, pieceSize);
+        this.fileInfo = requireNonNull(fileInfo);
         this.infoHash = requireNonNull(infoHash);
         this.pieceTracker = new PieceTracker();
     }
@@ -94,7 +91,7 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
     }
 
     public boolean isSingleFileTorrent() {
-        return fileWithInfos.size() == 1;
+        return fileInfo.isSingleFile();
     }
 
     public Set<Tracker> getTrackers() {
@@ -114,15 +111,15 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
     }
 
     public int getPieceSize() {
-        return pieceSize;
+        return fileInfo.getPieceSize();
     }
 
     public int getPieceSize(int pieceIndex) {
         if (pieceIndex == getNumPieces() - 1) {
-            int remainder = (int) (getTotalSize() % pieceSize);
-            return remainder == 0 ? pieceSize : remainder;
+            int remainder = (int) (getTotalSize() % getPieceSize());
+            return remainder == 0 ? getPieceSize() : remainder;
         }
-        return pieceSize;
+        return getPieceSize();
     }
 
     public int getBlockSize() {
@@ -138,11 +135,11 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
     }
 
     public List<Sha1Hash> getPieceHashes() {
-        return pieceHashes;
+        return fileInfo.getPieceHashes();
     }
 
     public Sha1Hash getPieceHash(int piece) {
-        return pieceHashes.get(piece);
+        return fileInfo.getPieceHash(piece);
     }
 
     public String getName() {
@@ -154,15 +151,15 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
     }
 
     public List<File> getFiles() {
-        return fileWithInfos.getFiles();
+        return fileInfo.getFiles();
     }
 
-    public List<FileWithInfo> getFileWithInfosInRange(long start, long end) {
-        return fileWithInfos.getInRange(start, end);
+    public List<FileWithPieceInfo> getFileWithInfosInRange(long start, long end) {
+        return fileInfo.getInRange(start, end);
     }
 
-    public List<FileWithInfo> getFilesWithInfo() {
-        return fileWithInfos.get();
+    public List<FileWithPieceInfo> getFilesWithInfo() {
+        return fileInfo.getFileWithInfos();
     }
 
     @Override
@@ -186,7 +183,7 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
     }
 
     public long getTotalSize() {
-        return fileWithInfos.getTotalFileSize();
+        return fileInfo.getTotalFileSize();
     }
 
     private long getVerifiedBytes() {
@@ -197,7 +194,7 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
     }
 
     public int getNumPieces() {
-        return pieceHashes.size();
+        return fileInfo.getNumPieces();
     }
 
     public long getPieceOffset(int index) {
@@ -227,24 +224,24 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
 
             long pieceStart = getPieceOffset(pieceIndex);
             long pieceEnd = pieceStart + getPieceSize(pieceIndex) - 1;
-            List<FileWithInfo> filesInRange = fileWithInfos.getInRange(pieceStart, pieceEnd);
+            List<FileWithPieceInfo> filesInRange = fileInfo.getInRange(pieceStart, pieceEnd);
 
-            for (FileWithInfo fileWithInfo : filesInRange) {
-                FileInfo fileInfo = fileWithInfo.fileInfo();
-                fileInfo.setPieceNotVerified(pieceIndex - fileInfo.firstPiece());
-                long pieceBytesWithinFile = getPieceBytesInFile(pieceIndex, fileInfo);
-                fileInfo.incrementVerifiedBytes(-pieceBytesWithinFile);
+            for (FileWithPieceInfo fileWithPieceInfo : filesInRange) {
+                FilePieceInfo filePieceInfo = fileWithPieceInfo.filePieceInfo();
+                filePieceInfo.setPieceNotVerified(pieceIndex - filePieceInfo.firstPiece());
+                long pieceBytesWithinFile = getPieceBytesInFile(pieceIndex, filePieceInfo);
+                filePieceInfo.incrementVerifiedBytes(-pieceBytesWithinFile);
             }
         }
         pieceTracker.setPieceMissing(pieceIndex);
         verifiedPiecesSubject.onNext(pieceTracker.getVerifiedPieces());
     }
 
-    private long getPieceBytesInFile(int piece, FileInfo fileInfo) {
+    private long getPieceBytesInFile(int piece, FilePieceInfo filePieceInfo) {
         long pieceStart = getPieceOffset(piece);
         long pieceEnd = pieceStart + getPieceSize(piece) - 1;
-        long pieceStartWithinFile = Math.max(pieceStart, fileInfo.start());
-        long pieceEndWithinFile = Math.min(pieceEnd, fileInfo.end());
+        long pieceStartWithinFile = Math.max(pieceStart, filePieceInfo.start());
+        long pieceEndWithinFile = Math.min(pieceEnd, filePieceInfo.end());
         return pieceEndWithinFile - pieceStartWithinFile + 1;
     }
 
@@ -280,13 +277,13 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
 
         long pieceStart = getPieceOffset(pieceIndex);
         long pieceEnd = pieceStart + getPieceSize(pieceIndex) - 1;
-        List<FileWithInfo> filesInRange = fileWithInfos.getInRange(pieceStart, pieceEnd);
+        List<FileWithPieceInfo> filesInRange = fileInfo.getInRange(pieceStart, pieceEnd);
 
-        for (FileWithInfo fileWithInfo : filesInRange) {
-            FileInfo fileInfo = fileWithInfo.fileInfo();
-            fileInfo.setPieceVerified(pieceIndex - fileInfo.firstPiece());
-            long pieceBytesWithinFile = getPieceBytesInFile(pieceIndex, fileInfo);
-            fileInfo.incrementVerifiedBytes(pieceBytesWithinFile);
+        for (FileWithPieceInfo fileWithPieceInfo : filesInRange) {
+            FilePieceInfo filePieceInfo = fileWithPieceInfo.filePieceInfo();
+            filePieceInfo.setPieceVerified(pieceIndex - filePieceInfo.firstPiece());
+            long pieceBytesWithinFile = getPieceBytesInFile(pieceIndex, filePieceInfo);
+            filePieceInfo.incrementVerifiedBytes(pieceBytesWithinFile);
         }
     }
 
@@ -393,9 +390,8 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
                 + ", creationDate=" + creationDate
                 + ", comment='" + comment + '\''
                 + ", createdBy='" + createdBy + '\''
-                + ", pieceSize=" + pieceSize
                 + ", name='" + name + '\''
-                + ", fileWithInfos=" + fileWithInfos
+                + ", fileInfo=" + fileInfo
                 + ", infoHash=" + infoHash
                 + '}';
     }

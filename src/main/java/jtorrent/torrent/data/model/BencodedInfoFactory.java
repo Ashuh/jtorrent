@@ -12,9 +12,9 @@ public class BencodedInfoFactory {
 
     public static BencodedInfo fromMap(Map<String, Object> map) {
         if (map.containsKey(KEY_LENGTH)) {
-            return SingleFileInfo.fromMap(map);
+            return BencodedSingleFileInfo.fromMap(map);
         } else if (map.containsKey(KEY_FILES)) {
-            return MultiFileInfo.fromMap(map);
+            return BencodedMultiFileInfo.fromMap(map);
         }
 
         throw new IllegalArgumentException("Invalid info dictionary");

@@ -13,8 +13,8 @@ import javafx.beans.property.StringProperty;
 import jtorrent.common.presentation.util.BindingUtils;
 import jtorrent.common.presentation.util.DataUnitFormatter;
 import jtorrent.torrent.domain.model.File;
-import jtorrent.torrent.domain.model.FileInfo;
-import jtorrent.torrent.domain.model.FileWithInfo;
+import jtorrent.torrent.domain.model.FilePieceInfo;
+import jtorrent.torrent.domain.model.FileWithPieceInfo;
 
 public class UiFileInfo {
 
@@ -58,16 +58,16 @@ public class UiFileInfo {
         this.disposables = disposables;
     }
 
-    public static UiFileInfo fromDomain(FileWithInfo fileWithInfo) {
-        File file = fileWithInfo.file();
-        FileInfo fileInfo = fileWithInfo.fileInfo();
+    public static UiFileInfo fromDomain(FileWithPieceInfo fileWithPieceInfo) {
+        File file = fileWithPieceInfo.file();
+        FilePieceInfo filePieceInfo = fileWithPieceInfo.filePieceInfo();
 
         StringProperty path = new SimpleStringProperty(file.getPath().toString());
         StringProperty size = new SimpleStringProperty(DataUnitFormatter.formatSize(file.getSize()));
         StringProperty done = new SimpleStringProperty("");
         StringProperty percentDone = new SimpleStringProperty("");
-        IntegerProperty firstPiece = new SimpleIntegerProperty(fileInfo.firstPiece());
-        IntegerProperty numPieces = new SimpleIntegerProperty(fileInfo.numPieces());
+        IntegerProperty firstPiece = new SimpleIntegerProperty(filePieceInfo.firstPiece());
+        IntegerProperty numPieces = new SimpleIntegerProperty(filePieceInfo.numPieces());
         ObjectProperty<BitSet> pieces = new SimpleObjectProperty<>(new BitSet());
         StringProperty priority = new SimpleStringProperty("");
         StringProperty mode = new SimpleStringProperty("");
@@ -79,15 +79,16 @@ public class UiFileInfo {
         StringProperty codecs = new SimpleStringProperty("");
         CompositeDisposable disposables = new CompositeDisposable();
 
-        Observable<String> doneObservable = fileInfo.getVerifiedBytesObservable().map(DataUnitFormatter::formatSize);
+        Observable<String> doneObservable =
+                filePieceInfo.getVerifiedBytesObservable().map(DataUnitFormatter::formatSize);
         BindingUtils.subscribe(doneObservable, done, disposables);
 
-        Observable<String> percentDoneObservable = fileInfo.getVerifiedBytesObservable()
+        Observable<String> percentDoneObservable = filePieceInfo.getVerifiedBytesObservable()
                 .map(verifiedBytes -> (double) verifiedBytes / file.getSize())
                 .map(percent -> String.format("%.1f%%", percent * 100));
         BindingUtils.subscribe(percentDoneObservable, percentDone, disposables);
 
-        Observable<BitSet> fileVerifiedPiecesObservable = fileInfo.getVerifiedPiecesObservable();
+        Observable<BitSet> fileVerifiedPiecesObservable = filePieceInfo.getVerifiedPiecesObservable();
         BindingUtils.subscribe(fileVerifiedPiecesObservable, pieces, disposables);
 
         return new UiFileInfo(path, size, done, percentDone, firstPiece, numPieces, pieces, priority, mode,
