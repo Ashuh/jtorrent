@@ -8,7 +8,6 @@ import static jtorrent.common.domain.util.ValidationUtil.requireNonNull;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collections;
@@ -81,7 +80,6 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
 
     public void start() {
         torrent.setIsActive(true);
-        createSaveDirectory();
         CompletableFuture.runAsync(this::verifyFiles)
                 .thenAccept(ignored -> {
                     workDispatcher.start();
@@ -101,14 +99,6 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
         executorService.shutdownNow();
         peerHandlers.forEach(PeerHandler::stop);
         torrent.clearPeers();
-    }
-
-    private void createSaveDirectory() {
-        try {
-            Files.createDirectories(torrent.getRootSaveDirectory());
-        } catch (IOException e) {
-            log(Level.ERROR, String.format("Failed to create save directory %s", torrent.getSaveDirectory()), e);
-        }
     }
 
     private void verifyFiles() {

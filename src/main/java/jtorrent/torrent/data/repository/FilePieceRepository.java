@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.lang.System.Logger.Level;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -77,6 +78,7 @@ public class FilePieceRepository implements PieceRepository {
     private byte[] read(Path path, long start, int length) throws IOException {
         LOGGER.log(Level.DEBUG, "Reading {0} bytes from {1} starting at {2}", length, path, start);
         byte[] buffer = new byte[length];
+        Files.createDirectories(path.getParent());
         try (RandomAccessFile file = new RandomAccessFile(path.toFile(), READ_ONLY_MODE)) {
             file.seek(start);
             file.read(buffer);
@@ -86,6 +88,7 @@ public class FilePieceRepository implements PieceRepository {
 
     private void write(Path path, long start, byte[] data) throws IOException {
         LOGGER.log(Level.DEBUG, "Writing {0} bytes to {1} starting at {2}", data.length, path, start);
+        Files.createDirectories(path.getParent());
         try (RandomAccessFile file = new RandomAccessFile(path.toFile(), READ_WRITE_MODE)) {
             file.seek(start);
             file.write(data);
