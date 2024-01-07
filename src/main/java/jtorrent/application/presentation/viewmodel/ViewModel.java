@@ -62,6 +62,7 @@ public class ViewModel {
             case REMOVE:
                 assert indexOptional.isPresent();
                 UiTorrent removed = uiTorrents.remove(indexOptional.get().intValue());
+                removed.dispose();
                 uiTorrentToTorrent.remove(removed);
                 break;
             case CLEAR:

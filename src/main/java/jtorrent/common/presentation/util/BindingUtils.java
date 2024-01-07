@@ -10,7 +10,8 @@ public class BindingUtils {
     private BindingUtils() {
     }
 
-    public static <T> void subscribe(Observable<T> observable, Property<T> property, CompositeDisposable disposables) {
+    public static <T> void subscribe(Observable<T> observable, Property<? super T> property,
+            CompositeDisposable disposables) {
         Disposable disposable = observable.subscribe(new UpdatePropertyConsumer<>(property));
         disposables.add(disposable);
     }

@@ -3,14 +3,15 @@ package jtorrent.torrent.presentation;
 import static jtorrent.common.domain.util.ValidationUtil.requireNonNull;
 
 import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.disposables.CompositeDisposable;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import jtorrent.common.presentation.util.BindingUtils;
 import jtorrent.common.presentation.util.DataUnitFormatter;
-import jtorrent.common.presentation.util.UpdatePropertyConsumer;
 import jtorrent.torrent.domain.model.Torrent;
 
 public class UiTorrent {
@@ -23,9 +24,11 @@ public class UiTorrent {
     private final StringProperty eta;
     private final StringProperty saveDirectory;
     private final BooleanProperty isActive;
+    private final CompositeDisposable disposables;
 
     public UiTorrent(StringProperty name, StringProperty size, DoubleProperty progress, StringProperty downSpeed,
-            StringProperty upSpeed, StringProperty eta, StringProperty saveDirectory, BooleanProperty isActive) {
+            StringProperty upSpeed, StringProperty eta, StringProperty saveDirectory, BooleanProperty isActive,
+            CompositeDisposable disposables) {
         this.name = requireNonNull(name);
         this.size = requireNonNull(size);
         this.progress = requireNonNull(progress);
@@ -34,6 +37,7 @@ public class UiTorrent {
         this.eta = requireNonNull(eta);
         this.saveDirectory = requireNonNull(saveDirectory);
         this.isActive = requireNonNull(isActive);
+        this.disposables = disposables;
     }
 
     public static UiTorrent fromDomain(Torrent torrent) {
@@ -47,29 +51,27 @@ public class UiTorrent {
         StringProperty eta = new SimpleStringProperty("");
         StringProperty saveDirectory = new SimpleStringProperty(torrent.getSaveDirectory().toString());
         BooleanProperty isActive = new SimpleBooleanProperty(false);
+        CompositeDisposable disposables = new CompositeDisposable();
 
-        Observable<Integer> downloadedObservable = torrent.getDownloadedObservable();
         Observable<Double> downloadRateObservable = torrent.getDownloadRateObservable();
+        BindingUtils.subscribe(downloadRateObservable.map(UiTorrent::formatRate), downSpeed, disposables);
+
         Observable<Double> uploadRateObservable = torrent.getUploadRateObservable();
-        Observable<Boolean> isActiveObservable = torrent.getIsActiveObservable();
+        BindingUtils.subscribe(uploadRateObservable.map(UiTorrent::formatRate), upSpeed, disposables);
+
         Observable<Long> verifiedBytesObservable = torrent.getVerifiedBytesObservable();
-        downloadRateObservable
-                .map(UiTorrent::formatRate)
-                .subscribe(new UpdatePropertyConsumer<>(downSpeed));
-        uploadRateObservable
-                .map(UiTorrent::formatRate)
-                .subscribe(new UpdatePropertyConsumer<>(upSpeed));
-        Observable.combineLatest(verifiedBytesObservable, downloadRateObservable,
-                        new CalculateEtaCombiner(torrentSize))
-                .subscribe(new UpdatePropertyConsumer<>(eta));
+        Observable<String> etaObservable = Observable.combineLatest(verifiedBytesObservable, downloadRateObservable,
+                new CalculateEtaCombiner(torrentSize));
+        BindingUtils.subscribe(etaObservable, eta, disposables);
 
-        verifiedBytesObservable
-                .map(verifiedBytes -> (double) verifiedBytes / torrentSize)
-                .subscribe(new UpdatePropertyConsumer<>(progress));
+        Observable<Double> progressObservable = torrent.getDownloadedObservable()
+                .map(verifiedBytes -> (double) verifiedBytes / torrentSize);
+        BindingUtils.subscribe(progressObservable, progress, disposables);
 
-        isActiveObservable.subscribe(new UpdatePropertyConsumer<>(isActive));
+        Observable<Boolean> isActiveObservable = torrent.getIsActiveObservable();
+        BindingUtils.subscribe(isActiveObservable, isActive, disposables);
 
-        return new UiTorrent(name, size, progress, downSpeed, upSpeed, eta, saveDirectory, isActive);
+        return new UiTorrent(name, size, progress, downSpeed, upSpeed, eta, saveDirectory, isActive, disposables);
     }
 
     private static String formatRate(double bytes) {
@@ -143,4 +145,7 @@ public class UiTorrent {
         return isActive;
     }
 
+    public void dispose() {
+        disposables.dispose();
+    }
 }
