@@ -20,12 +20,12 @@ public class UiTorrent {
     private final DoubleProperty progress;
     private final StringProperty downSpeed;
     private final StringProperty upSpeed;
-    private final DoubleProperty eta;
+    private final StringProperty eta;
     private final StringProperty saveDirectory;
     private final BooleanProperty isActive;
 
     public UiTorrent(StringProperty name, StringProperty size, DoubleProperty progress, StringProperty downSpeed,
-            StringProperty upSpeed, DoubleProperty eta, StringProperty saveDirectory, BooleanProperty isActive) {
+            StringProperty upSpeed, StringProperty eta, StringProperty saveDirectory, BooleanProperty isActive) {
         this.name = requireNonNull(name);
         this.size = requireNonNull(size);
         this.progress = requireNonNull(progress);
@@ -44,7 +44,7 @@ public class UiTorrent {
         DoubleProperty progress = new SimpleDoubleProperty(0.0);
         StringProperty downSpeed = new SimpleStringProperty("");
         StringProperty upSpeed = new SimpleStringProperty("");
-        DoubleProperty eta = new SimpleDoubleProperty(Double.POSITIVE_INFINITY);
+        StringProperty eta = new SimpleStringProperty("");
         StringProperty saveDirectory = new SimpleStringProperty(torrent.getSaveDirectory().toString());
         BooleanProperty isActive = new SimpleBooleanProperty(false);
 
@@ -119,11 +119,11 @@ public class UiTorrent {
         return upSpeed;
     }
 
-    public double getEta() {
+    public String getEta() {
         return eta.get();
     }
 
-    public DoubleProperty etaProperty() {
+    public StringProperty etaProperty() {
         return eta;
     }
 

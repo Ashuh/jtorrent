@@ -1,8 +1,10 @@
 package jtorrent.torrent.presentation;
 
+import java.time.Duration;
+
 import io.reactivex.rxjava3.functions.BiFunction;
 
-class CalculateEtaCombiner implements BiFunction<Long, Double, Double> {
+class CalculateEtaCombiner implements BiFunction<Long, Double, String> {
 
     private final long size;
 
@@ -11,15 +13,25 @@ class CalculateEtaCombiner implements BiFunction<Long, Double, Double> {
     }
 
     @Override
-    public Double apply(Long downloaded, Double rate) {
+    public String apply(Long downloaded, Double rate) {
         if (downloaded == size) {
-            return 0.0;
+            return "";
         }
 
         if (rate == 0) {
-            return Double.POSITIVE_INFINITY;
+            return "∞";
         } else {
-            return (size - downloaded) / rate;
+            long etaSeconds = (long) ((size - downloaded) / rate);
+            return formatTime(etaSeconds);
         }
+    }
+
+    private static String formatTime(long seconds) {
+        Duration duration = Duration.ofSeconds(seconds);
+        long days = duration.toDaysPart();
+        long hours = duration.toHoursPart();
+        long minutes = duration.toMinutesPart();
+        long secs = duration.toSecondsPart();
+        return String.format("%sd %sh %sm %ss", days, hours, minutes, secs);
     }
 }

@@ -36,7 +36,7 @@ public class TorrentsTableView implements Initializable {
     @FXML
     private TableColumn<UiTorrent, String> upSpeed;
     @FXML
-    private TableColumn<UiTorrent, Double> eta;
+    private TableColumn<UiTorrent, String> eta;
     @FXML
     private TableColumn<UiTorrent, String> saveDirectory;
 
@@ -86,7 +86,7 @@ public class TorrentsTableView implements Initializable {
         status.setCellFactory(ProgressBarTableCell.forTableColumn());
         downSpeed.setCellValueFactory(cd -> cd.getValue().downSpeedProperty());
         upSpeed.setCellValueFactory(cd -> cd.getValue().upSpeedProperty());
-        eta.setCellValueFactory(cd -> cd.getValue().etaProperty().asObject());
+        eta.setCellValueFactory(cd -> cd.getValue().etaProperty());
         saveDirectory.setCellValueFactory(cd -> cd.getValue().saveDirectoryProperty());
 
         StartButtonDisabledBinding startButtonDisabledBinding =
