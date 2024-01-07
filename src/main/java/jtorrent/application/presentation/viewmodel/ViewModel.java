@@ -156,7 +156,7 @@ public class ViewModel {
         Torrent torrent = uiTorrentToTorrent.get(uiTorrent);
 
         // only works on windows. Doing this because Desktop::browseFileDirectory doesn't work on Windows 10
-        final String command = EXPLORER_EXE + " /SELECT,\"" + torrent.getSaveDirectory().toAbsolutePath() + "\"";
+        final String command = EXPLORER_EXE + " /SELECT,\"" + torrent.getSaveAsPath().toAbsolutePath() + "\"";
         try {
             Runtime.getRuntime().exec(command);
         } catch (IOException e) {
