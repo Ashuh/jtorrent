@@ -13,6 +13,9 @@ public class SingleFileInfo extends FileInfo {
     }
 
     public static SingleFileInfo build(File file, int pieceSize, List<Sha1Hash> pieceHashes) {
+        if (file.getPath().getNameCount() != 1) {
+            throw new IllegalArgumentException("File path must be a single file");
+        }
         List<FileWithPieceInfo> fileWithPieceInfos = build(List.of(file), pieceSize);
         return new SingleFileInfo(fileWithPieceInfos, pieceSize, file.getSize(), pieceHashes);
     }
