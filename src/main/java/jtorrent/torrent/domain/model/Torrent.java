@@ -3,7 +3,6 @@ package jtorrent.torrent.domain.model;
 import static jtorrent.common.domain.util.ValidationUtil.requireNonNull;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.BitSet;
 import java.util.HashMap;
@@ -52,7 +51,6 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
     private final BehaviorSubject<BitSet> verifiedPiecesSubject = BehaviorSubject.createDefault(new BitSet());
     private final BehaviorSubject<BitSet> availablePiecesSubject = BehaviorSubject.createDefault(new BitSet());
     private final BehaviorSubject<Boolean> isActiveSubject = BehaviorSubject.createDefault(false);
-    private Path saveDirectory = Paths.get("download").toAbsolutePath(); // TODO: use default downloads folder?
     private boolean isActive = false;
 
     public Torrent(Set<Tracker> trackers, LocalDateTime creationDate, String comment, String createdBy,
@@ -68,11 +66,11 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
     }
 
     public Path getSaveDirectory() {
-        return saveDirectory;
+        return fileInfo.getSaveDirectory();
     }
 
     public void setSaveDirectory(Path saveDirectory) {
-        this.saveDirectory = saveDirectory;
+        fileInfo.setSaveDirectory(saveDirectory);
     }
 
     /**
@@ -84,9 +82,7 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
      * @return the root save directory for this torrent
      */
     public Path getRootSaveDirectory() {
-        return fileInfo.getDirectory()
-                .map(dir -> saveDirectory.resolve(dir))
-                .orElse(saveDirectory);
+        return fileInfo.getFileRoot();
     }
 
     /**
@@ -102,6 +98,10 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
      */
     public boolean isSingleFileTorrent() {
         return fileInfo.isSingleFile();
+    }
+
+    public Path getSaveAsPath() {
+        return fileInfo.getSaveAsPath();
     }
 
     public Set<Tracker> getTrackers() {

@@ -4,9 +4,10 @@ import static jtorrent.common.domain.util.ValidationUtil.requireAtMost;
 import static jtorrent.common.domain.util.ValidationUtil.requireNonNegative;
 import static jtorrent.common.domain.util.ValidationUtil.requireNonNull;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.IntStream;
 
 import jtorrent.common.domain.util.Sha1Hash;
@@ -17,6 +18,7 @@ public abstract class FileInfo {
     private final List<Sha1Hash> pieceHashes;
     private final int pieceSize;
     private final long totalFileSize;
+    private Path saveDirectory = Paths.get("download").toAbsolutePath(); // TODO: use default downloads folder?
 
     protected FileInfo(List<FileWithPieceInfo> fileWithPieceInfos, int pieceSize, long totalFileSize,
             List<Sha1Hash> pieceHashes) {
@@ -110,8 +112,6 @@ public abstract class FileInfo {
         return fileWithPieceInfos.get(index).filePieceInfo();
     }
 
-    public abstract Optional<String> getDirectory();
-
     public abstract boolean isSingleFile();
 
     public List<FileWithPieceInfo> getFileWithInfos() {
@@ -143,4 +143,29 @@ public abstract class FileInfo {
     public int getNumPieces() {
         return pieceHashes.size();
     }
+
+    /**
+     * Gets the {@link Path} to the directory that is used to save the torrent contents.
+     * Torrent contents refer to either a single file in the case of a single file torrent,
+     * or a directory in the case of a multi-file torrent.
+     */
+    public Path getSaveDirectory() {
+        return saveDirectory;
+    }
+
+    public void setSaveDirectory(Path saveDirectory) {
+        this.saveDirectory = requireNonNull(saveDirectory);
+    }
+
+    /**
+     * Gets the root directory of the {@link File}s that this {@link FileInfo} contains.
+     */
+    public abstract Path getFileRoot();
+
+    /**
+     * Gets the path to the file or directory to which the torrent contents should be saved.
+     * If the torrent is a single file torrent, then the returned path is the path to the file.
+     * If the torrent is a multi-file torrent, then the returned path is the path to the directory containing the files.
+     */
+    public abstract Path getSaveAsPath();
 }

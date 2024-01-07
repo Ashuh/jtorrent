@@ -1,7 +1,7 @@
 package jtorrent.torrent.domain.model;
 
+import java.nio.file.Path;
 import java.util.List;
-import java.util.Optional;
 
 import jtorrent.common.domain.util.Sha1Hash;
 
@@ -21,12 +21,17 @@ public class SingleFileInfo extends FileInfo {
     }
 
     @Override
-    public Optional<String> getDirectory() {
-        return Optional.empty();
+    public boolean isSingleFile() {
+        return true;
     }
 
     @Override
-    public boolean isSingleFile() {
-        return true;
+    public Path getFileRoot() {
+        return getSaveDirectory();
+    }
+
+    @Override
+    public Path getSaveAsPath() {
+        return getFileRoot().resolve(getFiles().get(0).getPath());
     }
 }

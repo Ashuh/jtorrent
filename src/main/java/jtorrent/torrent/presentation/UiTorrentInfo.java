@@ -102,7 +102,7 @@ public class UiTorrentInfo {
         StringProperty upLimit = new SimpleStringProperty();
         StringProperty shareRatio = new SimpleStringProperty();
         StringProperty status = new SimpleStringProperty();
-        StringProperty saveAs = new SimpleStringProperty();
+        StringProperty saveAs = new SimpleStringProperty(torrent.getSaveAsPath().toString());
         StringProperty pieces = new SimpleStringProperty(
                 formatPieces(
                         torrent.getNumPieces(),

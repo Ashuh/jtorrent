@@ -2,8 +2,8 @@ package jtorrent.torrent.domain.model;
 
 import static jtorrent.common.domain.util.ValidationUtil.requireNonNull;
 
+import java.nio.file.Path;
 import java.util.List;
-import java.util.Optional;
 
 import jtorrent.common.domain.util.Sha1Hash;
 
@@ -25,12 +25,18 @@ public class MultiFileInfo extends FileInfo {
         return new MultiFileInfo(directory, fileWithPieceInfos, pieceSize, totalFileSize, pieceHashes);
     }
 
-    public Optional<String> getDirectory() {
-        return directory.describeConstable();
-    }
-
     @Override
     public boolean isSingleFile() {
         return false;
+    }
+
+    @Override
+    public Path getFileRoot() {
+        return getSaveDirectory().resolve(directory);
+    }
+
+    @Override
+    public Path getSaveAsPath() {
+        return getFileRoot();
     }
 }
