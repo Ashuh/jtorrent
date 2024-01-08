@@ -4,7 +4,7 @@ import java.time.Duration;
 
 import io.reactivex.rxjava3.functions.BiFunction;
 
-class CalculateEtaCombiner implements BiFunction<Long, Double, String> {
+public class CalculateEtaCombiner implements BiFunction<Long, Double, String> {
 
     private final long size;
 
