@@ -493,8 +493,8 @@ class BencodedTorrentTest {
         }
 
         public Torrent build() {
-            return new Torrent(trackers, creationDate, comment, createdBy,
-                    pieceSize, pieceHashes, name, files, infoHash);
+            FileInfo fileInfo = null; // TODO: fix this
+            return new Torrent(trackers, creationDate, comment, createdBy, name, fileInfo, infoHash);
         }
     }
 
