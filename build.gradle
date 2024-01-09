@@ -14,7 +14,7 @@ targetCompatibility = '17'
 
 application {
     mainModule = 'jtorrent'
-    mainClass = 'jtorrent.application.presentation.Main'
+    mainClass = 'jtorrent.Main'
 }
 
 repositories {

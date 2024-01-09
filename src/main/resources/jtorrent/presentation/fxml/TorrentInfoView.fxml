@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Text?>
+<?import jtorrent.presentation.view.DataStatusBar?>
+<VBox spacing="4.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="jtorrent.presentation.view.TorrentInfoView">
+    <padding>
+        <Insets bottom="4.0" left="4.0" right="4.0" top="4.0"/>
+    </padding>
+    <GridPane hgap="8.0" vgap="4.0">
+        <columnConstraints>
+            <ColumnConstraints hgrow="NEVER"/>
+            <ColumnConstraints hgrow="ALWAYS"/>
+            <ColumnConstraints hgrow="NEVER"/>
+        </columnConstraints>
+        <rowConstraints>
+            <RowConstraints vgrow="SOMETIMES"/>
+            <RowConstraints vgrow="SOMETIMES"/>
+        </rowConstraints>
+        <Text text="Downloaded:"/>
+        <DataStatusBar fx:id="downloadedDataStatusBar" GridPane.columnIndex="1"/>
+        <Text fx:id="downloadedPercentage" text="0.00 %" GridPane.columnIndex="2"/>
+        <Text text="Availability:" GridPane.rowIndex="1"/>
+        <DataStatusBar fx:id="availableDataStatusBar" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+        <Text fx:id="availablePercentage" text="0.000" GridPane.columnIndex="2" GridPane.rowIndex="1"/>
+    </GridPane>
+    <ScrollPane fitToWidth="true">
+        <VBox.margin>
+            <Insets/>
+        </VBox.margin>
+        <VBox spacing="8.0">
+            <HBox styleClass="bg-accent-subtle">
+                <Label styleClass="text-bold" text="Transfer"/>
+            </HBox>
+            <GridPane hgap="8.0" vgap="4.0">
+                <columnConstraints>
+                    <ColumnConstraints hgrow="NEVER"/>
+                    <ColumnConstraints hgrow="ALWAYS"/>
+                    <ColumnConstraints hgrow="NEVER"/>
+                    <ColumnConstraints hgrow="ALWAYS"/>
+                    <ColumnConstraints hgrow="NEVER"/>
+                    <ColumnConstraints hgrow="ALWAYS"/>
+                </columnConstraints>
+                <rowConstraints>
+                    <RowConstraints vgrow="NEVER"/>
+                    <RowConstraints vgrow="NEVER"/>
+                    <RowConstraints vgrow="NEVER"/>
+                    <RowConstraints vgrow="NEVER"/>
+                    <RowConstraints vgrow="NEVER"/>
+                </rowConstraints>
+                <Text text="Time Elapsed:"/>
+                <Text fx:id="timeElapsed" text="0s" GridPane.columnIndex="1"/>
+                <Text text="Remaining:" GridPane.columnIndex="2"/>
+                <Text fx:id="remaining" GridPane.columnIndex="3"/>
+                <Text text="Wasted:" GridPane.columnIndex="4"/>
+                <Text fx:id="wasted" text="0 B (0 hashfails)" GridPane.columnIndex="5"/>
+                <Text text="Downloaded:" GridPane.rowIndex="1"/>
+                <Text fx:id="downloaded" text="0 B" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+                <Text text="Uploaded:" GridPane.columnIndex="2" GridPane.rowIndex="1"/>
+                <Text fx:id="uploaded" text="0 B" GridPane.columnIndex="3" GridPane.rowIndex="1"/>
+                <Text text="Seeds:" GridPane.columnIndex="4" GridPane.rowIndex="1"/>
+                <Text fx:id="seeds" text="0 of 0 connected (0 in swarm)" GridPane.columnIndex="5"
+                      GridPane.rowIndex="1"/>
+                <Text text="Download Speed:" GridPane.rowIndex="2"/>
+                <Text fx:id="downloadSpeed" text="0.0 KB/s" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+                <Text text="Upload Speed:" GridPane.columnIndex="2" GridPane.rowIndex="2"/>
+                <Text fx:id="uploadSpeed" text="0.0 KB/s" GridPane.columnIndex="3" GridPane.rowIndex="2"/>
+                <Text text="Peers:" GridPane.columnIndex="4" GridPane.rowIndex="2"/>
+                <Text fx:id="peers" text="0 of 0 connected (0 in swarm)" GridPane.columnIndex="5"
+                      GridPane.rowIndex="2"/>
+                <Text text="Down Limit:" GridPane.rowIndex="3"/>
+                <Text fx:id="downLimit" text="∞" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
+                <Text text="Up Limit:" GridPane.columnIndex="2" GridPane.rowIndex="3"/>
+                <Text fx:id="upLimit" text="∞" GridPane.columnIndex="3" GridPane.rowIndex="3"/>
+                <Text text="Share Ratio:" GridPane.columnIndex="4" GridPane.rowIndex="3"/>
+                <Text fx:id="shareRatio" text="0.000" GridPane.columnIndex="5" GridPane.rowIndex="3"/>
+                <Text text="Status:" GridPane.rowIndex="4"/>
+                <Text fx:id="status" text="Stopped" GridPane.columnIndex="1" GridPane.rowIndex="4"/>
+            </GridPane>
+            <HBox styleClass="bg-accent-subtle">
+                <Label styleClass="text-bold" text="General"/>
+            </HBox>
+            <GridPane hgap="8.0" vgap="4.0">
+                <columnConstraints>
+                    <ColumnConstraints hgrow="NEVER"/>
+                    <ColumnConstraints hgrow="ALWAYS"/>
+                    <ColumnConstraints hgrow="NEVER"/>
+                    <ColumnConstraints hgrow="ALWAYS"/>
+                </columnConstraints>
+                <rowConstraints>
+                    <RowConstraints vgrow="NEVER"/>
+                    <RowConstraints vgrow="NEVER"/>
+                    <RowConstraints vgrow="NEVER"/>
+                    <RowConstraints vgrow="NEVER"/>
+                    <RowConstraints vgrow="NEVER"/>
+                    <RowConstraints vgrow="NEVER"/>
+                    <RowConstraints vgrow="NEVER"/>
+                    <RowConstraints vgrow="NEVER"/>
+                </rowConstraints>
+                <Text text="Save As:"/>
+                <Text fx:id="saveAs" GridPane.columnIndex="1"/>
+                <Text text="Pieces:" GridPane.columnIndex="2" GridPane.rowIndex="1"/>
+                <Text fx:id="pieces" GridPane.columnIndex="3" GridPane.rowIndex="1"/>
+                <Text text="Total Size:" GridPane.rowIndex="1"/>
+                <Text fx:id="totalSize" text="0 B (0 B done)" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+                <Text text="Created By:" GridPane.columnIndex="2" GridPane.rowIndex="2"/>
+                <Text fx:id="createdBy" text="JTorrent" GridPane.columnIndex="3" GridPane.rowIndex="2"/>
+                <Text text="Created On:" GridPane.rowIndex="2"/>
+                <Text fx:id="createdOn" text="1/1/1970 0:00:00 am" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+                <Text text="Completed On:" GridPane.columnIndex="2" GridPane.rowIndex="3"/>
+                <Text fx:id="completedOn" text="Incomplete" GridPane.columnIndex="3" GridPane.rowIndex="3"/>
+                <Text text="Hash:" GridPane.rowIndex="3"/>
+                <Text fx:id="hash" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
+                <Text text="Comment:" GridPane.rowIndex="4"/>
+                <Text fx:id="comment" GridPane.columnIndex="1" GridPane.rowIndex="4"/>
+            </GridPane>
+        </VBox>
+    </ScrollPane>
+</VBox>
