@@ -6,6 +6,8 @@ import io.reactivex.rxjava3.functions.BiFunction;
 
 public class CalculateEtaCombiner implements BiFunction<Long, Double, String> {
 
+    private static final String INFINITY = "\u221E";
+
     private final long size;
 
     public CalculateEtaCombiner(long size) {
@@ -19,7 +21,7 @@ public class CalculateEtaCombiner implements BiFunction<Long, Double, String> {
         }
 
         if (rate == 0) {
-            return "∞";
+            return INFINITY;
         } else {
             long etaSeconds = (long) ((size - downloaded) / rate);
             return formatTime(etaSeconds);
