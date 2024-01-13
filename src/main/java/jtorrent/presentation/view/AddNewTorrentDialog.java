@@ -2,22 +2,21 @@ package jtorrent.presentation.view;
 
 import java.io.IOException;
 
-import javafx.fxml.FXMLLoader;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.DialogPane;
-import jtorrent.presentation.UiManager;
 import jtorrent.presentation.model.UiTorrentContents;
+import jtorrent.presentation.view.fxml.JTorrentFxmlLoader;
 
 public class AddNewTorrentDialog extends Dialog<UiTorrentContents> {
 
     private final AddNewTorrentView addNewTorrentView;
 
     public AddNewTorrentDialog(UiTorrentContents torrentContents) {
-        FXMLLoader fxmlLoader = new FXMLLoader(UiManager.class.getResource("fxml/AddNewTorrentDialog.fxml"));
         try {
-            DialogPane dialogPane = fxmlLoader.load();
-            addNewTorrentView = fxmlLoader.getController();
+            JTorrentFxmlLoader loader = new JTorrentFxmlLoader();
+            DialogPane dialogPane = loader.load("AddNewTorrentDialog.fxml");
+            addNewTorrentView = loader.getController();
             addNewTorrentView.setTorrentContents(torrentContents);
             setDialogPane(dialogPane);
             setTitle(torrentContents.getName() + " - Add New Torrent");
