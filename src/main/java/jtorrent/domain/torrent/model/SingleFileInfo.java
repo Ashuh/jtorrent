@@ -34,4 +34,15 @@ public class SingleFileInfo extends FileInfo {
     public Path getSaveAsPath() {
         return getFileRoot().resolve(getFiles().get(0).getPath());
     }
+
+    @Override
+    public String toString() {
+        return "SingleFileInfo{"
+                + "fileWithPieceInfos=" + fileWithPieceInfos
+                + ", pieceHashes=" + pieceHashes
+                + ", pieceSize=" + pieceSize
+                + ", totalFileSize=" + totalFileSize
+                + ", saveDirectory=" + saveDirectory
+                + "} ";
+    }
 }

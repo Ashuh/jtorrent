@@ -8,17 +8,18 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.IntStream;
 
 import jtorrent.domain.common.util.Sha1Hash;
 
 public abstract class FileInfo {
 
-    private final List<FileWithPieceInfo> fileWithPieceInfos;
-    private final List<Sha1Hash> pieceHashes;
-    private final int pieceSize;
-    private final long totalFileSize;
-    private Path saveDirectory = Paths.get("download").toAbsolutePath(); // TODO: use default downloads folder?
+    protected final List<FileWithPieceInfo> fileWithPieceInfos;
+    protected final List<Sha1Hash> pieceHashes;
+    protected final int pieceSize;
+    protected final long totalFileSize;
+    protected Path saveDirectory = Paths.get("download").toAbsolutePath(); // TODO: use default downloads folder?
 
     protected FileInfo(List<FileWithPieceInfo> fileWithPieceInfos, int pieceSize, long totalFileSize,
             List<Sha1Hash> pieceHashes) {
@@ -168,4 +169,25 @@ public abstract class FileInfo {
      * If the torrent is a multi-file torrent, then the returned path is the path to the directory containing the files.
      */
     public abstract Path getSaveAsPath();
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(fileWithPieceInfos, pieceHashes, pieceSize, totalFileSize, saveDirectory);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        FileInfo fileInfo = (FileInfo) o;
+        return pieceSize == fileInfo.pieceSize
+                && totalFileSize == fileInfo.totalFileSize
+                && Objects.equals(fileWithPieceInfos, fileInfo.fileWithPieceInfos)
+                && Objects.equals(pieceHashes, fileInfo.pieceHashes)
+                && Objects.equals(saveDirectory, fileInfo.saveDirectory);
+    }
 }

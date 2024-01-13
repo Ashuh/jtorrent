@@ -1,6 +1,7 @@
 package jtorrent.domain.torrent.model;
 
 import java.util.BitSet;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 
 import io.reactivex.rxjava3.core.Observable;
@@ -86,5 +87,44 @@ public final class FilePieceInfo {
 
     public Observable<BitSet> getVerifiedPiecesObservable() {
         return verifiedPiecesSubject;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(firstPiece, firstPieceStart, lastPiece, lastPieceEnd, start, end, verifiedBytes.get(),
+                verifiedPieces);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        FilePieceInfo that = (FilePieceInfo) o;
+        return firstPiece == that.firstPiece
+                && firstPieceStart == that.firstPieceStart
+                && lastPiece == that.lastPiece
+                && lastPieceEnd == that.lastPieceEnd
+                && start == that.start
+                && end == that.end
+                && Objects.equals(verifiedBytes.get(), that.verifiedBytes.get())
+                && Objects.equals(verifiedPieces, that.verifiedPieces);
+    }
+
+    @Override
+    public String toString() {
+        return "FilePieceInfo{"
+                + "firstPiece=" + firstPiece
+                + ", firstPieceStart=" + firstPieceStart
+                + ", lastPiece=" + lastPiece
+                + ", lastPieceEnd=" + lastPieceEnd
+                + ", start=" + start
+                + ", end=" + end
+                + ", verifiedBytes=" + verifiedBytes
+                + ", verifiedPieces=" + verifiedPieces
+                + '}';
     }
 }

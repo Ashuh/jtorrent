@@ -4,6 +4,7 @@ import static jtorrent.domain.common.util.ValidationUtil.requireNonNull;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Objects;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -38,6 +39,8 @@ public abstract class RxObservableCollectionBase<E, T extends Collection<E>, V> 
         notifyCleared();
     }
 
+    protected abstract void notifyCleared();
+
     public Collection<E> getCollection() {
         return Collections.unmodifiableCollection(collection);
     }
@@ -70,11 +73,26 @@ public abstract class RxObservableCollectionBase<E, T extends Collection<E>, V> 
         }
     }
 
+    protected abstract void emitInitialState(Observer<? super V> observer);
+
     protected abstract void add(E item);
 
     protected abstract void remove(E item);
 
-    protected abstract void emitInitialState(Observer<? super V> observer);
+    @Override
+    public int hashCode() {
+        return Objects.hash(collection);
+    }
 
-    protected abstract void notifyCleared();
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        RxObservableCollectionBase<?, ?, ?> that = (RxObservableCollectionBase<?, ?, ?>) o;
+        return Objects.equals(collection, that.collection);
+    }
 }

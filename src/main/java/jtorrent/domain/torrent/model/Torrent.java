@@ -385,12 +385,25 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
             return false;
         }
         Torrent torrent = (Torrent) o;
-        return Objects.equals(infoHash, torrent.infoHash);
+        return isActive == torrent.isActive
+                && Objects.equals(trackers, torrent.trackers)
+                && Objects.equals(creationDate, torrent.creationDate)
+                && Objects.equals(comment, torrent.comment)
+                && Objects.equals(createdBy, torrent.createdBy)
+                && Objects.equals(name, torrent.name)
+                && Objects.equals(fileInfo, torrent.fileInfo)
+                && Objects.equals(infoHash, torrent.infoHash)
+                && Objects.equals(pieceTracker, torrent.pieceTracker)
+                && Objects.equals(downloaded.get(), torrent.downloaded.get())
+                && Objects.equals(uploaded.get(), torrent.uploaded.get())
+                && Objects.equals(peers, torrent.peers)
+                && Objects.equals(verifiedBytes.get(), torrent.verifiedBytes.get());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(infoHash);
+        return Objects.hash(trackers, creationDate, comment, createdBy, name, fileInfo, infoHash,
+                pieceTracker, downloaded.get(), uploaded.get(), peers, verifiedBytes.get(), isActive);
     }
 
     @Override
@@ -610,6 +623,34 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
             BitSet availableBlocks = getAvailableBlocks(piece);
             availableBlocks.set(block);
             return availableBlocks.cardinality() == getNumBlocks(piece);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            PieceTracker that = (PieceTracker) o;
+            return Objects.equals(pieceIndexToRequestedBlocks, that.pieceIndexToRequestedBlocks)
+                    && Objects.equals(pieceIndexToAvailableBlocks, that.pieceIndexToAvailableBlocks)
+                    && Objects.equals(partiallyMissingPieces, that.partiallyMissingPieces)
+                    && Objects.equals(partiallyMissingPiecesWithUnrequestedBlocks,
+                    that.partiallyMissingPiecesWithUnrequestedBlocks)
+                    && Objects.equals(completelyMissingPieces, that.completelyMissingPieces)
+                    && Objects.equals(completelyMissingPiecesWithUnrequestedBlocks,
+                    that.completelyMissingPiecesWithUnrequestedBlocks)
+                    && Objects.equals(completePieces, that.completePieces)
+                    && Objects.equals(verifiedPieces, that.verifiedPieces);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(pieceIndexToRequestedBlocks, pieceIndexToAvailableBlocks, partiallyMissingPieces,
+                    partiallyMissingPiecesWithUnrequestedBlocks, completelyMissingPieces,
+                    completelyMissingPiecesWithUnrequestedBlocks, completePieces, verifiedPieces);
         }
     }
 }

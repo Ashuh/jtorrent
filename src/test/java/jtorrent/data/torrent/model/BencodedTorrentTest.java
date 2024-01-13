@@ -11,6 +11,7 @@ import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.List;
@@ -24,6 +25,8 @@ import com.dampcake.bencode.BencodeOutputStream;
 import jtorrent.domain.common.util.Sha1Hash;
 import jtorrent.domain.torrent.model.File;
 import jtorrent.domain.torrent.model.FileInfo;
+import jtorrent.domain.torrent.model.MultiFileInfo;
+import jtorrent.domain.torrent.model.SingleFileInfo;
 import jtorrent.domain.torrent.model.Torrent;
 import jtorrent.domain.tracker.model.Tracker;
 import jtorrent.domain.tracker.model.udp.UdpTracker;
@@ -239,7 +242,7 @@ class BencodedTorrentTest {
 
         Torrent expected = new TorrentBuilder()
                 .setTrackers(Set.of(new UdpTracker(InetSocketAddress.createUnresolved("tracker.example.com", 80))))
-                .setCreationDate(LocalDateTime.ofEpochSecond(123456789L, 0, ZoneOffset.UTC))
+                .setCreationDate(LocalDateTime.ofEpochSecond(123456789L, 0, OffsetDateTime.now().getOffset()))
                 .setComment("comment")
                 .setCreatedBy("created by")
                 .setPieceSize(100)
@@ -286,12 +289,13 @@ class BencodedTorrentTest {
 
         Torrent expected = new TorrentBuilder()
                 .setTrackers(Set.of(new UdpTracker(InetSocketAddress.createUnresolved("tracker.example.com", 80))))
-                .setCreationDate(LocalDateTime.ofEpochSecond(123456789L, 0, ZoneOffset.UTC))
+                .setCreationDate(LocalDateTime.ofEpochSecond(123456789L, 0, OffsetDateTime.now().getOffset()))
                 .setComment("comment")
                 .setCreatedBy("created by")
                 .setPieceSize(100)
                 .setPieceHashes(List.of(new Sha1Hash(new byte[20])))
                 .setName("name")
+                .setDirectory("name")
                 .setFiles(List.of(
                         new FileBuilder()
                                 .setLength(100)
@@ -445,6 +449,7 @@ class BencodedTorrentTest {
         private int pieceSize = 0;
         private List<Sha1Hash> pieceHashes = Collections.emptyList();
         private String name = "";
+        private String directory;
         private List<File> files = Collections.emptyList();
         private Sha1Hash infoHash = new Sha1Hash(new byte[20]);
 
@@ -483,6 +488,11 @@ class BencodedTorrentTest {
             return this;
         }
 
+        public TorrentBuilder setDirectory(String directory) {
+            this.directory = directory;
+            return this;
+        }
+
         public TorrentBuilder setFiles(List<File> files) {
             this.files = files;
             return this;
@@ -494,7 +504,15 @@ class BencodedTorrentTest {
         }
 
         public Torrent build() {
-            FileInfo fileInfo = null; // TODO: fix this
+            FileInfo fileInfo;
+            if (directory == null) {
+                if (files.size() != 1) {
+                    throw new IllegalArgumentException("Number of files must be 1 if directory is null");
+                }
+                fileInfo = SingleFileInfo.build(files.get(0), pieceSize, pieceHashes);
+            } else {
+                fileInfo = MultiFileInfo.build(directory, files, pieceSize, pieceHashes);
+            }
             return new Torrent(trackers, creationDate, comment, createdBy, name, fileInfo, infoHash);
         }
     }
