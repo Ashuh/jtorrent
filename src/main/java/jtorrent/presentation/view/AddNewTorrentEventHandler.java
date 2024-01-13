@@ -40,9 +40,9 @@ public abstract class AddNewTorrentEventHandler<E extends Event> implements Even
             try {
                 UiTorrentContents torrentContents = viewModel.loadTorrentContents(file);
                 AddNewTorrentDialog dialog = new AddNewTorrentDialog(torrentContents);
-                Optional<AddNewTorrentDialog.Options> options = dialog.showAndWait();
-                if (options.isPresent()) {
-                    viewModel.addTorrentFromFile(file, options.get());
+                Optional<UiTorrentContents> torrentContentsResult = dialog.showAndWait();
+                if (torrentContentsResult.isPresent()) {
+                    viewModel.addTorrent(torrentContentsResult.get());
                 }
             } catch (IOException e) {
                 ExceptionAlert alert = new ExceptionAlert("Error", "Failed to load torrent", e);

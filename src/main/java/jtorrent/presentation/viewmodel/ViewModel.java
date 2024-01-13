@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
 import java.net.UnknownHostException;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -29,7 +28,6 @@ import jtorrent.presentation.model.UiPeer;
 import jtorrent.presentation.model.UiTorrent;
 import jtorrent.presentation.model.UiTorrentContents;
 import jtorrent.presentation.model.UiTorrentInfo;
-import jtorrent.presentation.view.AddNewTorrentDialog;
 
 public class ViewModel {
 
@@ -170,10 +168,8 @@ public class ViewModel {
         return UiTorrentContents.forTorrent(torrent);
     }
 
-    public void addTorrentFromFile(File file, AddNewTorrentDialog.Options options) throws IOException {
-        Torrent torrent = client.loadTorrent(file);
-        torrent.setSaveDirectory(Path.of(options.saveDirectory()));
-        torrent.setName(options.name());
+    public void addTorrent(UiTorrentContents uiTorrentContents) throws IOException {
+        Torrent torrent = uiTorrentContents.getTorrent();
         client.addTorrent(torrent);
     }
 

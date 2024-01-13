@@ -47,6 +47,14 @@ public class AddNewTorrentView implements Initializable {
         this.torrentContents.set(torrentContents);
     }
 
+    public UiTorrentContents getTorrentContents() {
+        return torrentContents.get();
+    }
+
+    public ObjectProperty<UiTorrentContents> torrentContentsProperty() {
+        return torrentContents;
+    }
+
     public String getSaveDirectory() {
         return saveDirectoryInput.getText();
     }

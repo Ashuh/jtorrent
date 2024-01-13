@@ -9,7 +9,7 @@ import javafx.scene.control.DialogPane;
 import jtorrent.presentation.UiManager;
 import jtorrent.presentation.model.UiTorrentContents;
 
-public class AddNewTorrentDialog extends Dialog<AddNewTorrentDialog.Options> {
+public class AddNewTorrentDialog extends Dialog<UiTorrentContents> {
 
     private final AddNewTorrentView addNewTorrentView;
 
@@ -28,16 +28,11 @@ public class AddNewTorrentDialog extends Dialog<AddNewTorrentDialog.Options> {
         }
     }
 
-    private Options convertResult(ButtonType dialogButton) {
+    private UiTorrentContents convertResult(ButtonType dialogButton) {
         if (dialogButton == ButtonType.OK) {
-            String name = addNewTorrentView.getName();
-            String saveDirectory = addNewTorrentView.getSaveDirectory();
-            return new Options(name, saveDirectory);
+            return addNewTorrentView.getTorrentContents();
         } else {
             return null;
         }
-    }
-
-    public record Options(String name, String saveDirectory) {
     }
 }

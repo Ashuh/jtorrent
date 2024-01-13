@@ -21,15 +21,17 @@ public class UiTorrentContents {
     private final StringProperty size;
     private final StringProperty date;
     private final TreeItem<FileInfo> files;
+    private final Torrent torrent;
 
     public UiTorrentContents(StringProperty saveDirectory, StringProperty name, StringProperty comment,
-            StringProperty size, StringProperty date, TreeItem<FileInfo> files) {
+            StringProperty size, StringProperty date, TreeItem<FileInfo> files, Torrent torrent) {
         this.saveDirectory = saveDirectory;
         this.name = name;
         this.comment = comment;
         this.size = size;
         this.date = date;
         this.files = files;
+        this.torrent = torrent;
     }
 
     public static UiTorrentContents forTorrent(Torrent torrent) {
@@ -39,7 +41,7 @@ public class UiTorrentContents {
         StringProperty size = new SimpleStringProperty(DataUnitFormatter.formatSize(torrent.getTotalSize()));
         StringProperty date = new SimpleStringProperty(DateFormatter.format(torrent.getCreationDate()));
         TreeItem<FileInfo> files = buildFileTree(torrent.getFiles());
-        return new UiTorrentContents(saveDirectory, name, comment, size, date, files);
+        return new UiTorrentContents(saveDirectory, name, comment, size, date, files, torrent);
     }
 
     private static TreeItem<FileInfo> buildFileTree(Collection<File> files) {
@@ -118,6 +120,17 @@ public class UiTorrentContents {
 
     public TreeItem<FileInfo> getFiles() {
         return files;
+    }
+
+    /**
+     * Gets the underlying {@link Torrent} with the updated fields.
+     *
+     * @return the updated {@link Torrent}
+     */
+    public Torrent getTorrent() {
+        torrent.setName(name.get());
+        torrent.setSaveDirectory(Path.of(saveDirectory.get()));
+        return torrent;
     }
 
     public record FileInfo(StringProperty name, StringProperty size, boolean isDirectory) {
