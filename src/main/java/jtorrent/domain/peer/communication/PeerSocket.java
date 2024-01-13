@@ -18,7 +18,7 @@ import jtorrent.domain.peer.model.exception.InfoHashMismatchException;
 import jtorrent.domain.peer.model.exception.UnexpectedEndOfStreamException;
 import jtorrent.domain.peer.model.message.Handshake;
 import jtorrent.domain.peer.model.message.PeerMessage;
-import jtorrent.domain.peer.model.message.PeerMessageUnpacker;
+import jtorrent.domain.peer.model.message.factory.PeerMessageUnpacker;
 
 public class PeerSocket {
 

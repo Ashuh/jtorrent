@@ -1,10 +1,12 @@
-package jtorrent.domain.peer.model.message;
+package jtorrent.domain.peer.model.message.factory;
 
 import static jtorrent.domain.common.util.ValidationUtil.requireNonNull;
 
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
 
+import jtorrent.domain.peer.model.message.KeepAlive;
+import jtorrent.domain.peer.model.message.PeerMessage;
 import jtorrent.domain.peer.model.message.typed.Bitfield;
 import jtorrent.domain.peer.model.message.typed.Cancel;
 import jtorrent.domain.peer.model.message.typed.Choke;
