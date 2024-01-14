@@ -6,6 +6,7 @@ import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.URL;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -87,6 +88,10 @@ public class Client implements LocalServiceDiscoveryManager.Listener, TorrentHan
 
     public Torrent loadTorrent(File file) throws IOException {
         return torrentRepository.loadTorrent(file);
+    }
+
+    public Torrent loadTorrent(URL url) throws IOException {
+        return torrentRepository.loadTorrent(url);
     }
 
     public void startTorrent(Torrent torrent) {

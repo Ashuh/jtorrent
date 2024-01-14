@@ -18,7 +18,9 @@ public class MainWindow {
     @FXML
     private Menu fileMenu;
     @FXML
-    private MenuItem newMenuItem;
+    private MenuItem addTorrentFromFile;
+    @FXML
+    private MenuItem addTorrentFromUrl;
     @FXML
     private TorrentsTableView torrentsTableViewController;
     @FXML
@@ -35,7 +37,19 @@ public class MainWindow {
             }
         });
 
-        newMenuItem.setOnAction(new AddNewTorrentEventHandler<>(viewModel) {
+        addTorrentFromFile.setOnAction(new AddNewTorrentFileEventHandler<>(viewModel) {
+            @Override
+            protected boolean shouldHandle(ActionEvent event) {
+                return true;
+            }
+
+            @Override
+            protected Window getOwnerWindow() {
+                return menuBar.getScene().getWindow();
+            }
+        });
+
+        addTorrentFromUrl.setOnAction(new AddNewTorrentUrlEventHandler<>(viewModel) {
             @Override
             protected boolean shouldHandle(ActionEvent event) {
                 return true;

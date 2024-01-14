@@ -14,7 +14,8 @@
     <top>
         <MenuBar fx:id="menuBar" BorderPane.alignment="CENTER">
             <Menu mnemonicParsing="false" text="File">
-                <MenuItem fx:id="newMenuItem" mnemonicParsing="false" text="New"/>
+                <MenuItem fx:id="addTorrentFromFile" mnemonicParsing="false" text="Add Torrent"/>
+                <MenuItem fx:id="addTorrentFromUrl" mnemonicParsing="false" text="Add Torrent from URL"/>
                 <MenuItem mnemonicParsing="false" text="Open…"/>
                 <Menu mnemonicParsing="false" text="Open Recent"/>
                 <SeparatorMenuItem mnemonicParsing="false"/>

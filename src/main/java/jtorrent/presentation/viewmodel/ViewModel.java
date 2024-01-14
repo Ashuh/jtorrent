@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
+import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -165,6 +166,12 @@ public class ViewModel {
 
     public UiTorrentContents loadTorrentContents(File file) throws IOException {
         Torrent torrent = client.loadTorrent(file);
+        return UiTorrentContents.forTorrent(torrent);
+    }
+
+    public UiTorrentContents loadTorrentContents(String urlString) throws IOException {
+        URL url = new URL(urlString);
+        Torrent torrent = client.loadTorrent(url);
         return UiTorrentContents.forTorrent(torrent);
     }
 

@@ -65,7 +65,7 @@ public class TorrentsTableView implements Initializable {
                 .addListener((observable, oldValue, newValue) -> viewModel.setTorrentSelected(newValue));
         startButton.setOnMouseClicked(event -> viewModel.startSelectedTorrent());
         stopButton.setOnMouseClicked(event -> viewModel.stopSelectedTorrent());
-        addButton.setOnMouseClicked(new AddNewTorrentEventHandler<>(viewModel) {
+        addButton.setOnMouseClicked(new AddNewTorrentFileEventHandler<>(viewModel) {
             @Override
             protected boolean shouldHandle(MouseEvent event) {
                 return event.getButton() == MouseButton.PRIMARY;

@@ -1,9 +1,13 @@
 package jtorrent.data.torrent.repository;
 
+import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -40,6 +44,26 @@ public class FileTorrentRepository implements TorrentRepository {
         InputStream inputStream = new FileInputStream(file);
         BencodedTorrent bencodedTorrent = BencodedTorrent.decode(inputStream);
         return bencodedTorrent.toDomain();
+    }
+
+    @Override
+    public Torrent loadTorrent(URL url) throws IOException {
+        // For some reason decoding directly from the URL stream doesn't work, so we have to read it into a byte array
+        // first.
+        try (BufferedInputStream in = new BufferedInputStream(url.openStream());
+             ByteArrayOutputStream out = new ByteArrayOutputStream();
+        ) {
+            byte[] dataBuffer = new byte[1024];
+            int bytesRead;
+            while ((bytesRead = in.read(dataBuffer, 0, 1024)) != -1) {
+                out.write(dataBuffer, 0, bytesRead);
+            }
+
+            try (InputStream inputStream = new ByteArrayInputStream(out.toByteArray())) {
+                BencodedTorrent bencodedTorrent = BencodedTorrent.decode(inputStream);
+                return bencodedTorrent.toDomain();
+            }
+        }
     }
 
     @Override
