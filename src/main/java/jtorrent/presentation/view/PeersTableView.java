@@ -59,6 +59,7 @@ public class PeersTableView implements Initializable {
             dialog.setTitle("Add Peer");
             dialog.setHeaderText(null);
             dialog.setContentText("Enter the IP:port of the peer to add:");
+            dialog.initOwner(tableView.getScene().getWindow());
             Optional<String> input = dialog.showAndWait();
             input.ifPresent(ipPort -> {
                 try {
