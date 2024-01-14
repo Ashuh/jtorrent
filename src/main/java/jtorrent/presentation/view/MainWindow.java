@@ -1,6 +1,7 @@
 package jtorrent.presentation.view;
 
 
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Menu;
@@ -21,6 +22,8 @@ public class MainWindow {
     private MenuItem addTorrentFromFile;
     @FXML
     private MenuItem addTorrentFromUrl;
+    @FXML
+    private MenuItem quit;
     @FXML
     private TorrentsTableView torrentsTableViewController;
     @FXML
@@ -60,6 +63,8 @@ public class MainWindow {
                 return menuBar.getScene().getWindow();
             }
         });
+
+        quit.setOnAction(event -> Platform.exit());
 
         torrentsTableViewController.setViewModel(viewModel);
         peersTableViewController.setViewModel(viewModel);
