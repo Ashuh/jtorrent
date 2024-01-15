@@ -14,13 +14,13 @@ import javafx.css.StyleableProperty;
 import javafx.css.StyleablePropertyFactory;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
-import javafx.scene.layout.Pane;
+import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 
-public class DataStatusBar extends Pane {
+public class DataStatusBar extends Region {
 
     private static final StyleablePropertyFactory<DataStatusBar> FACTORY =
-            new StyleablePropertyFactory<>(Pane.getClassCssMetaData());
+            new StyleablePropertyFactory<>(Region.getClassCssMetaData());
 
     private final StyleableProperty<Color> availableColor = FACTORY.createStyleableColorProperty(
             this, "color", "-color-success-fg", s -> s.availableColor, Color.GREEN);
