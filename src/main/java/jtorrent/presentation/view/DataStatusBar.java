@@ -1,11 +1,17 @@
 package jtorrent.presentation.view;
 
 import java.util.BitSet;
+import java.util.List;
 
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.value.ObservableValue;
+import javafx.css.CssMetaData;
+import javafx.css.Styleable;
+import javafx.css.StyleableProperty;
+import javafx.css.StyleablePropertyFactory;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
 import javafx.scene.layout.Pane;
@@ -13,10 +19,15 @@ import javafx.scene.paint.Color;
 
 public class DataStatusBar extends Pane {
 
+    private static final StyleablePropertyFactory<DataStatusBar> FACTORY =
+            new StyleablePropertyFactory<>(Pane.getClassCssMetaData());
+
+    private final StyleableProperty<Color> availableColor = FACTORY.createStyleableColorProperty(
+            this, "color", "-color-success-fg", s -> s.availableColor, Color.GREEN);
+    private final StyleableProperty<Color> unavailableColor = FACTORY.createStyleableColorProperty(
+            this, "color", "-color-danger-fg", s -> s.unavailableColor, Color.RED);
     private final IntegerProperty totalSegments = new SimpleIntegerProperty();
     private final ObjectProperty<BitSet> availability = new SimpleObjectProperty<>(new BitSet());
-    private final ObjectProperty<Color> availableColor = new SimpleObjectProperty<>(Color.GREEN);
-    private final ObjectProperty<Color> unavailableColor = new SimpleObjectProperty<>(Color.RED);
     private final ImageView imageView = new ImageView();
     private WritableImage writableImage;
 
@@ -25,8 +36,11 @@ public class DataStatusBar extends Pane {
         widthProperty().addListener((observable, oldValue, newValue) -> redraw());
         totalSegments.addListener((observable, oldValue, newValue) -> redraw());
         availability.addListener((observable, oldValue, newValue) -> updateAvailability(oldValue, newValue));
+        availableColorProperty().addListener(observable -> redraw());
+        unavailableColorProperty().addListener(observable -> redraw());
         imageView.fitHeightProperty().bind(heightProperty());
         getChildren().add(imageView);
+        getStyleClass().add("root");
     }
 
     /**
@@ -57,7 +71,7 @@ public class DataStatusBar extends Pane {
     }
 
     private Color getColor(double availabilityRatio) {
-        return unavailableColor.get().interpolate(availableColor.get(), availabilityRatio);
+        return unavailableColor.getValue().interpolate(availableColor.getValue(), availabilityRatio);
     }
 
     private BitSet pixelToSegments(int pixel) {
@@ -127,10 +141,6 @@ public class DataStatusBar extends Pane {
         return availability;
     }
 
-    public ObjectProperty<Color> availableColorProperty() {
-        return availableColor;
-    }
-
     public int getTotalSegments() {
         return totalSegments.get();
     }
@@ -147,23 +157,18 @@ public class DataStatusBar extends Pane {
         this.availability.set(availability);
     }
 
-    public Color getAvailableColor() {
-        return availableColor.get();
+    @SuppressWarnings("unchecked")
+    public ObservableValue<Color> availableColorProperty() {
+        return (ObservableValue<Color>) availableColor;
     }
 
-    public void setAvailableColor(Color availableColor) {
-        this.availableColor.set(availableColor);
+    @SuppressWarnings("unchecked")
+    public ObservableValue<Color> unavailableColorProperty() {
+        return (ObservableValue<Color>) unavailableColor;
     }
 
-    public Color getUnavailableColor() {
-        return unavailableColor.get();
-    }
-
-    public void setUnavailableColor(Color unavailableColor) {
-        this.unavailableColor.set(unavailableColor);
-    }
-
-    public ObjectProperty<Color> unavailableColorProperty() {
-        return unavailableColor;
+    @Override
+    public List<CssMetaData<? extends Styleable, ?>> getCssMetaData() {
+        return FACTORY.getCssMetaData();
     }
 }
