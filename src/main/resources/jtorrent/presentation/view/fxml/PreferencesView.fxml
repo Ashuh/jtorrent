@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.ButtonType?>
+<?import javafx.scene.control.DialogPane?>
+<?import javafx.scene.control.TreeView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<DialogPane xmlns:fx="http://javafx.com/fxml/1" fx:id="dialogPane" xmlns="http://javafx.com/javafx/17.0.2-ea"
+            fx:controller="jtorrent.presentation.view.PreferencesView">
+    <content>
+        <HBox spacing="16.0">
+            <TreeView fx:id="treeView"/>
+            <Pane fx:id="pane" HBox.hgrow="ALWAYS">
+            </Pane>
+        </HBox>
+    </content>
+    <ButtonType fx:constant="OK"/>
+    <ButtonType fx:constant="APPLY"/>
+    <ButtonType fx:constant="CANCEL"/>
+</DialogPane>

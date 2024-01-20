@@ -30,7 +30,7 @@
                 <MenuItem fx:id="quit" mnemonicParsing="false" text="Quit"/>
             </Menu>
             <Menu mnemonicParsing="false" text="Options">
-                <MenuItem mnemonicParsing="false" text="Preferences"/>
+                <MenuItem fx:id="preferences" mnemonicParsing="false" text="Preferences"/>
             </Menu>
             <Menu mnemonicParsing="false" text="Help">
                 <MenuItem mnemonicParsing="false" text="About JTorrent"/>

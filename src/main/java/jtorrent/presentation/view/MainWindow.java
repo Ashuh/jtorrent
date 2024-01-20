@@ -23,6 +23,8 @@ public class MainWindow {
     @FXML
     private MenuItem addTorrentFromUrl;
     @FXML
+    private MenuItem preferences;
+    @FXML
     private MenuItem quit;
     @FXML
     private TorrentsTableView torrentsTableViewController;
@@ -42,29 +44,35 @@ public class MainWindow {
 
         addTorrentFromFile.setOnAction(new AddNewTorrentFileEventHandler<>(viewModel) {
             @Override
-            protected boolean shouldHandle(ActionEvent event) {
-                return true;
+            protected Window getOwnerWindow() {
+                return menuBar.getScene().getWindow();
             }
 
             @Override
-            protected Window getOwnerWindow() {
-                return menuBar.getScene().getWindow();
+            protected boolean shouldHandle(ActionEvent event) {
+                return true;
             }
         });
 
         addTorrentFromUrl.setOnAction(new AddNewTorrentUrlEventHandler<>(viewModel) {
             @Override
-            protected boolean shouldHandle(ActionEvent event) {
-                return true;
+            protected Window getOwnerWindow() {
+                return menuBar.getScene().getWindow();
             }
 
             @Override
-            protected Window getOwnerWindow() {
-                return menuBar.getScene().getWindow();
+            protected boolean shouldHandle(ActionEvent event) {
+                return true;
             }
         });
 
         quit.setOnAction(event -> Platform.exit());
+
+        preferences.setOnAction(event -> {
+            PreferencesDialog preferencesDialog = new PreferencesDialog();
+            preferencesDialog.initOwner(menuBar.getScene().getWindow());
+            preferencesDialog.showAndWait();
+        });
 
         torrentsTableViewController.setViewModel(viewModel);
         peersTableViewController.setViewModel(viewModel);

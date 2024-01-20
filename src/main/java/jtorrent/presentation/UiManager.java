@@ -2,6 +2,9 @@ package jtorrent.presentation;
 
 import java.io.IOException;
 
+import atlantafx.base.theme.PrimerDark;
+import atlantafx.base.theme.Theme;
+import javafx.application.Application;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
@@ -27,6 +30,12 @@ public class UiManager {
         } catch (IOException e) {
             throw new AssertionError(e);
         }
+
+        setTheme(new PrimerDark());
+    }
+
+    public static void setTheme(Theme theme) {
+        Application.setUserAgentStylesheet(theme.getUserAgentStylesheet());
     }
 
     public void show() {
