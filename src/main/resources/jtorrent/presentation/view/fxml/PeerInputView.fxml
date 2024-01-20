@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import atlantafx.base.layout.InputGroup?>
+<?import javafx.scene.control.ButtonType?>
+<?import javafx.scene.control.ChoiceBox?>
+<?import javafx.scene.control.DialogPane?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<DialogPane fx:id="dialogPane" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="jtorrent.presentation.view.PeerInputView">
+    <content>
+        <VBox spacing="16.0">
+            <InputGroup>
+                <ChoiceBox fx:id="choiceBox" prefWidth="70.0"/>
+                <TextField fx:id="ip1" prefWidth="50.0" promptText="127"/>
+                <Label text="."/>
+                <TextField fx:id="ip2" prefWidth="50.0" promptText="0"/>
+                <Label text="."/>
+                <TextField fx:id="ip3" prefWidth="50.0" promptText="0"/>
+                <Label text="."/>
+                <TextField fx:id="ip4" prefWidth="50.0" promptText="1"/>
+            </InputGroup>
+            <InputGroup>
+                <Label prefWidth="70.0" text="Port"/>
+                <TextField HBox.hgrow="ALWAYS" fx:id="port" promptText="6881"/>
+            </InputGroup>
+        </VBox>
+    </content>
+    <ButtonType fx:constant="OK"/>
+    <ButtonType fx:constant="CANCEL"/>
+</DialogPane>

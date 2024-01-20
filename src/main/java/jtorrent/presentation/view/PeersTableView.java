@@ -9,10 +9,10 @@ import javafx.collections.transformation.SortedList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.ContextMenu;
+import javafx.scene.control.Dialog;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
-import javafx.scene.control.TextInputDialog;
 import jtorrent.presentation.model.UiPeer;
 import jtorrent.presentation.viewmodel.ViewModel;
 
@@ -55,10 +55,7 @@ public class PeersTableView implements Initializable {
                 return;
             }
 
-            TextInputDialog dialog = new TextInputDialog();
-            dialog.setTitle("Add Peer");
-            dialog.setHeaderText(null);
-            dialog.setContentText("Enter the IP:port of the peer to add:");
+            Dialog<String> dialog = new PeerInputDialog();
             dialog.initOwner(tableView.getScene().getWindow());
             Optional<String> input = dialog.showAndWait();
             input.ifPresent(ipPort -> {
