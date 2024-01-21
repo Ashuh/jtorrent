@@ -2,41 +2,48 @@ package jtorrent.presentation.model;
 
 import static jtorrent.domain.common.util.ValidationUtil.requireNonNull;
 
-import javafx.beans.property.DoubleProperty;
-import javafx.beans.property.SimpleDoubleProperty;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.disposables.CompositeDisposable;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import jtorrent.domain.peer.model.Peer;
-import jtorrent.presentation.util.UpdatePropertyConsumer;
+import jtorrent.presentation.util.BindingUtils;
+import jtorrent.presentation.util.DataUnitFormatter;
 
 public class UiPeer {
 
     private final StringProperty ip;
     private final StringProperty port;
     private final StringProperty client;
-    private final DoubleProperty downSpeed;
-    private final DoubleProperty upSpeed;
+    private final StringProperty downSpeed;
+    private final StringProperty upSpeed;
+    private final CompositeDisposable disposables;
 
-    public UiPeer(StringProperty ip, StringProperty port, StringProperty client, DoubleProperty downSpeed,
-            DoubleProperty upSpeed) {
+    public UiPeer(StringProperty ip, StringProperty port, StringProperty client, StringProperty downSpeed,
+            StringProperty upSpeed, CompositeDisposable disposables) {
         this.ip = requireNonNull(ip);
         this.port = requireNonNull(port);
         this.client = requireNonNull(client);
         this.downSpeed = requireNonNull(downSpeed);
         this.upSpeed = requireNonNull(upSpeed);
+        this.disposables = requireNonNull(disposables);
     }
 
     public static UiPeer fromDomain(Peer peer) {
         SimpleStringProperty ip = new SimpleStringProperty(peer.getAddress().getHostAddress());
         SimpleStringProperty port = new SimpleStringProperty(String.valueOf(peer.getPort()));
         SimpleStringProperty client = new SimpleStringProperty("Placeholder");
-        SimpleDoubleProperty downSpeed = new SimpleDoubleProperty(0.0);
-        SimpleDoubleProperty upSpeed = new SimpleDoubleProperty(0.0);
+        SimpleStringProperty downSpeed = new SimpleStringProperty("");
+        SimpleStringProperty upSpeed = new SimpleStringProperty("");
+        CompositeDisposable disposables = new CompositeDisposable();
 
-        peer.getDownloadRateObservable().subscribe(new UpdatePropertyConsumer<>(downSpeed));
-        peer.getUploadRateObservable().subscribe(new UpdatePropertyConsumer<>(upSpeed));
+        Observable<Double> downloadRateObservable = peer.getDownloadRateObservable();
+        BindingUtils.subscribe(downloadRateObservable.map(DataUnitFormatter::formatRate), downSpeed, disposables);
 
-        return new UiPeer(ip, port, client, downSpeed, upSpeed);
+        Observable<Double> uploadRateObservable = peer.getUploadRateObservable();
+        BindingUtils.subscribe(uploadRateObservable.map(DataUnitFormatter::formatRate), upSpeed, disposables);
+
+        return new UiPeer(ip, port, client, downSpeed, upSpeed, disposables);
     }
 
     public String getIp() {
@@ -63,19 +70,23 @@ public class UiPeer {
         return client;
     }
 
-    public double getDownSpeed() {
+    public String getDownSpeed() {
         return downSpeed.get();
     }
 
-    public DoubleProperty downSpeedProperty() {
+    public StringProperty downSpeedProperty() {
         return downSpeed;
     }
 
-    public double getUpSpeed() {
+    public String getUpSpeed() {
         return upSpeed.get();
     }
 
-    public DoubleProperty upSpeedProperty() {
+    public StringProperty upSpeedProperty() {
         return upSpeed;
+    }
+
+    public void dispose() {
+        disposables.dispose();
     }
 }

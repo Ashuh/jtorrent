@@ -45,8 +45,8 @@ public class PeersTableView implements Initializable {
         ip.setCellValueFactory(cd -> cd.getValue().ipProperty());
         port.setCellValueFactory(cd -> cd.getValue().portProperty());
         client.setCellValueFactory(cd -> cd.getValue().clientProperty());
-        peerDownSpeed.setCellValueFactory(cd -> cd.getValue().downSpeedProperty().asString());
-        peerUpSpeed.setCellValueFactory(cd -> cd.getValue().upSpeedProperty().asString());
+        peerDownSpeed.setCellValueFactory(cd -> cd.getValue().downSpeedProperty());
+        peerUpSpeed.setCellValueFactory(cd -> cd.getValue().upSpeedProperty());
 
         tableView.setContextMenu(new ContextMenu(initMenuItems()));
     }
