@@ -78,6 +78,7 @@ public class ViewModel {
             selectedTorrentPeersSubscription.dispose();
         }
 
+        uiPeers.forEach(UiPeer::dispose);
         uiPeers.clear();
 
         if (uiTorrent == null) {
