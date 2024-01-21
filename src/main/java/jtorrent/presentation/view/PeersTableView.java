@@ -23,6 +23,8 @@ public class PeersTableView implements Initializable {
     @FXML
     private TableColumn<UiPeer, String> ip;
     @FXML
+    private TableColumn<UiPeer, String> port;
+    @FXML
     private TableColumn<UiPeer, String> client;
     @FXML
     private TableColumn<UiPeer, String> peerDownSpeed;
@@ -41,6 +43,7 @@ public class PeersTableView implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         ip.setCellValueFactory(cd -> cd.getValue().ipProperty());
+        port.setCellValueFactory(cd -> cd.getValue().portProperty());
         client.setCellValueFactory(cd -> cd.getValue().clientProperty());
         peerDownSpeed.setCellValueFactory(cd -> cd.getValue().downSpeedProperty().asString());
         peerUpSpeed.setCellValueFactory(cd -> cd.getValue().upSpeedProperty().asString());

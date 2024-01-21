@@ -12,12 +12,15 @@ import jtorrent.presentation.util.UpdatePropertyConsumer;
 public class UiPeer {
 
     private final StringProperty ip;
+    private final StringProperty port;
     private final StringProperty client;
     private final DoubleProperty downSpeed;
     private final DoubleProperty upSpeed;
 
-    public UiPeer(StringProperty ip, StringProperty client, DoubleProperty downSpeed, DoubleProperty upSpeed) {
+    public UiPeer(StringProperty ip, StringProperty port, StringProperty client, DoubleProperty downSpeed,
+            DoubleProperty upSpeed) {
         this.ip = requireNonNull(ip);
+        this.port = requireNonNull(port);
         this.client = requireNonNull(client);
         this.downSpeed = requireNonNull(downSpeed);
         this.upSpeed = requireNonNull(upSpeed);
@@ -25,6 +28,7 @@ public class UiPeer {
 
     public static UiPeer fromDomain(Peer peer) {
         SimpleStringProperty ip = new SimpleStringProperty(peer.getAddress().getHostAddress());
+        SimpleStringProperty port = new SimpleStringProperty(String.valueOf(peer.getPort()));
         SimpleStringProperty client = new SimpleStringProperty("Placeholder");
         SimpleDoubleProperty downSpeed = new SimpleDoubleProperty(0.0);
         SimpleDoubleProperty upSpeed = new SimpleDoubleProperty(0.0);
@@ -32,7 +36,7 @@ public class UiPeer {
         peer.getDownloadRateObservable().subscribe(new UpdatePropertyConsumer<>(downSpeed));
         peer.getUploadRateObservable().subscribe(new UpdatePropertyConsumer<>(upSpeed));
 
-        return new UiPeer(ip, client, downSpeed, upSpeed);
+        return new UiPeer(ip, port, client, downSpeed, upSpeed);
     }
 
     public String getIp() {
@@ -41,6 +45,14 @@ public class UiPeer {
 
     public StringProperty ipProperty() {
         return ip;
+    }
+
+    public String getPort() {
+        return port.get();
+    }
+
+    public StringProperty portProperty() {
+        return port;
     }
 
     public String getClient() {

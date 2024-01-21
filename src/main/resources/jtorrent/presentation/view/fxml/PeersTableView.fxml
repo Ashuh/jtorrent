@@ -6,6 +6,7 @@
            fx:controller="jtorrent.presentation.view.PeersTableView">
     <columns>
         <TableColumn fx:id="ip" text="IP"/>
+        <TableColumn fx:id="port" text="Port"/>
         <TableColumn fx:id="client" text="Client"/>
         <TableColumn fx:id="peerDownSpeed" text="Down Speed"/>
         <TableColumn fx:id="peerUpSpeed" text="Up Speed"/>
