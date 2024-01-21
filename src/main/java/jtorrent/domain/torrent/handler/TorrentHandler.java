@@ -215,6 +215,7 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
         log(Level.DEBUG, String.format("Handling peer disconnected: %s", peerHandler.getPeerContactInfo()));
         workDispatcher.removePeerHandler(peerHandler);
         torrent.removePeer(peerHandler.getPeer());
+        peerHandlers.remove(peerHandler);
     }
 
     @Override
