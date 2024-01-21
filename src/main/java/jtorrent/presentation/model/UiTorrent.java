@@ -38,7 +38,7 @@ public class UiTorrent {
         this.eta = requireNonNull(eta);
         this.saveDirectory = requireNonNull(saveDirectory);
         this.isActive = requireNonNull(isActive);
-        this.disposables = disposables;
+        this.disposables = requireNonNull(disposables);
     }
 
     public static UiTorrent fromDomain(Torrent torrent) {
