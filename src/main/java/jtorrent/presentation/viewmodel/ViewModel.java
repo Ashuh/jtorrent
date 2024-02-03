@@ -17,6 +17,7 @@ import java.util.Optional;
 import io.reactivex.rxjava3.disposables.Disposable;
 import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -40,6 +41,7 @@ public class ViewModel {
     private final ObservableList<UiPeer> uiPeers = FXCollections.observableList(new ArrayList<>());
     private final ObjectProperty<ObservableList<UiFileInfo>> uiFileInfos = new SimpleObjectProperty<>();
     private final ObjectProperty<UiTorrentInfo> uiTorrentInfo = new SimpleObjectProperty<>(null);
+    private final ObjectProperty<UiTorrent> selectedUiTorrent = new SimpleObjectProperty<>();
     private final Map<UiTorrent, Torrent> uiTorrentToTorrent = new HashMap<>();
     private final Map<Peer, UiPeer> peerToUiPeer = new HashMap<>();
 
@@ -74,6 +76,8 @@ public class ViewModel {
     }
 
     public void setTorrentSelected(UiTorrent uiTorrent) {
+        selectedUiTorrent.set(uiTorrent);
+
         if (selectedTorrentPeersSubscription != null) {
             selectedTorrentPeersSubscription.dispose();
         }
@@ -124,6 +128,10 @@ public class ViewModel {
             uiTorrentInfo.get().dispose();
         }
         Platform.runLater(() -> uiTorrentInfo.set(selectedUiTorrentInfo));
+    }
+
+    public ReadOnlyObjectProperty<UiTorrent> selectedTorrentProperty() {
+        return selectedUiTorrent;
     }
 
     public boolean hasSelectedTorrent() {

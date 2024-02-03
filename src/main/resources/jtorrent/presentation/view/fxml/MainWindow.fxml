@@ -10,7 +10,8 @@
 <?import javafx.scene.input.KeyCodeCombination?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.BorderPane?>
-<BorderPane xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1"
+<?import javafx.scene.layout.VBox?>
+<BorderPane xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/17.0.2-ea"
             fx:controller="jtorrent.presentation.view.MainWindow">
     <top>
         <MenuBar fx:id="menuBar" BorderPane.alignment="CENTER">
@@ -39,7 +40,10 @@
     </top>
     <center>
         <SplitPane dividerPositions="0.5" orientation="VERTICAL" BorderPane.alignment="CENTER">
-            <fx:include fx:id="torrentsTableView" source="TorrentsTableView.fxml"/>
+            <VBox>
+                <fx:include fx:id="torrentControlsView" source="TorrentControlsView.fxml"/>
+                <fx:include fx:id="torrentsTableView" source="TorrentsTableView.fxml"/>
+            </VBox>
             <AnchorPane>
                 <children>
                     <TabPane fx:id="tabPane" tabClosingPolicy="UNAVAILABLE" AnchorPane.bottomAnchor="0.0"

@@ -27,6 +27,8 @@ public class MainWindow {
     @FXML
     private MenuItem quit;
     @FXML
+    private TorrentControlsView torrentControlsViewController;
+    @FXML
     private TorrentsTableView torrentsTableViewController;
     @FXML
     private PeersTableView peersTableViewController;
@@ -74,6 +76,7 @@ public class MainWindow {
             preferencesDialog.showAndWait();
         });
 
+        torrentControlsViewController.setViewModel(viewModel);
         torrentsTableViewController.setViewModel(viewModel);
         peersTableViewController.setViewModel(viewModel);
         filesViewController.itemsProperty().bind(viewModel.getFileInfos());
