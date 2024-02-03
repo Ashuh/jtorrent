@@ -27,8 +27,8 @@ public class AddNewTorrentDialog extends Dialog<UiTorrentContents> {
         }
     }
 
-    private UiTorrentContents convertResult(ButtonType dialogButton) {
-        if (dialogButton == ButtonType.OK) {
+    private UiTorrentContents convertResult(ButtonType buttonType) {
+        if (buttonType == ButtonType.OK) {
             return addNewTorrentView.getTorrentContents();
         } else {
             return null;
