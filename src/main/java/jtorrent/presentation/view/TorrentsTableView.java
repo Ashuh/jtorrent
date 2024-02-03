@@ -1,6 +1,7 @@
 package jtorrent.presentation.view;
 
 import java.net.URL;
+import java.util.Optional;
 import java.util.ResourceBundle;
 
 import javafx.beans.binding.BooleanBinding;
@@ -18,6 +19,7 @@ import javafx.scene.control.cell.ProgressBarTableCell;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.Window;
+import jtorrent.presentation.model.UiNewTorrent;
 import jtorrent.presentation.model.UiTorrent;
 import jtorrent.presentation.viewmodel.ViewModel;
 
@@ -45,7 +47,7 @@ public class TorrentsTableView implements Initializable {
     @FXML
     private Button addUrlButton;
     @FXML
-    private Button createFileButton;
+    private Button createButton;
     @FXML
     private Button deleteButton;
     @FXML
@@ -98,6 +100,15 @@ public class TorrentsTableView implements Initializable {
         stopButton.disableProperty().bind(stopButtonDisabledBinding);
 
         tableView.setRowFactory(param -> new TorrentTableRow());
+
+        createButton.setOnMouseClicked(mouseEvent -> {
+            CreateNewTorrentDialog dialog = new CreateNewTorrentDialog();
+            dialog.initOwner(createButton.getScene().getWindow());
+            Optional<UiNewTorrent> result = dialog.showAndWait();
+            if (result.isPresent()) {
+                // TODO: create new torrent
+            }
+        });
     }
 
     private abstract static class ButtonDisabledBinding extends BooleanBinding implements ChangeListener<UiTorrent> {

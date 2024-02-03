@@ -23,7 +23,7 @@
                 <FontIcon iconLiteral="mdi2l-link-variant"/>
             </graphic>
         </Button>
-        <Button fx:id="createFileButton" mnemonicParsing="false">
+        <Button fx:id="createButton" mnemonicParsing="false">
             <graphic>
                 <FontIcon iconLiteral="mdi2f-file-plus"/>
             </graphic>
