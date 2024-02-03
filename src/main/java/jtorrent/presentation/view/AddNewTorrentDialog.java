@@ -15,7 +15,7 @@ public class AddNewTorrentDialog extends Dialog<UiTorrentContents> {
     public AddNewTorrentDialog(UiTorrentContents torrentContents) {
         try {
             JTorrentFxmlLoader loader = new JTorrentFxmlLoader();
-            DialogPane dialogPane = loader.load("AddNewTorrentDialog.fxml");
+            DialogPane dialogPane = loader.load("AddNewTorrentView.fxml");
             addNewTorrentView = loader.getController();
             addNewTorrentView.setTorrentContents(torrentContents);
             setDialogPane(dialogPane);
