@@ -97,7 +97,6 @@ public class Peer {
 
     public void addUploadedBytes(int bytes) {
         uploadRateTracker.addBytes(bytes);
-        System.out.println("Added " + bytes + " bytes to upload rate tracker");
     }
 
     public double getUploadRate() {
