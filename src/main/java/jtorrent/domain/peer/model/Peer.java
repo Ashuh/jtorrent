@@ -21,6 +21,10 @@ public class Peer {
     private final PeerContactInfo peerContactInfo;
     private final RateTracker downloadRateTracker = new RateTracker(WINDOW_DURATION);
     private final RateTracker uploadRateTracker = new RateTracker(WINDOW_DURATION);
+    private final Observable<Double> downloadRateObservable =
+            downloadRateTracker.getRateObservable(1, TimeUnit.SECONDS); // TODO: fixed rate?
+    private final Observable<Double> uploadRateObservable =
+            uploadRateTracker.getRateObservable(1, TimeUnit.SECONDS); // TODO: fixed rate?
     private boolean isLocalChoked = true;
     private boolean isRemoteChoked = true;
     private boolean isLocalInterested = false;
@@ -88,7 +92,7 @@ public class Peer {
     }
 
     public Observable<Double> getDownloadRateObservable() {
-        return downloadRateTracker.getRateObservable(1, TimeUnit.SECONDS); // TODO: fixed rate?
+        return downloadRateObservable;
     }
 
     public void addUploadedBytes(int bytes) {
@@ -101,7 +105,7 @@ public class Peer {
     }
 
     public Observable<Double> getUploadRateObservable() {
-        return uploadRateTracker.getRateObservable(1, TimeUnit.SECONDS); // TODO: fixed rate?
+        return uploadRateObservable;
     }
 
     public boolean isLastSeenWithin(Duration duration) {
