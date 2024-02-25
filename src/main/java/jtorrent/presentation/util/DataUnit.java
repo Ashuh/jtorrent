@@ -57,7 +57,7 @@ public enum DataUnit {
      * @param bytes the number of bytes. Must be non-negative.
      * @return the {@link DataUnit} that is the best fit for the given number of bytes
      */
-    public static DataUnit forBytes(long bytes) {
+    public static DataUnit bestFitBytes(long bytes) {
         requireNonNegative(bytes);
         if (bytes == 0) {
             return BYTE;
@@ -126,49 +126,5 @@ public enum DataUnit {
 
     public long getNumberOfBytes() {
         return numberOfBytes;
-    }
-
-    /**
-     * Converts the given size from the given unit to this unit.
-     *
-     * @param size the size to convert
-     * @param from the unit of the given size
-     * @return the size in this unit
-     */
-    public double convertFrom(double size, DataUnit from) {
-        return size * from.numberOfBytes / numberOfBytes;
-    }
-
-    /**
-     * Converts the given size from the given unit to this unit.
-     *
-     * @param size the size to convert
-     * @param from the unit of the given size
-     * @return the size in this unit
-     */
-    public long convertFrom(long size, DataUnit from) {
-        return size * from.numberOfBytes / numberOfBytes;
-    }
-
-    /**
-     * Converts the given size from this unit to the given unit.
-     *
-     * @param size the size to convert
-     * @param to   the unit to convert to
-     * @return the size in the given unit
-     */
-    public double convertTo(double size, DataUnit to) {
-        return size * numberOfBytes / to.numberOfBytes;
-    }
-
-    /**
-     * Converts the given size from this unit to the given unit.
-     *
-     * @param size the size to convert
-     * @param to   the unit to convert to
-     * @return the size in the given unit
-     */
-    public long convertTo(long size, DataUnit to) {
-        return size * numberOfBytes / to.numberOfBytes;
     }
 }

@@ -8,7 +8,7 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import jtorrent.domain.peer.model.Peer;
 import jtorrent.presentation.util.BindingUtils;
-import jtorrent.presentation.util.DataUnitFormatter;
+import jtorrent.presentation.util.DataSize;
 
 public class UiPeer {
 
@@ -38,10 +38,12 @@ public class UiPeer {
         CompositeDisposable disposables = new CompositeDisposable();
 
         Observable<Double> downloadRateObservable = peer.getDownloadRateObservable();
-        BindingUtils.subscribe(downloadRateObservable.map(DataUnitFormatter::formatRate), downSpeed, disposables);
+        BindingUtils.subscribe(downloadRateObservable.map(DataSize::bestFitBytes).map(DataSize::toRateString),
+                downSpeed, disposables);
 
         Observable<Double> uploadRateObservable = peer.getUploadRateObservable();
-        BindingUtils.subscribe(uploadRateObservable.map(DataUnitFormatter::formatRate), upSpeed, disposables);
+        BindingUtils.subscribe(uploadRateObservable.map(DataSize::bestFitBytes).map(DataSize::toRateString),
+                upSpeed, disposables);
 
         return new UiPeer(ip, port, client, downSpeed, upSpeed, disposables);
     }

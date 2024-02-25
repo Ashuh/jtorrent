@@ -17,7 +17,7 @@ import javafx.collections.ObservableList;
 import javafx.scene.chart.XYChart;
 import javafx.util.StringConverter;
 import jtorrent.domain.Client;
-import jtorrent.presentation.util.DataUnit;
+import jtorrent.presentation.util.DataSize;
 
 public class UiChartData {
 
@@ -104,17 +104,12 @@ public class UiChartData {
     private static class RateAxisFormatter extends StringConverter<Number> {
         @Override
         public String toString(Number object) {
-            DataUnit unit = DataUnit.forBytes(object.longValue());
-            double value = unit.convertFrom(object.doubleValue(), DataUnit.BYTE);
-            return String.format("%.2f %s", value, unit.getRateSymbol());
+            return DataSize.bestFitBytes(object.longValue()).toRateString();
         }
 
         @Override
         public Number fromString(String string) {
-            String[] tokens = string.split(" ");
-            double value = Double.parseDouble(tokens[0]);
-            DataUnit unit = DataUnit.fromRateSymbol(tokens[1]);
-            return unit.convertTo(value, DataUnit.BYTE);
+            return DataSize.fromRateString(string).getSizeInBytes();
         }
     }
 }

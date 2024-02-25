@@ -10,7 +10,7 @@ import javafx.beans.property.StringProperty;
 import javafx.scene.control.TreeItem;
 import jtorrent.domain.torrent.model.File;
 import jtorrent.domain.torrent.model.Torrent;
-import jtorrent.presentation.util.DataUnitFormatter;
+import jtorrent.presentation.util.DataSize;
 import jtorrent.presentation.util.DateFormatter;
 
 public class UiTorrentContents {
@@ -38,7 +38,7 @@ public class UiTorrentContents {
         StringProperty saveDirectory = new SimpleStringProperty(torrent.getSaveDirectory().toString());
         StringProperty name = new SimpleStringProperty(torrent.getName());
         StringProperty comment = new SimpleStringProperty(torrent.getComment());
-        StringProperty size = new SimpleStringProperty(DataUnitFormatter.formatSize(torrent.getTotalSize()));
+        StringProperty size = new SimpleStringProperty(DataSize.bestFitBytes(torrent.getTotalSize()).toString());
         StringProperty date = new SimpleStringProperty(DateFormatter.format(torrent.getCreationDate()));
         TreeItem<FileInfo> files = buildFileTree(torrent.getFiles());
         return new UiTorrentContents(saveDirectory, name, comment, size, date, files, torrent);
@@ -71,7 +71,7 @@ public class UiTorrentContents {
             }
 
             treeItemToTotalSize.forEach((item, totalSize) -> {
-                String size = DataUnitFormatter.formatSize(totalSize);
+                String size = DataSize.bestFitBytes(totalSize).toString();
                 item.getValue().size().set(size);
             });
         }

@@ -14,7 +14,7 @@ import javafx.beans.property.StringProperty;
 import jtorrent.domain.torrent.model.Torrent;
 import jtorrent.presentation.util.BindingUtils;
 import jtorrent.presentation.util.CalculateEtaCombiner;
-import jtorrent.presentation.util.DataUnitFormatter;
+import jtorrent.presentation.util.DataSize;
 import jtorrent.presentation.util.DateFormatter;
 
 public class UiTorrentInfo {
@@ -138,17 +138,24 @@ public class UiTorrentInfo {
         ).map(Object::toString);
         BindingUtils.subscribe(remainingObservable, remaining, disposables);
 
-        Observable<String> downloadedObservable = torrent.getDownloadedObservable().map(DataUnitFormatter::formatSize);
+        Observable<String> downloadedObservable = torrent.getDownloadedObservable()
+                .map(DataSize::bestFitBytes)
+                .map(DataSize::toString);
         BindingUtils.subscribe(downloadedObservable, downloaded, disposables);
 
-        Observable<String> uploadedObservable = torrent.getUploadedObservable().map(DataUnitFormatter::formatSize);
+        Observable<String> uploadedObservable = torrent.getUploadedObservable()
+                .map(DataSize::bestFitBytes)
+                .map(DataSize::toString);
         BindingUtils.subscribe(uploadedObservable, uploaded, disposables);
 
         Observable<String> downloadRateObservable = torrent.getDownloadRateObservable()
-                .map(DataUnitFormatter::formatRate);
+                .map(DataSize::bestFitBytes)
+                .map(DataSize::toRateString);
         BindingUtils.subscribe(downloadRateObservable, downloadSpeed, disposables);
 
-        Observable<String> uploadRateObservable = torrent.getUploadRateObservable().map(DataUnitFormatter::formatRate);
+        Observable<String> uploadRateObservable = torrent.getUploadRateObservable()
+                .map(DataSize::bestFitBytes)
+                .map(DataSize::toRateString);
         BindingUtils.subscribe(uploadRateObservable, uploadSpeed, disposables);
 
         Observable<String> piecesObservable = torrent.getVerifiedPiecesObservable()
@@ -167,7 +174,7 @@ public class UiTorrentInfo {
     }
 
     private static String formatTotalSize(long totalSize, long verified) {
-        return DataUnitFormatter.formatSize(totalSize) + " (" + DataUnitFormatter.formatSize(verified) + " done)";
+        return DataSize.bestFitBytes(totalSize) + " (" + DataSize.bestFitBytes(verified) + " done)";
     }
 
     private static String formatDate(LocalDateTime localDateTime) {
@@ -175,7 +182,7 @@ public class UiTorrentInfo {
     }
 
     private static String formatPieces(int numPieces, long pieceSize, int numVerifiedPieces) {
-        return numPieces + " x " + DataUnitFormatter.formatSize(pieceSize) + " (" + numVerifiedPieces + " done)";
+        return numPieces + " x " + DataSize.bestFitBytes(pieceSize) + " (" + numVerifiedPieces + " done)";
     }
 
     private static String formatPercentage(long value, long total) {

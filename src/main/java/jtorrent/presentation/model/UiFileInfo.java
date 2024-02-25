@@ -14,7 +14,7 @@ import jtorrent.domain.torrent.model.File;
 import jtorrent.domain.torrent.model.FilePieceInfo;
 import jtorrent.domain.torrent.model.FileWithPieceInfo;
 import jtorrent.presentation.util.BindingUtils;
-import jtorrent.presentation.util.DataUnitFormatter;
+import jtorrent.presentation.util.DataSize;
 
 public class UiFileInfo {
 
@@ -63,7 +63,7 @@ public class UiFileInfo {
         FilePieceInfo filePieceInfo = fileWithPieceInfo.filePieceInfo();
 
         StringProperty path = new SimpleStringProperty(file.getPath().toString());
-        StringProperty size = new SimpleStringProperty(DataUnitFormatter.formatSize(file.getSize()));
+        StringProperty size = new SimpleStringProperty(DataSize.bestFitBytes(file.getSize()).toString());
         StringProperty done = new SimpleStringProperty("");
         StringProperty percentDone = new SimpleStringProperty("");
         IntegerProperty firstPiece = new SimpleIntegerProperty(filePieceInfo.firstPiece());
@@ -79,8 +79,9 @@ public class UiFileInfo {
         StringProperty codecs = new SimpleStringProperty("");
         CompositeDisposable disposables = new CompositeDisposable();
 
-        Observable<String> doneObservable =
-                filePieceInfo.getVerifiedBytesObservable().map(DataUnitFormatter::formatSize);
+        Observable<String> doneObservable = filePieceInfo.getVerifiedBytesObservable()
+                .map(DataSize::bestFitBytes)
+                .map(DataSize::toString);
         BindingUtils.subscribe(doneObservable, done, disposables);
 
         Observable<String> percentDoneObservable = filePieceInfo.getVerifiedBytesObservable()

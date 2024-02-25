@@ -13,7 +13,7 @@ import javafx.beans.property.StringProperty;
 import jtorrent.domain.torrent.model.Torrent;
 import jtorrent.presentation.util.BindingUtils;
 import jtorrent.presentation.util.CalculateEtaCombiner;
-import jtorrent.presentation.util.DataUnitFormatter;
+import jtorrent.presentation.util.DataSize;
 
 public class UiTorrent {
 
@@ -45,7 +45,7 @@ public class UiTorrent {
         long torrentSize = torrent.getTotalSize();
 
         StringProperty name = new SimpleStringProperty(torrent.getName());
-        StringProperty size = new SimpleStringProperty(DataUnitFormatter.formatSize(torrentSize));
+        StringProperty size = new SimpleStringProperty(DataSize.bestFitBytes(torrentSize).toString());
         DoubleProperty progress = new SimpleDoubleProperty(0.0);
         StringProperty downSpeed = new SimpleStringProperty("");
         StringProperty upSpeed = new SimpleStringProperty("");
@@ -79,7 +79,7 @@ public class UiTorrent {
         if (bytes == 0) {
             return "";
         }
-        return DataUnitFormatter.formatRate(bytes);
+        return DataSize.bestFitBytes(bytes).toRateString();
     }
 
     public String getName() {
