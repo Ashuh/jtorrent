@@ -36,6 +36,8 @@ public class MainWindow {
     private TorrentInfoView torrentInfoViewController;
     @FXML
     private FilesView filesViewController;
+    @FXML
+    private ChartView chartViewController;
 
     public void setViewModel(ViewModel viewModel) {
         menuBar.addEventFilter(MouseEvent.MOUSE_PRESSED, event -> {
@@ -81,5 +83,6 @@ public class MainWindow {
         peersTableViewController.setViewModel(viewModel);
         filesViewController.itemsProperty().bind(viewModel.getFileInfos());
         torrentInfoViewController.torrentInfoProperty().bind(viewModel.getTorrentInfo());
+        chartViewController.chartDataProperty().bind(viewModel.chartDataProperty());
     }
 }

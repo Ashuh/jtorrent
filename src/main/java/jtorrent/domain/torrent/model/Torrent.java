@@ -317,12 +317,25 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
         return (int) Math.ceil((double) getPieceSize(pieceIndex) / BLOCK_SIZE);
     }
 
+    public double getDownloadRate() {
+        return peers.getCollection().stream()
+                .mapToDouble(Peer::getDownloadRate)
+                .sum();
+    }
+
     public Observable<Double> getDownloadRateObservable() {
         return downloadRateObservable;
     }
 
     public Observable<Integer> getDownloadedObservable() {
         return downloadedSubject;
+    }
+
+
+    public double getUploadRate() {
+        return peers.getCollection().stream()
+                .mapToDouble(Peer::getUploadRate)
+                .sum();
     }
 
     public Observable<Double> getUploadRateObservable() {

@@ -153,6 +153,18 @@ public class Client implements LocalServiceDiscoveryManager.Listener, TorrentHan
         }
     }
 
+    public double getDownloadRate() {
+        return torrentRepository.getTorrents().getCollection().stream()
+                .mapToDouble(Torrent::getDownloadRate)
+                .sum();
+    }
+
+    public double getUploadRate() {
+        return torrentRepository.getTorrents().getCollection().stream()
+                .mapToDouble(Torrent::getUploadRate)
+                .sum();
+    }
+
     private class HandleInboundConnectionsTask extends BackgroundTask {
 
         @Override

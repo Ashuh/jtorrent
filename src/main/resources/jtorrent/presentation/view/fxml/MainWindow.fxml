@@ -57,6 +57,9 @@
                         <Tab fx:id="peersTab" closable="false" text="Peers">
                             <fx:include fx:id="peersTableView" source="PeersTableView.fxml"/>
                         </Tab>
+                        <Tab text="Charts">
+                            <fx:include fx:id="chartView" source="ChartView.fxml"/>
+                        </Tab>
                     </TabPane>
                 </children>
             </AnchorPane>

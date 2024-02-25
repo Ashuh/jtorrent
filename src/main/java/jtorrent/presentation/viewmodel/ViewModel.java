@@ -25,6 +25,7 @@ import jtorrent.domain.Client;
 import jtorrent.domain.peer.model.Peer;
 import jtorrent.domain.peer.model.PeerContactInfo;
 import jtorrent.domain.torrent.model.Torrent;
+import jtorrent.presentation.model.UiChartData;
 import jtorrent.presentation.model.UiFileInfo;
 import jtorrent.presentation.model.UiPeer;
 import jtorrent.presentation.model.UiTorrent;
@@ -39,6 +40,7 @@ public class ViewModel {
     private final Client client;
     private final ObservableList<UiTorrent> uiTorrents = FXCollections.observableList(new ArrayList<>());
     private final ObservableList<UiPeer> uiPeers = FXCollections.observableList(new ArrayList<>());
+    private final ObjectProperty<UiChartData> chartData = new SimpleObjectProperty<>();
     private final ObjectProperty<ObservableList<UiFileInfo>> uiFileInfos = new SimpleObjectProperty<>();
     private final ObjectProperty<UiTorrentInfo> uiTorrentInfo = new SimpleObjectProperty<>(null);
     private final ObjectProperty<UiTorrent> selectedUiTorrent = new SimpleObjectProperty<>();
@@ -73,6 +75,8 @@ public class ViewModel {
                 throw new AssertionError("Unknown event type: " + event.getType());
             }
         });
+
+        chartData.set(UiChartData.build(client));
     }
 
     public void setTorrentSelected(UiTorrent uiTorrent) {
@@ -203,5 +207,9 @@ public class ViewModel {
 
     public ObjectProperty<UiTorrentInfo> getTorrentInfo() {
         return uiTorrentInfo;
+    }
+
+    public ReadOnlyObjectProperty<UiChartData> chartDataProperty() {
+        return chartData;
     }
 }
