@@ -65,7 +65,7 @@ public class UiTorrent {
                 new CalculateEtaCombiner(torrentSize));
         BindingUtils.subscribe(etaObservable, eta, disposables);
 
-        Observable<Double> progressObservable = torrent.getDownloadedObservable()
+        Observable<Double> progressObservable = torrent.getVerifiedBytesObservable()
                 .map(verifiedBytes -> (double) verifiedBytes / torrentSize);
         BindingUtils.subscribe(progressObservable, progress, disposables);
 
