@@ -50,8 +50,10 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
     private final BehaviorSubject<Long> verifiedBytesSubject = BehaviorSubject.createDefault(0L);
     private final BehaviorSubject<BitSet> verifiedPiecesSubject = BehaviorSubject.createDefault(new BitSet());
     private final BehaviorSubject<BitSet> availablePiecesSubject = BehaviorSubject.createDefault(new BitSet());
-    private final BehaviorSubject<Boolean> isActiveSubject = BehaviorSubject.createDefault(false);
-    private boolean isActive = false;
+    private long checkedBytes = 0;
+    private final BehaviorSubject<Long> checkedBytesSubject = BehaviorSubject.createDefault(0L);
+    private State state = State.STOPPED;
+    private final BehaviorSubject<State> stateSubject = BehaviorSubject.createDefault(state);
 
     public Torrent(Set<Tracker> trackers, LocalDateTime creationDate, String comment, String createdBy,
             String name, FileInfo fileInfo, Sha1Hash infoHash) {
@@ -297,6 +299,16 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
         }
     }
 
+    public void setPieceChecked(int pieceIndex) {
+        checkedBytes += getPieceSize(pieceIndex);
+        checkedBytesSubject.onNext(checkedBytes);
+    }
+
+    public void resetCheckedBytes() {
+        checkedBytes = 0;
+        checkedBytesSubject.onNext(checkedBytes);
+    }
+
     public boolean isPieceComplete(int pieceIndex) {
         return pieceTracker.isPieceComplete(pieceIndex);
     }
@@ -331,7 +343,6 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
         return downloadedSubject;
     }
 
-
     public double getUploadRate() {
         return peers.getCollection().stream()
                 .mapToDouble(Peer::getUploadRate)
@@ -348,6 +359,10 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
 
     public Observable<Long> getVerifiedBytesObservable() {
         return verifiedBytesSubject;
+    }
+
+    public Observable<Long> getCheckedBytesObservable() {
+        return checkedBytesSubject;
     }
 
     public RxObservableSet<Peer> getPeersObservable() {
@@ -376,17 +391,17 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
         return peers.anyMatch(peer -> peer.getPeerContactInfo().equals(peerContactInfo));
     }
 
-    public Observable<Boolean> getIsActiveObservable() {
-        return isActiveSubject;
+    public State getState() {
+        return state;
     }
 
-    public boolean isActive() {
-        return isActive;
+    public Observable<State> getStateObservable() {
+        return stateSubject;
     }
 
-    public void setIsActive(boolean isActive) {
-        this.isActive = isActive;
-        isActiveSubject.onNext(isActive);
+    public void setState(State state) {
+        this.state = state;
+        stateSubject.onNext(state);
     }
 
     @Override
@@ -398,8 +413,7 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
             return false;
         }
         Torrent torrent = (Torrent) o;
-        return isActive == torrent.isActive
-                && Objects.equals(trackers, torrent.trackers)
+        return Objects.equals(trackers, torrent.trackers)
                 && Objects.equals(creationDate, torrent.creationDate)
                 && Objects.equals(comment, torrent.comment)
                 && Objects.equals(createdBy, torrent.createdBy)
@@ -416,7 +430,7 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
     @Override
     public int hashCode() {
         return Objects.hash(trackers, creationDate, comment, createdBy, name, fileInfo, infoHash,
-                pieceTracker, downloaded.get(), uploaded.get(), peers, verifiedBytes.get(), isActive);
+                pieceTracker, downloaded.get(), uploaded.get(), peers, verifiedBytes.get());
     }
 
     @Override
@@ -430,6 +444,13 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
                 + ", fileInfo=" + fileInfo
                 + ", infoHash=" + infoHash
                 + '}';
+    }
+
+    public enum State {
+        STOPPED,
+        CHECKING,
+        DOWNLOADING,
+        SEEDING
     }
 
     private class PieceTracker {

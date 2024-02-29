@@ -9,8 +9,8 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
-import javafx.scene.control.cell.ProgressBarTableCell;
 import jtorrent.presentation.model.UiTorrent;
+import jtorrent.presentation.model.UiTorrentStatus;
 import jtorrent.presentation.viewmodel.ViewModel;
 
 public class TorrentsTableView implements Initializable {
@@ -22,7 +22,7 @@ public class TorrentsTableView implements Initializable {
     @FXML
     private TableColumn<UiTorrent, String> size;
     @FXML
-    private TableColumn<UiTorrent, Double> status;
+    private TableColumn<UiTorrent, UiTorrentStatus> status;
     @FXML
     private TableColumn<UiTorrent, String> downSpeed;
     @FXML
@@ -48,8 +48,8 @@ public class TorrentsTableView implements Initializable {
     public void initialize(URL url, ResourceBundle resourceBundle) {
         name.setCellValueFactory(cd -> cd.getValue().nameProperty());
         size.setCellValueFactory(cd -> cd.getValue().sizeProperty());
-        status.setCellValueFactory(param -> param.getValue().progressProperty().asObject());
-        status.setCellFactory(ProgressBarTableCell.forTableColumn());
+        status.setCellValueFactory(param -> param.getValue().statusProperty());
+        status.setCellFactory(param -> new TorrentStatusCell());
         downSpeed.setCellValueFactory(cd -> cd.getValue().downSpeedProperty());
         upSpeed.setCellValueFactory(cd -> cd.getValue().upSpeedProperty());
         eta.setCellValueFactory(cd -> cd.getValue().etaProperty());

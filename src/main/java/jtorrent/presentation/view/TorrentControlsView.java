@@ -11,6 +11,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.stage.Window;
 import jtorrent.presentation.model.UiNewTorrent;
 import jtorrent.presentation.model.UiTorrent;
+import jtorrent.presentation.model.UiTorrentStatus;
 import jtorrent.presentation.viewmodel.ViewModel;
 
 public class TorrentControlsView {
@@ -47,12 +48,15 @@ public class TorrentControlsView {
         });
 
         ObservableValue<Boolean> isStartButtonDisabled = viewModel.selectedTorrentProperty()
-                .flatMap(UiTorrent::isActiveProperty)
+                .flatMap(UiTorrent::statusProperty)
+                .flatMap(UiTorrentStatus::stateProperty)
+                .map(state -> !state.contains("STOPPED"))
                 .orElse(true);
 
         ObservableValue<Boolean> isStopButtonDisabled = viewModel.selectedTorrentProperty()
-                .flatMap(UiTorrent::isActiveProperty)
-                .map(isActive -> !isActive)
+                .flatMap(UiTorrent::statusProperty)
+                .flatMap(UiTorrentStatus::stateProperty)
+                .map(state -> state.contains("STOPPED"))
                 .orElse(true);
 
         startButton.disableProperty()

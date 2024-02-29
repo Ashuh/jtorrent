@@ -4,10 +4,10 @@ import static jtorrent.domain.common.util.ValidationUtil.requireNonNull;
 
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
-import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
-import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import jtorrent.domain.torrent.model.Torrent;
@@ -19,25 +19,23 @@ public class UiTorrent {
 
     private final StringProperty name;
     private final StringProperty size;
-    private final DoubleProperty progress;
     private final StringProperty downSpeed;
     private final StringProperty upSpeed;
     private final StringProperty eta;
     private final StringProperty saveDirectory;
-    private final BooleanProperty isActive;
+    private final ObjectProperty<UiTorrentStatus> status;
     private final CompositeDisposable disposables;
 
-    public UiTorrent(StringProperty name, StringProperty size, DoubleProperty progress, StringProperty downSpeed,
-            StringProperty upSpeed, StringProperty eta, StringProperty saveDirectory, BooleanProperty isActive,
-            CompositeDisposable disposables) {
+    public UiTorrent(StringProperty name, StringProperty size, StringProperty downSpeed,
+            StringProperty upSpeed, StringProperty eta, StringProperty saveDirectory,
+            ObjectProperty<UiTorrentStatus> status, CompositeDisposable disposables) {
         this.name = requireNonNull(name);
         this.size = requireNonNull(size);
-        this.progress = requireNonNull(progress);
         this.downSpeed = requireNonNull(downSpeed);
         this.upSpeed = requireNonNull(upSpeed);
         this.eta = requireNonNull(eta);
         this.saveDirectory = requireNonNull(saveDirectory);
-        this.isActive = requireNonNull(isActive);
+        this.status = requireNonNull(status);
         this.disposables = requireNonNull(disposables);
     }
 
@@ -46,12 +44,13 @@ public class UiTorrent {
 
         StringProperty name = new SimpleStringProperty(torrent.getName());
         StringProperty size = new SimpleStringProperty(DataSize.bestFitBytes(torrentSize).toString());
-        DoubleProperty progress = new SimpleDoubleProperty(0.0);
         StringProperty downSpeed = new SimpleStringProperty("");
         StringProperty upSpeed = new SimpleStringProperty("");
         StringProperty eta = new SimpleStringProperty("");
         StringProperty saveDirectory = new SimpleStringProperty(torrent.getSaveDirectory().toString());
-        BooleanProperty isActive = new SimpleBooleanProperty(false);
+        StringProperty state = new SimpleStringProperty();
+        DoubleProperty progress = new SimpleDoubleProperty(0.0);
+        ObjectProperty<UiTorrentStatus> status = new SimpleObjectProperty<>(new UiTorrentStatus(state, progress));
         CompositeDisposable disposables = new CompositeDisposable();
 
         Observable<Double> downloadRateObservable = torrent.getDownloadRateObservable();
@@ -65,14 +64,24 @@ public class UiTorrent {
                 new CalculateEtaCombiner(torrentSize));
         BindingUtils.subscribe(etaObservable, eta, disposables);
 
-        Observable<Double> progressObservable = torrent.getVerifiedBytesObservable()
+        Observable<Double> downloadProgressObservable = torrent.getVerifiedBytesObservable()
                 .map(verifiedBytes -> (double) verifiedBytes / torrentSize);
+
+        Observable<Double> checkProgressObservable = torrent.getCheckedBytesObservable()
+                .map(checkedBytes -> (double) checkedBytes / torrentSize);
+
+        Observable<Torrent.State> stateObservable = torrent.getStateObservable();
+
+        Observable<Double> progressObservable = Observable.combineLatest(
+                stateObservable, downloadProgressObservable, checkProgressObservable,
+                UiTorrent::combineProgress);
         BindingUtils.subscribe(progressObservable, progress, disposables);
 
-        Observable<Boolean> isActiveObservable = torrent.getIsActiveObservable();
-        BindingUtils.subscribe(isActiveObservable, isActive, disposables);
+        Observable<String> statusObservable = Observable.combineLatest(
+                stateObservable, progressObservable, UiTorrent::combineStatus);
+        BindingUtils.subscribe(statusObservable, state, disposables);
 
-        return new UiTorrent(name, size, progress, downSpeed, upSpeed, eta, saveDirectory, isActive, disposables);
+        return new UiTorrent(name, size, downSpeed, upSpeed, eta, saveDirectory, status, disposables);
     }
 
     private static String formatRate(double bytes) {
@@ -80,6 +89,17 @@ public class UiTorrent {
             return "";
         }
         return DataSize.bestFitBytes(bytes).toRateString();
+    }
+
+    private static double combineProgress(Torrent.State state, double downloadProgress, double checkProgress) {
+        return state == Torrent.State.CHECKING ? checkProgress : downloadProgress;
+    }
+
+    private static String combineStatus(Torrent.State state, Double progress) {
+        if (state == Torrent.State.CHECKING || state == Torrent.State.DOWNLOADING) {
+            return state + " " + String.format("%.1f", progress * 100) + "%";
+        }
+        return state.toString();
     }
 
     public String getName() {
@@ -96,14 +116,6 @@ public class UiTorrent {
 
     public StringProperty sizeProperty() {
         return size;
-    }
-
-    public double getProgress() {
-        return progress.get();
-    }
-
-    public DoubleProperty progressProperty() {
-        return progress;
     }
 
     public String getDownSpeed() {
@@ -138,12 +150,8 @@ public class UiTorrent {
         return saveDirectory;
     }
 
-    public boolean isActive() {
-        return isActive.get();
-    }
-
-    public BooleanProperty isActiveProperty() {
-        return isActive;
+    public ObjectProperty<UiTorrentStatus> statusProperty() {
+        return status;
     }
 
     public void dispose() {

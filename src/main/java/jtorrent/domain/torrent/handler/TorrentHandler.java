@@ -67,6 +67,10 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
      * Used to prevent verification from happening while handling a successful peer connection.
      */
     private final Object verificationLock = new Object();
+    /**
+     * Used to prevent concurrent modification to the state of the torrent.
+     */
+    private final Object stateLock = new Object();
 
     public TorrentHandler(Torrent torrent, PieceRepository pieceRepository) {
         this.torrent = requireNonNull(torrent);
@@ -79,9 +83,11 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
     }
 
     public void start() {
-        torrent.setIsActive(true);
         CompletableFuture.runAsync(this::verifyFiles)
                 .thenAccept(ignored -> {
+                    boolean isCompleted = torrent.isAllPiecesVerified();
+                    Torrent.State state = isCompleted ? Torrent.State.SEEDING : Torrent.State.DOWNLOADING;
+                    torrent.setState(state);
                     workDispatcher.start();
                     trackerHandlers.forEach(TrackerHandler::start);
                     unchokeTask.scheduleAtFixedRate(0, 10, SECONDS);
@@ -92,7 +98,9 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
     }
 
     public void stop() {
-        torrent.setIsActive(false);
+        synchronized (stateLock) {
+            torrent.setState(Torrent.State.STOPPED);
+        }
         workDispatcher.stop();
         trackerHandlers.forEach(TrackerHandler::stop);
         unchokeTask.stop();
@@ -102,6 +110,8 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
     }
 
     private void verifyFiles() {
+        torrent.setState(Torrent.State.CHECKING);
+        torrent.resetCheckedBytes();
         synchronized (pieceStateLock) {
             IntStream.range(0, torrent.getNumPieces())
                     .forEach(piece -> {
@@ -110,6 +120,7 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
                         } else {
                             torrent.setPieceMissing(piece);
                         }
+                        torrent.setPieceChecked(piece);
                     });
         }
     }
@@ -623,6 +634,14 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
                     }
                 });
                 trackerHandlers.forEach(TrackerHandler::stop);
+                synchronized (stateLock) {
+                    // we need to do this check in a synchronized block because the torrent could have been stopped
+                    // concurrently right before we set the state. Without this check, the state could be set to
+                    // STOPPED and then to SEEDING right after.
+                    if (torrent.getState() == Torrent.State.DOWNLOADING) {
+                        torrent.setState(Torrent.State.SEEDING);
+                    }
+                }
             }
         }
 
