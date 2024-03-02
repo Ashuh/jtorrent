@@ -84,6 +84,7 @@ public class ViewModel {
 
         if (selectedTorrentPeersSubscription != null) {
             selectedTorrentPeersSubscription.dispose();
+            selectedTorrentPeersSubscription = null;
         }
 
         uiPeers.forEach(UiPeer::dispose);
@@ -91,7 +92,6 @@ public class ViewModel {
 
         if (uiTorrent == null) {
             selectedTorrent = null;
-            selectedTorrentPeersSubscription = null;
             return;
         }
 
