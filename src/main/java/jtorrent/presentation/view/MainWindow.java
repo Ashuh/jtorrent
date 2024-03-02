@@ -79,6 +79,7 @@ public class MainWindow {
         });
 
         torrentControlsViewController.setViewModel(viewModel);
+        torrentControlsViewController.torrentControlsStateProperty().bind(viewModel.torrentControlsStateProperty());
         torrentsTableViewController.setViewModel(viewModel);
         peersTableViewController.setViewModel(viewModel);
         filesViewController.itemsProperty().bind(viewModel.getFileInfos());

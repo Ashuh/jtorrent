@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import io.reactivex.rxjava3.disposables.Disposable;
+import io.reactivex.rxjava3.subjects.BehaviorSubject;
 import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
@@ -30,6 +31,7 @@ import jtorrent.presentation.model.UiFileInfo;
 import jtorrent.presentation.model.UiPeer;
 import jtorrent.presentation.model.UiTorrent;
 import jtorrent.presentation.model.UiTorrentContents;
+import jtorrent.presentation.model.UiTorrentControlsState;
 import jtorrent.presentation.model.UiTorrentInfo;
 
 public class ViewModel {
@@ -44,10 +46,12 @@ public class ViewModel {
     private final ObjectProperty<ObservableList<UiFileInfo>> uiFileInfos = new SimpleObjectProperty<>();
     private final ObjectProperty<UiTorrentInfo> uiTorrentInfo = new SimpleObjectProperty<>(null);
     private final ObjectProperty<UiTorrent> selectedUiTorrent = new SimpleObjectProperty<>();
+    private final ObjectProperty<UiTorrentControlsState> torrentControlsState = new SimpleObjectProperty<>();
     private final Map<UiTorrent, Torrent> uiTorrentToTorrent = new HashMap<>();
     private final Map<Peer, UiPeer> peerToUiPeer = new HashMap<>();
-
     private Torrent selectedTorrent;
+    private final BehaviorSubject<Optional<Torrent>> selectedTorrentSubject = BehaviorSubject
+            .createDefault(Optional.empty());
     private Disposable selectedTorrentPeersSubscription;
 
     public ViewModel(Client client) {
@@ -76,7 +80,13 @@ public class ViewModel {
             }
         });
 
+        torrentControlsState.set(UiTorrentControlsState.build(selectedTorrentSubject));
         chartData.set(UiChartData.build(client));
+    }
+
+    private void setSelectedTorrent(Torrent selectedTorrent) {
+        this.selectedTorrent = selectedTorrent;
+        selectedTorrentSubject.onNext(Optional.ofNullable(selectedTorrent));
     }
 
     public void setTorrentSelected(UiTorrent uiTorrent) {
@@ -91,12 +101,12 @@ public class ViewModel {
         uiPeers.clear();
 
         if (uiTorrent == null) {
-            selectedTorrent = null;
+            setSelectedTorrent(null);
             return;
         }
 
         Torrent torrent = uiTorrentToTorrent.get(uiTorrent);
-        selectedTorrent = torrent;
+        setSelectedTorrent(torrent);
 
         selectedTorrentPeersSubscription = torrent.getPeersObservable().subscribe(event -> {
             switch (event.getType()) {
@@ -143,7 +153,7 @@ public class ViewModel {
     }
 
     public void addPeerForSelectedTorrent(String ipPort) throws UnknownHostException {
-        if (selectedTorrent == null) {
+        if (!hasSelectedTorrent()) {
             return;
         }
 
@@ -152,14 +162,14 @@ public class ViewModel {
     }
 
     public void startSelectedTorrent() {
-        if (selectedTorrent == null) {
+        if (!hasSelectedTorrent()) {
             return;
         }
         client.startTorrent(selectedTorrent);
     }
 
     public void stopSelectedTorrent() {
-        if (selectedTorrent == null) {
+        if (!hasSelectedTorrent()) {
             return;
         }
         client.stopTorrent(selectedTorrent);
@@ -211,5 +221,9 @@ public class ViewModel {
 
     public ReadOnlyObjectProperty<UiChartData> chartDataProperty() {
         return chartData;
+    }
+
+    public ReadOnlyObjectProperty<UiTorrentControlsState> torrentControlsStateProperty() {
+        return torrentControlsState;
     }
 }
