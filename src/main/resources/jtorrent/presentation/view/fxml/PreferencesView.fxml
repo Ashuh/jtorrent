@@ -5,8 +5,7 @@
 <?import javafx.scene.control.TreeView?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Pane?>
-<DialogPane xmlns:fx="http://javafx.com/fxml/1" fx:id="dialogPane" xmlns="http://javafx.com/javafx/17.0.2-ea"
-            fx:controller="jtorrent.presentation.view.PreferencesView">
+<fx:root xmlns:fx="http://javafx.com/fxml/1" type="DialogPane" xmlns="http://javafx.com/javafx/17.0.2-ea">
     <content>
         <HBox spacing="16.0">
             <TreeView fx:id="treeView"/>
@@ -17,4 +16,4 @@
     <ButtonType fx:constant="OK"/>
     <ButtonType fx:constant="APPLY"/>
     <ButtonType fx:constant="CANCEL"/>
-</DialogPane>
+</fx:root>

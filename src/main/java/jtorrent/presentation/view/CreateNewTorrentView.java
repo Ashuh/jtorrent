@@ -1,17 +1,20 @@
 package jtorrent.presentation.view;
 
 import java.io.File;
+import java.io.IOException;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.DialogPane;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.util.StringConverter;
 import jtorrent.presentation.model.UiNewTorrent;
+import jtorrent.presentation.view.fxml.JTorrentFxmlLoader;
 
-public class CreateNewTorrentView {
+public class CreateNewTorrentView extends DialogPane {
 
     @FXML
     private ComboBox<File> source;
@@ -21,6 +24,14 @@ public class CreateNewTorrentView {
     private Button addFile;
     @FXML
     private ChoiceBox<String> pieceSize;
+
+    public CreateNewTorrentView() {
+        try {
+            JTorrentFxmlLoader.loadView(this);
+        } catch (IOException e) {
+            throw new AssertionError(e);
+        }
+    }
 
     @FXML
     private void initialize() {

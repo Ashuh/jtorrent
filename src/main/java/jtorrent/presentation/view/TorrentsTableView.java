@@ -1,22 +1,28 @@
 package jtorrent.presentation.view;
 
-import java.net.URL;
-import java.util.ResourceBundle;
+import static jtorrent.domain.common.util.ValidationUtil.requireNonNull;
 
+import java.io.IOException;
+
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.transformation.SortedList;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
-import javafx.fxml.Initializable;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
+import javafx.scene.input.MouseEvent;
 import jtorrent.presentation.model.UiTorrent;
 import jtorrent.presentation.model.UiTorrentStatus;
+import jtorrent.presentation.view.fxml.JTorrentFxmlLoader;
 import jtorrent.presentation.viewmodel.ViewModel;
 
-public class TorrentsTableView implements Initializable {
+public class TorrentsTableView extends TableView<UiTorrent> {
 
-    @FXML
-    private TableView<UiTorrent> tableView;
+    private final ObjectProperty<ViewModel> viewModel = new SimpleObjectProperty<>();
     @FXML
     private TableColumn<UiTorrent, String> name;
     @FXML
@@ -32,40 +38,95 @@ public class TorrentsTableView implements Initializable {
     @FXML
     private TableColumn<UiTorrent, String> saveDirectory;
 
-    private ViewModel viewModel;
-
-    public void setViewModel(ViewModel viewModel) {
-        this.viewModel = viewModel;
-        SortedList<UiTorrent> sortedList = new SortedList<>(viewModel.getTorrents());
-        sortedList.comparatorProperty().bind(tableView.comparatorProperty());
-        tableView.setItems(sortedList);
-        tableView.getSelectionModel()
-                .selectedItemProperty()
-                .addListener((observable, oldValue, newValue) -> viewModel.setTorrentSelected(newValue));
+    public TorrentsTableView() {
+        try {
+            JTorrentFxmlLoader.loadView(this);
+        } catch (IOException e) {
+            throw new AssertionError(e);
+        }
     }
 
-    @Override
-    public void initialize(URL url, ResourceBundle resourceBundle) {
-        name.setCellValueFactory(cd -> cd.getValue().nameProperty());
-        size.setCellValueFactory(cd -> cd.getValue().sizeProperty());
+    public ObjectProperty<ViewModel> viewModelProperty() {
+        return viewModel;
+    }
+
+    @FXML
+    public void initialize() {
+        viewModel.addListener(new ViewModelChangeListener());
+
+        itemsProperty().bind(viewModel
+                .map(ViewModel::getTorrents)
+                .map(SortedList::new)
+                .map(sortedList -> {
+                    sortedList.comparatorProperty().bind(comparatorProperty());
+                    return sortedList;
+                })
+        );
+
+        name.setCellValueFactory(param -> param.getValue().nameProperty());
+        size.setCellValueFactory(param -> param.getValue().sizeProperty());
         status.setCellValueFactory(param -> param.getValue().statusProperty());
         status.setCellFactory(param -> new TorrentStatusCell());
-        downSpeed.setCellValueFactory(cd -> cd.getValue().downSpeedProperty());
-        upSpeed.setCellValueFactory(cd -> cd.getValue().upSpeedProperty());
-        eta.setCellValueFactory(cd -> cd.getValue().etaProperty());
-        saveDirectory.setCellValueFactory(cd -> cd.getValue().saveDirectoryProperty());
-        tableView.setRowFactory(param -> new TorrentTableRow());
+        downSpeed.setCellValueFactory(param -> param.getValue().downSpeedProperty());
+        upSpeed.setCellValueFactory(param -> param.getValue().upSpeedProperty());
+        eta.setCellValueFactory(param -> param.getValue().etaProperty());
+        saveDirectory.setCellValueFactory(param -> param.getValue().saveDirectoryProperty());
+        setRowFactory(param -> new TorrentTableRow());
     }
 
     private class TorrentTableRow extends TableRow<UiTorrent> {
 
         public TorrentTableRow() {
-            setOnMouseClicked(event -> {
+            onMouseClickedProperty().bind(viewModel.map(MouseEventHandler::new));
+        }
+
+        private class MouseEventHandler implements EventHandler<MouseEvent> {
+            private final ViewModel viewModel;
+
+            private MouseEventHandler(ViewModel viewModel) {
+                this.viewModel = requireNonNull(viewModel);
+            }
+
+            @Override
+            public void handle(MouseEvent event) {
                 if (event.getClickCount() == 2 && !isEmpty()) {
                     UiTorrent torrent = getItem();
                     viewModel.showTorrentInFileExplorer(torrent);
                 }
-            });
+            }
+        }
+    }
+
+    private class ViewModelChangeListener implements ChangeListener<ViewModel> {
+        private ChangeListener<UiTorrent> listener;
+
+        @Override
+        public void changed(ObservableValue<? extends ViewModel> observable, ViewModel oldValue,
+                ViewModel newValue) {
+            if (oldValue != null) {
+                getSelectionModel().selectedItemProperty().removeListener(listener);
+            }
+
+            if (newValue != null) {
+                listener = new TorrentChangeListener(newValue);
+                getSelectionModel().selectedItemProperty().addListener(listener);
+            } else {
+                listener = null;
+            }
+        }
+
+        private static class TorrentChangeListener implements ChangeListener<UiTorrent> {
+            private final ViewModel viewModel;
+
+            private TorrentChangeListener(ViewModel viewModel) {
+                this.viewModel = requireNonNull(viewModel);
+            }
+
+            @Override
+            public void changed(ObservableValue<? extends UiTorrent> observable, UiTorrent oldValue,
+                    UiTorrent newValue) {
+                viewModel.setTorrentSelected(newValue);
+            }
         }
     }
 }

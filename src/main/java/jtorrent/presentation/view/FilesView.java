@@ -1,21 +1,20 @@
 package jtorrent.presentation.view;
 
-import java.net.URL;
-import java.util.ResourceBundle;
+import java.io.IOException;
 
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
-import javafx.collections.ObservableList;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.fxml.FXML;
-import javafx.fxml.Initializable;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import jtorrent.presentation.model.UiFileInfo;
+import jtorrent.presentation.view.fxml.JTorrentFxmlLoader;
+import jtorrent.presentation.viewmodel.ViewModel;
 
-public class FilesView implements Initializable {
+public class FilesView extends TableView<UiFileInfo> {
 
-    @FXML
-    private TableView<UiFileInfo> tableView;
+    private final ObjectProperty<ViewModel> viewModel = new SimpleObjectProperty<>();
     @FXML
     private TableColumn<UiFileInfo, String> path;
     @FXML
@@ -47,31 +46,41 @@ public class FilesView implements Initializable {
     @FXML
     private TableColumn<UiFileInfo, String> codecs;
 
-    @Override
-    public void initialize(URL url, ResourceBundle resourceBundle) {
-        path.setCellValueFactory(cd -> cd.getValue().pathProperty());
-        size.setCellValueFactory(cd -> cd.getValue().sizeProperty());
-        done.setCellValueFactory(cd -> cd.getValue().doneProperty());
-        percentDone.setCellValueFactory(cd -> cd.getValue().percentDoneProperty());
-        firstPiece.setCellValueFactory(cd -> cd.getValue().firstPieceProperty().asObject());
-        numPieces.setCellValueFactory(cd -> cd.getValue().numPiecesProperty().asObject());
-        pieces.setCellValueFactory(cd -> Bindings.createObjectBinding(() ->
-                new DataStatusBarTableCell.State(
-                        cd.getValue().numPiecesProperty(),
-                        cd.getValue().downloadedPiecesProperty()
-                ), cd.getValue().downloadedPiecesProperty(), cd.getValue().numPiecesProperty()));
-        pieces.setCellFactory(column -> new DataStatusBarTableCell());
-        priority.setCellValueFactory(cd -> cd.getValue().priorityProperty());
-        mode.setCellValueFactory(cd -> cd.getValue().modeProperty());
-        rate.setCellValueFactory(cd -> cd.getValue().rateProperty());
-        resolution.setCellValueFactory(cd -> cd.getValue().resolutionProperty());
-        duration.setCellValueFactory(cd -> cd.getValue().durationProperty());
-        streamable.setCellValueFactory(cd -> cd.getValue().streamableProperty());
-        hasHeader.setCellValueFactory(cd -> cd.getValue().hasHeaderProperty());
-        codecs.setCellValueFactory(cd -> cd.getValue().codecsProperty());
+    public FilesView() {
+        try {
+            JTorrentFxmlLoader.loadView(this);
+        } catch (IOException e) {
+            throw new AssertionError(e);
+        }
     }
 
-    public ObjectProperty<ObservableList<UiFileInfo>> itemsProperty() {
-        return tableView.itemsProperty();
+    @FXML
+    public void initialize() {
+        itemsProperty().bind(viewModel.flatMap(ViewModel::getFileInfos));
+
+        path.setCellValueFactory(param -> param.getValue().pathProperty());
+        size.setCellValueFactory(param -> param.getValue().sizeProperty());
+        done.setCellValueFactory(param -> param.getValue().doneProperty());
+        percentDone.setCellValueFactory(param -> param.getValue().percentDoneProperty());
+        firstPiece.setCellValueFactory(param -> param.getValue().firstPieceProperty().asObject());
+        numPieces.setCellValueFactory(param -> param.getValue().numPiecesProperty().asObject());
+        pieces.setCellValueFactory(param -> Bindings.createObjectBinding(() ->
+                new DataStatusBarTableCell.State(
+                        param.getValue().numPiecesProperty(),
+                        param.getValue().downloadedPiecesProperty()
+                ), param.getValue().downloadedPiecesProperty(), param.getValue().numPiecesProperty()));
+        pieces.setCellFactory(column -> new DataStatusBarTableCell());
+        priority.setCellValueFactory(param -> param.getValue().priorityProperty());
+        mode.setCellValueFactory(param -> param.getValue().modeProperty());
+        rate.setCellValueFactory(param -> param.getValue().rateProperty());
+        resolution.setCellValueFactory(param -> param.getValue().resolutionProperty());
+        duration.setCellValueFactory(param -> param.getValue().durationProperty());
+        streamable.setCellValueFactory(param -> param.getValue().streamableProperty());
+        hasHeader.setCellValueFactory(param -> param.getValue().hasHeaderProperty());
+        codecs.setCellValueFactory(param -> param.getValue().codecsProperty());
+    }
+
+    public ObjectProperty<ViewModel> viewModelProperty() {
+        return viewModel;
     }
 }

@@ -1,7 +1,6 @@
 package jtorrent.presentation.view;
 
-import java.net.URL;
-import java.util.ResourceBundle;
+import java.io.IOException;
 import java.util.function.UnaryOperator;
 import java.util.regex.Pattern;
 
@@ -9,20 +8,18 @@ import javafx.application.Platform;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
-import javafx.fxml.Initializable;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.DialogPane;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextFormatter;
+import jtorrent.presentation.view.fxml.JTorrentFxmlLoader;
 
-public class PeerInputView implements Initializable {
+public class PeerInputView extends DialogPane {
 
     private static final int IP_OCTET_MAX_VALUE = 255;
     private static final int PORT_MAX_VALUE = 65535;
 
-    @FXML
-    private DialogPane dialogPane;
     @FXML
     private ChoiceBox<String> choiceBox;
     @FXML
@@ -36,12 +33,20 @@ public class PeerInputView implements Initializable {
     @FXML
     private TextField port;
 
+    public PeerInputView() {
+        try {
+            JTorrentFxmlLoader.loadView(this);
+        } catch (IOException e) {
+            throw new AssertionError(e);
+        }
+    }
+
     public String getSocketAddress() {
         return ip1.getText() + "." + ip2.getText() + "." + ip3.getText() + "." + ip4.getText() + ":" + port.getText();
     }
 
-    @Override
-    public void initialize(URL location, ResourceBundle resources) {
+    @FXML
+    public void initialize() {
         Platform.runLater(() -> ip1.requestFocus());
 
         ip1.setTextFormatter(new TextFormatter<>(new ChangeUnaryOperator(ip2, IP_OCTET_MAX_VALUE)));
@@ -59,7 +64,7 @@ public class PeerInputView implements Initializable {
                 .or(ip3.textProperty().isEmpty())
                 .or(ip4.textProperty().isEmpty())
                 .or(port.textProperty().isEmpty());
-        dialogPane.lookupButton(ButtonType.OK).disableProperty().bind(anyFieldEmpty);
+        lookupButton(ButtonType.OK).disableProperty().bind(anyFieldEmpty);
     }
 
     private record ChangeUnaryOperator(TextField next, int maxValue) implements UnaryOperator<TextFormatter.Change> {

@@ -2,8 +2,7 @@
 
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
-<TableView xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:id="tableView"
-           fx:controller="jtorrent.presentation.view.PeersTableView">
+<fx:root xmlns:fx="http://javafx.com/fxml/1" type="TableView" xmlns="http://javafx.com/javafx/17.0.2-ea">
     <columns>
         <TableColumn fx:id="ip" text="IP"/>
         <TableColumn fx:id="port" text="Port"/>
@@ -11,4 +10,4 @@
         <TableColumn fx:id="peerDownSpeed" text="Down Speed"/>
         <TableColumn fx:id="peerUpSpeed" text="Up Speed"/>
     </columns>
-</TableView>
+</fx:root>

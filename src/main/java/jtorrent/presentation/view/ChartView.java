@@ -2,31 +2,56 @@ package jtorrent.presentation.view;
 
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.fxml.FXML;
+import javafx.beans.value.ObservableValue;
+import javafx.geometry.Side;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import jtorrent.presentation.model.UiChartData;
+import jtorrent.presentation.viewmodel.ViewModel;
 
-public class ChartView {
+public class ChartView extends LineChart<Number, Number> {
 
-    @FXML
-    private LineChart<Number, Number> chart;
-    @FXML
-    private NumberAxis timeAxis;
-    @FXML
-    private NumberAxis rateAxis;
+    private final ObjectProperty<ViewModel> viewModel = new SimpleObjectProperty<>();
 
-    private final ObjectProperty<UiChartData> chartData = new SimpleObjectProperty<>();
-
-    @FXML
-    private void initialize() {
-        chart.dataProperty().bind(chartData.map(UiChartData::getChartData));
-        timeAxis.lowerBoundProperty().bind(chartData.flatMap(UiChartData::lowerBoundProperty));
-        timeAxis.upperBoundProperty().bind(chartData.flatMap(UiChartData::upperBoundProperty));
-        rateAxis.tickLabelFormatterProperty().bind(chartData.flatMap(UiChartData::rateAxisFormatterProperty));
+    public ChartView() {
+        super(buildTimeAxis(), buildRateAxis());
+        setCreateSymbols(false);
+        setAnimated(false);
+        ObservableValue<UiChartData> uiChartData = viewModel.flatMap(ViewModel::chartDataProperty);
+        dataProperty().bind(uiChartData.map(UiChartData::getChartData));
+        getTimeAxis().lowerBoundProperty().bind(uiChartData.flatMap(UiChartData::lowerBoundProperty));
+        getTimeAxis().upperBoundProperty().bind(uiChartData.flatMap(UiChartData::upperBoundProperty));
+        getRateAxis().tickLabelFormatterProperty().bind(uiChartData.flatMap(UiChartData::rateAxisFormatterProperty));
     }
 
-    public ObjectProperty<UiChartData> chartDataProperty() {
-        return chartData;
+    private static NumberAxis buildTimeAxis() {
+        NumberAxis timeAxis = new NumberAxis();
+        timeAxis.setAnimated(false);
+        timeAxis.setAutoRanging(false);
+        timeAxis.setMinorTickVisible(false);
+        timeAxis.setTickLabelsVisible(false);
+        timeAxis.setTickMarkVisible(false);
+        timeAxis.setSide(Side.BOTTOM);
+        return timeAxis;
+    }
+
+    private static NumberAxis buildRateAxis() {
+        NumberAxis rateAxis = new NumberAxis();
+        rateAxis.setAnimated(false);
+        rateAxis.setMinorTickVisible(false);
+        rateAxis.setSide(Side.LEFT);
+        return rateAxis;
+    }
+
+    private NumberAxis getTimeAxis() {
+        return (NumberAxis) getXAxis();
+    }
+
+    private NumberAxis getRateAxis() {
+        return (NumberAxis) getYAxis();
+    }
+
+    public ObjectProperty<ViewModel> viewModelProperty() {
+        return viewModel;
     }
 }

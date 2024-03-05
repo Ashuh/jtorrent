@@ -2,8 +2,7 @@
 
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
-<TableView fx:id="tableView" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1"
-           fx:controller="jtorrent.presentation.view.FilesView">
+<fx:root xmlns:fx="http://javafx.com/fxml/1" type="TableView" xmlns="http://javafx.com/javafx/17.0.2-ea">
     <columns>
         <TableColumn fx:id="path" text="Path"/>
         <TableColumn fx:id="size" text="Size"/>
@@ -21,4 +20,4 @@
         <TableColumn fx:id="hasHeader" text="Has Header"/>
         <TableColumn fx:id="codecs" text="Codecs"/>
     </columns>
-</TableView>
+</fx:root>

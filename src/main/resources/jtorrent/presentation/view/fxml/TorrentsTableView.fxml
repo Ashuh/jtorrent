@@ -2,8 +2,8 @@
 
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
-<TableView xmlns:fx="http://javafx.com/fxml/1" fx:id="tableView" maxHeight="1.7976931348623157E308"
-           xmlns="http://javafx.com/javafx/17.0.2-ea" fx:controller="jtorrent.presentation.view.TorrentsTableView">
+<fx:root xmlns:fx="http://javafx.com/fxml/1" type="TableView" maxHeight="1.7976931348623157E308"
+         xmlns="http://javafx.com/javafx/17.0.2-ea">
     <columns>
         <TableColumn fx:id="name" minWidth="0.0" prefWidth="200.0" text="Name"/>
         <TableColumn fx:id="size" minWidth="0.0" prefWidth="50.0" text="Size"/>
@@ -13,4 +13,4 @@
         <TableColumn fx:id="eta" minWidth="0.0" prefWidth="121.0" text="ETA"/>
         <TableColumn fx:id="saveDirectory" minWidth="0.0" prefWidth="121.0" text="Save Directory"/>
     </columns>
-</TableView>
+</fx:root>

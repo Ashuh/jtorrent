@@ -1,21 +1,22 @@
 package jtorrent.presentation.view;
 
-import java.net.URL;
+import java.io.IOException;
 import java.util.BitSet;
-import java.util.ResourceBundle;
 import java.util.function.Function;
 
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.fxml.FXML;
-import javafx.fxml.Initializable;
+import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import jtorrent.presentation.model.UiTorrentInfo;
+import jtorrent.presentation.view.fxml.JTorrentFxmlLoader;
+import jtorrent.presentation.viewmodel.ViewModel;
 
-public class TorrentInfoView implements Initializable {
+public class TorrentInfoView extends VBox {
 
-    private final ObjectProperty<UiTorrentInfo> torrentInfo = new SimpleObjectProperty<>();
+    private final ObjectProperty<ViewModel> viewModel = new SimpleObjectProperty<>();
 
     @FXML
     private DataStatusBar downloadedDataStatusBar;
@@ -68,8 +69,20 @@ public class TorrentInfoView implements Initializable {
     @FXML
     private Text comment;
 
-    @Override
-    public void initialize(URL url, ResourceBundle resourceBundle) {
+    public TorrentInfoView() {
+        try {
+            JTorrentFxmlLoader.loadView(this);
+        } catch (IOException e) {
+            throw new AssertionError(e);
+        }
+    }
+
+    public ObjectProperty<ViewModel> viewModelProperty() {
+        return viewModel;
+    }
+
+    @FXML
+    public void initialize() {
         bind(downloadedDataStatusBar.availabilityProperty(), UiTorrentInfo::downloadedPiecesProperty, new BitSet());
         bind(downloadedDataStatusBar.totalSegmentsProperty(), UiTorrentInfo::totalPiecesProperty, 0);
         bindText(downloadedPercentage, UiTorrentInfo::downloadedPercentageProperty, "");
@@ -107,14 +120,6 @@ public class TorrentInfoView implements Initializable {
     }
 
     private <T> void bind(Property<T> property, Function<UiTorrentInfo, Property<T>> mapper, T defaultValue) {
-        property.bind(torrentInfo.flatMap(mapper).orElse(defaultValue));
-    }
-
-    public UiTorrentInfo getTorrentInfo() {
-        return torrentInfo.get();
-    }
-
-    public ObjectProperty<UiTorrentInfo> torrentInfoProperty() {
-        return torrentInfo;
+        property.bind(viewModel.flatMap(ViewModel::getTorrentInfo).flatMap(mapper).orElse(defaultValue));
     }
 }

@@ -1,8 +1,7 @@
 package jtorrent.presentation.view;
 
-import java.net.URL;
+import java.io.IOException;
 import java.util.List;
-import java.util.ResourceBundle;
 
 import atlantafx.base.theme.CupertinoDark;
 import atlantafx.base.theme.CupertinoLight;
@@ -15,11 +14,12 @@ import atlantafx.base.theme.Theme;
 import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
-import javafx.fxml.Initializable;
 import javafx.scene.control.ChoiceBox;
+import javafx.scene.layout.GridPane;
 import javafx.util.StringConverter;
+import jtorrent.presentation.view.fxml.JTorrentFxmlLoader;
 
-public class AppearanceView implements Initializable {
+public class AppearanceView extends GridPane {
 
     private static final List<Theme> THEMES =
             List.of(new PrimerDark(), new PrimerLight(), new NordDark(), new NordLight(),
@@ -28,8 +28,16 @@ public class AppearanceView implements Initializable {
     @FXML
     private ChoiceBox<Theme> themeChoiceBox;
 
-    @Override
-    public void initialize(URL location, ResourceBundle resources) {
+    public AppearanceView() {
+        try {
+            JTorrentFxmlLoader.loadView(this);
+        } catch (IOException e) {
+            throw new AssertionError(e);
+        }
+    }
+
+    @FXML
+    public void initialize() {
         themeChoiceBox.setItems(FXCollections.observableArrayList(THEMES));
         themeChoiceBox.setConverter(new ThemeStringConverter());
         themeChoiceBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue)

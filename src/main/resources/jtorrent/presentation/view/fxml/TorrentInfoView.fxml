@@ -10,8 +10,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Text?>
 <?import jtorrent.presentation.view.DataStatusBar?>
-<VBox spacing="4.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="jtorrent.presentation.view.TorrentInfoView">
+<fx:root xmlns:fx="http://javafx.com/fxml/1" type="VBox" spacing="4.0" xmlns="http://javafx.com/javafx/17.0.2-ea">
     <padding>
         <Insets bottom="4.0" left="4.0" right="4.0" top="4.0"/>
     </padding>
@@ -124,4 +123,4 @@
             </GridPane>
         </VBox>
     </ScrollPane>
-</VBox>
+</fx:root>

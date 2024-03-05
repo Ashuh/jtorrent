@@ -4,8 +4,7 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ToolBar?>
 <?import javafx.scene.control.Tooltip?>
-<ToolBar xmlns:fx="http://javafx.com/fxml" xmlns="http://javafx.com/javafx"
-         fx:controller="jtorrent.presentation.view.TorrentControlsView">
+<fx:root xmlns:fx="http://javafx.com/fxml" type="ToolBar" xmlns="http://javafx.com/javafx">
     <Button fx:id="addButton" mnemonicParsing="false">
         <tooltip>
             <Tooltip text="Add Torrent" textAlignment="CENTER"/>
@@ -39,4 +38,4 @@
             <FontIcon iconLiteral="mdi2s-stop"/>
         </graphic>
     </Button>
-</ToolBar>
+</fx:root>

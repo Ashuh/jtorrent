@@ -15,9 +15,8 @@
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Text?>
-<DialogPane xmlns:fx="http://javafx.com/fxml/1" fx:id="dialogPane"
-            fx:controller="jtorrent.presentation.view.AddNewTorrentView"
-            expanded="true" xmlns="http://javafx.com/javafx/17.0.2-ea">
+<fx:root xmlns:fx="http://javafx.com/fxml/1" type="DialogPane" expanded="true"
+         xmlns="http://javafx.com/javafx/17.0.2-ea">
     <content>
         <GridPane hgap="12.0" vgap="12.0">
             <columnConstraints>
@@ -90,4 +89,4 @@
     </content>
     <ButtonType fx:constant="OK"/>
     <ButtonType fx:constant="CANCEL"/>
-</DialogPane>
+</fx:root>

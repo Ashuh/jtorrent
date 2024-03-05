@@ -8,8 +8,7 @@
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
-<DialogPane fx:id="dialogPane" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="jtorrent.presentation.view.PeerInputView">
+<fx:root xmlns:fx="http://javafx.com/fxml/1" type="DialogPane" xmlns="http://javafx.com/javafx/17.0.2-ea">
     <content>
         <VBox spacing="16.0">
             <InputGroup>
@@ -30,4 +29,4 @@
     </content>
     <ButtonType fx:constant="OK"/>
     <ButtonType fx:constant="CANCEL"/>
-</DialogPane>
+</fx:root>

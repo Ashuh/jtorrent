@@ -1,13 +1,11 @@
 package jtorrent.presentation.view;
 
 import java.io.File;
-import java.net.URL;
-import java.util.ResourceBundle;
+import java.io.IOException;
 
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.fxml.FXML;
-import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
 import javafx.scene.control.DialogPane;
 import javafx.scene.control.TextField;
@@ -16,12 +14,11 @@ import javafx.scene.control.TreeTableView;
 import javafx.scene.text.Text;
 import javafx.stage.DirectoryChooser;
 import jtorrent.presentation.model.UiTorrentContents;
+import jtorrent.presentation.view.fxml.JTorrentFxmlLoader;
 
-public class AddNewTorrentView implements Initializable {
+public class AddNewTorrentView extends DialogPane {
 
     private final ObjectProperty<UiTorrentContents> torrentContents = new SimpleObjectProperty<>();
-    @FXML
-    private DialogPane dialogPane;
     @FXML
     private TextField nameInput;
     @FXML
@@ -43,6 +40,14 @@ public class AddNewTorrentView implements Initializable {
     @FXML
     private TreeTableColumn<UiTorrentContents.FileInfo, String> fileSize;
 
+    public AddNewTorrentView() {
+        try {
+            JTorrentFxmlLoader.loadView(this);
+        } catch (IOException e) {
+            throw new AssertionError(e);
+        }
+    }
+
     public void setTorrentContents(UiTorrentContents torrentContents) {
         this.torrentContents.set(torrentContents);
     }
@@ -63,8 +68,8 @@ public class AddNewTorrentView implements Initializable {
         return nameInput.getText();
     }
 
-    @Override
-    public void initialize(URL url, ResourceBundle resourceBundle) {
+    @FXML
+    public void initialize() {
         torrentContents.addListener((observable, oldValue, newValue) -> {
             if (oldValue != null) {
                 nameInput.textProperty().unbindBidirectional(oldValue.nameProperty());
@@ -93,7 +98,7 @@ public class AddNewTorrentView implements Initializable {
             if (dir.exists()) {
                 directoryChooser.setInitialDirectory(dir);
             }
-            File selectedDir = directoryChooser.showDialog(dialogPane.getScene().getWindow());
+            File selectedDir = directoryChooser.showDialog(getScene().getWindow());
             if (selectedDir != null) {
                 saveDirectoryInput.setText(selectedDir.getAbsolutePath());
             }

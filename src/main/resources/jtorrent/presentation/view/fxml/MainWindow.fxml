@@ -11,8 +11,13 @@
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.VBox?>
-<BorderPane xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/17.0.2-ea"
-            fx:controller="jtorrent.presentation.view.MainWindow">
+<?import jtorrent.presentation.view.ChartView?>
+<?import jtorrent.presentation.view.FilesView?>
+<?import jtorrent.presentation.view.PeersTableView?>
+<?import jtorrent.presentation.view.TorrentControlsView?>
+<?import jtorrent.presentation.view.TorrentInfoView?>
+<?import jtorrent.presentation.view.TorrentsTableView?>
+<fx:root xmlns:fx="http://javafx.com/fxml/1" type="BorderPane" xmlns="http://javafx.com/javafx/17.0.2-ea">
     <top>
         <MenuBar fx:id="menuBar" BorderPane.alignment="CENTER">
             <Menu mnemonicParsing="false" text="File">
@@ -41,28 +46,28 @@
     <center>
         <SplitPane dividerPositions="0.5" orientation="VERTICAL" BorderPane.alignment="CENTER">
             <VBox>
-                <fx:include fx:id="torrentControlsView" source="TorrentControlsView.fxml"/>
-                <fx:include fx:id="torrentsTableView" source="TorrentsTableView.fxml"/>
+                <TorrentControlsView fx:id="torrentControlsView"/>
+                <TorrentsTableView fx:id="torrentsTableView"/>
             </VBox>
             <AnchorPane>
                 <children>
                     <TabPane fx:id="tabPane" tabClosingPolicy="UNAVAILABLE" AnchorPane.bottomAnchor="0.0"
                              AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                         <Tab closable="false" text="Files">
-                            <fx:include fx:id="filesView" source="FilesView.fxml"/>
+                            <FilesView fx:id="filesView"/>
                         </Tab>
                         <Tab closable="false" text="Info">
-                            <fx:include fx:id="torrentInfoView" source="TorrentInfoView.fxml"/>
+                            <TorrentInfoView fx:id="torrentInfoView"/>
                         </Tab>
                         <Tab fx:id="peersTab" closable="false" text="Peers">
-                            <fx:include fx:id="peersTableView" source="PeersTableView.fxml"/>
+                            <PeersTableView fx:id="peersTableView"/>
                         </Tab>
                         <Tab text="Charts">
-                            <fx:include fx:id="chartView" source="ChartView.fxml"/>
+                            <ChartView fx:id="chartView"/>
                         </Tab>
                     </TabPane>
                 </children>
             </AnchorPane>
         </SplitPane>
     </center>
-</BorderPane>
+</fx:root>
