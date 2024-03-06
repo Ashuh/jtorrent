@@ -20,7 +20,7 @@ public abstract class AddNewTorrentEventHandler<T, E extends Event> implements E
     }
 
     @Override
-    public void handle(E event) {
+    public final void handle(E event) {
         if (shouldHandle(event)) {
             handle();
         }
