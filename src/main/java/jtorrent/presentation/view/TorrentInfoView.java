@@ -2,10 +2,8 @@ package jtorrent.presentation.view;
 
 import java.io.IOException;
 import java.util.BitSet;
-import java.util.function.Function;
 
 import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.Property;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.fxml.FXML;
 import javafx.scene.layout.VBox;
@@ -83,43 +81,53 @@ public class TorrentInfoView extends VBox {
 
     @FXML
     public void initialize() {
-        bind(downloadedDataStatusBar.availabilityProperty(), UiTorrentInfo::downloadedPiecesProperty, new BitSet());
-        bind(downloadedDataStatusBar.totalSegmentsProperty(), UiTorrentInfo::totalPiecesProperty, 0);
-        bindText(downloadedPercentage, UiTorrentInfo::downloadedPercentageProperty, "");
+        var torrentInfo = viewModel.flatMap(ViewModel::getTorrentInfo);
 
-        bind(availableDataStatusBar.availabilityProperty(), UiTorrentInfo::availablePiecesProperty, new BitSet());
-        bind(availableDataStatusBar.totalSegmentsProperty(), UiTorrentInfo::totalPiecesProperty, 0);
-        bindText(availablePercentage, UiTorrentInfo::availablePercentageProperty, "");
+        downloadedDataStatusBar.availabilityProperty().bind(
+                torrentInfo
+                        .flatMap(UiTorrentInfo::downloadedPiecesProperty)
+                        .orElse(new BitSet())
+        );
+        downloadedDataStatusBar.totalSegmentsProperty().bind(
+                torrentInfo
+                        .flatMap(UiTorrentInfo::totalPiecesProperty)
+                        .orElse(0)
+        );
+        downloadedPercentage.textProperty().bind(torrentInfo.flatMap(UiTorrentInfo::downloadedPercentageProperty));
 
-        bindText(timeElapsed, UiTorrentInfo::timeElapsedProperty, "");
-        bindText(remaining, UiTorrentInfo::remainingProperty, "");
-        bindText(wasted, UiTorrentInfo::wastedProperty, "");
-        bindText(downloaded, UiTorrentInfo::downloadedProperty, "");
-        bindText(uploaded, UiTorrentInfo::uploadedProperty, "");
-        bindText(seeds, UiTorrentInfo::seedsProperty, "");
-        bindText(downloadSpeed, UiTorrentInfo::downloadSpeedProperty, "");
-        bindText(uploadSpeed, UiTorrentInfo::uploadSpeedProperty, "");
-        bindText(peers, UiTorrentInfo::peersProperty, "");
-        bindText(downLimit, UiTorrentInfo::downLimitProperty, "");
-        bindText(upLimit, UiTorrentInfo::upLimitProperty, "");
-        bindText(shareRatio, UiTorrentInfo::shareRatioProperty, "");
-        bindText(status, UiTorrentInfo::statusProperty, "");
+        availableDataStatusBar.availabilityProperty().bind(
+                torrentInfo
+                        .flatMap(UiTorrentInfo::availablePiecesProperty)
+                        .orElse(new BitSet())
+        );
+        availableDataStatusBar.totalSegmentsProperty().bind(
+                torrentInfo
+                        .flatMap(UiTorrentInfo::totalPiecesProperty)
+                        .orElse(0)
+        );
+        availablePercentage.textProperty().bind(torrentInfo.flatMap(UiTorrentInfo::availablePercentageProperty));
 
-        bindText(saveAs, UiTorrentInfo::saveAsProperty, "");
-        bindText(pieces, UiTorrentInfo::piecesProperty, "");
-        bindText(totalSize, UiTorrentInfo::totalSizeProperty, "");
-        bindText(createdBy, UiTorrentInfo::createdByProperty, "");
-        bindText(createdOn, UiTorrentInfo::createdOnProperty, "");
-        bindText(completedOn, UiTorrentInfo::completedOnProperty, "");
-        bindText(hash, UiTorrentInfo::hashProperty, "");
-        bindText(comment, UiTorrentInfo::commentProperty, "");
-    }
+        timeElapsed.textProperty().bind(torrentInfo.flatMap(UiTorrentInfo::timeElapsedProperty));
+        remaining.textProperty().bind(torrentInfo.flatMap(UiTorrentInfo::remainingProperty));
+        wasted.textProperty().bind(torrentInfo.flatMap(UiTorrentInfo::wastedProperty));
+        downloaded.textProperty().bind(torrentInfo.flatMap(UiTorrentInfo::downloadedProperty));
+        uploaded.textProperty().bind(torrentInfo.flatMap(UiTorrentInfo::uploadedProperty));
+        seeds.textProperty().bind(torrentInfo.flatMap(UiTorrentInfo::seedsProperty));
+        downloadSpeed.textProperty().bind(torrentInfo.flatMap(UiTorrentInfo::downloadSpeedProperty));
+        uploadSpeed.textProperty().bind(torrentInfo.flatMap(UiTorrentInfo::uploadSpeedProperty));
+        peers.textProperty().bind(torrentInfo.flatMap(UiTorrentInfo::peersProperty));
+        downLimit.textProperty().bind(torrentInfo.flatMap(UiTorrentInfo::downLimitProperty));
+        upLimit.textProperty().bind(torrentInfo.flatMap(UiTorrentInfo::upLimitProperty));
+        shareRatio.textProperty().bind(torrentInfo.flatMap(UiTorrentInfo::shareRatioProperty));
+        status.textProperty().bind(torrentInfo.flatMap(UiTorrentInfo::statusProperty));
 
-    private void bindText(Text text, Function<UiTorrentInfo, Property<String>> mapper, String defaultValue) {
-        bind(text.textProperty(), mapper, defaultValue);
-    }
-
-    private <T> void bind(Property<T> property, Function<UiTorrentInfo, Property<T>> mapper, T defaultValue) {
-        property.bind(viewModel.flatMap(ViewModel::getTorrentInfo).flatMap(mapper).orElse(defaultValue));
+        saveAs.textProperty().bind(torrentInfo.flatMap(UiTorrentInfo::saveAsProperty));
+        pieces.textProperty().bind(torrentInfo.flatMap(UiTorrentInfo::piecesProperty));
+        totalSize.textProperty().bind(torrentInfo.flatMap(UiTorrentInfo::totalSizeProperty));
+        createdBy.textProperty().bind(torrentInfo.flatMap(UiTorrentInfo::createdByProperty));
+        createdOn.textProperty().bind(torrentInfo.flatMap(UiTorrentInfo::createdOnProperty));
+        completedOn.textProperty().bind(torrentInfo.flatMap(UiTorrentInfo::completedOnProperty));
+        hash.textProperty().bind(torrentInfo.flatMap(UiTorrentInfo::hashProperty));
+        comment.textProperty().bind(torrentInfo.flatMap(UiTorrentInfo::commentProperty));
     }
 }
