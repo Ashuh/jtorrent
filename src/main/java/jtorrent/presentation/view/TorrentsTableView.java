@@ -89,7 +89,11 @@ public class TorrentsTableView extends TableView<UiTorrent> {
 
             @Override
             public void handle(MouseEvent event) {
-                if (event.getClickCount() == 2 && !isEmpty()) {
+                if (isEmpty()) {
+                    getSelectionModel().clearSelection();
+                    return;
+                }
+                if (event.getClickCount() == 2) {
                     UiTorrent torrent = getItem();
                     viewModel.showTorrentInFileExplorer(torrent);
                 }
