@@ -66,6 +66,7 @@ public class TorrentControlsView extends ToolBar {
         startButton.onMouseClickedProperty().bind(viewModel.map(StartButtonMouseEventHandler::new));
         stopButton.onMouseClickedProperty().bind(viewModel.map(StopButtonMouseEventHandler::new));
         addButton.onMouseClickedProperty().bind(viewModel.map(AddButtonMouseEventHandler::new));
+        addUrlButton.onMouseClickedProperty().bind(viewModel.map(AddUrlButtonEventHandler::new));
 
         createButton.setOnMouseClicked(mouseEvent -> {
             CreateNewTorrentDialog dialog = new CreateNewTorrentDialog();
@@ -106,6 +107,23 @@ public class TorrentControlsView extends ToolBar {
     private class AddButtonMouseEventHandler extends AddNewTorrentFileEventHandler<MouseEvent> {
 
         private AddButtonMouseEventHandler(ViewModel viewModel) {
+            super(viewModel);
+        }
+
+        @Override
+        protected Window getOwnerWindow() {
+            return getScene().getWindow();
+        }
+
+        @Override
+        protected boolean shouldHandle(MouseEvent event) {
+            return event.getButton() == MouseButton.PRIMARY;
+        }
+    }
+
+    private class AddUrlButtonEventHandler extends AddNewTorrentUrlEventHandler<MouseEvent> {
+
+        private AddUrlButtonEventHandler(ViewModel viewModel) {
             super(viewModel);
         }
 
