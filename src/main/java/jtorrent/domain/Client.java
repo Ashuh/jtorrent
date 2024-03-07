@@ -86,6 +86,10 @@ public class Client implements LocalServiceDiscoveryManager.Listener, TorrentHan
         torrentRepository.addTorrent(torrent);
     }
 
+    public void removeTorrent(Torrent torrent) {
+        torrentRepository.removeTorrent(torrent);
+    }
+
     public Torrent loadTorrent(File file) throws IOException {
         return torrentRepository.loadTorrent(file);
     }
@@ -107,7 +111,9 @@ public class Client implements LocalServiceDiscoveryManager.Listener, TorrentHan
     public void stopTorrent(Torrent torrent) {
         LOGGER.log(Level.INFO, "Stopping torrent " + torrent.getName());
         TorrentHandler torrentHandler = infoHashToTorrentHandler.remove(torrent.getInfoHash());
-        torrentHandler.stop();
+        if (torrentHandler != null) {
+            torrentHandler.stop();
+        }
         dhtManager.deregisterInfoHash(torrent.getInfoHash());
         // TODO: remove from local service discovery
     }

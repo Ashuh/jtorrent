@@ -97,11 +97,21 @@ public class ViewModel {
             selectedTorrentPeersSubscription = null;
         }
 
+        if (uiFileInfos.get() != null) {
+            uiFileInfos.get().forEach(UiFileInfo::dispose);
+        }
+
+        if (uiTorrentInfo.get() != null) {
+            uiTorrentInfo.get().dispose();
+        }
+
         uiPeers.forEach(UiPeer::dispose);
         uiPeers.clear();
 
         if (uiTorrent == null) {
             setSelectedTorrent(null);
+            uiFileInfos.set(null);
+            uiTorrentInfo.set(null);
             return;
         }
 
@@ -130,17 +140,9 @@ public class ViewModel {
         List<UiFileInfo> selectedUiFilesInfos = torrent.getFilesWithInfo().stream()
                 .map(UiFileInfo::fromDomain)
                 .toList();
-        Platform.runLater(() -> {
-            if (uiFileInfos.get() != null) {
-                uiFileInfos.get().forEach(UiFileInfo::dispose);
-            }
-            uiFileInfos.set(FXCollections.observableList(selectedUiFilesInfos));
-        });
+        Platform.runLater(() -> uiFileInfos.set(FXCollections.observableList(selectedUiFilesInfos)));
 
         UiTorrentInfo selectedUiTorrentInfo = UiTorrentInfo.fromDomain(torrent);
-        if (uiTorrentInfo.get() != null) {
-            uiTorrentInfo.get().dispose();
-        }
         Platform.runLater(() -> uiTorrentInfo.set(selectedUiTorrentInfo));
     }
 
@@ -201,6 +203,13 @@ public class ViewModel {
     public void addTorrent(UiTorrentContents uiTorrentContents) throws IOException {
         Torrent torrent = uiTorrentContents.getTorrent();
         client.addTorrent(torrent);
+    }
+
+    public void removeSelectedTorrent() {
+        if (!hasSelectedTorrent()) {
+            return;
+        }
+        client.removeTorrent(selectedTorrent);
     }
 
     public ObservableList<UiTorrent> getTorrents() {
