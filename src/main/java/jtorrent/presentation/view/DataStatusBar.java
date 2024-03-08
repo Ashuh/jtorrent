@@ -33,6 +33,7 @@ public class DataStatusBar extends Region {
 
     public DataStatusBar() {
         setPrefHeight(24);
+        imageView.visibleProperty().bind(totalSegments.greaterThan(0));
         widthProperty().addListener((observable, oldValue, newValue) -> redraw());
         totalSegments.addListener((observable, oldValue, newValue) -> redraw());
         availability.addListener((observable, oldValue, newValue) -> updateAvailability(oldValue, newValue));
@@ -83,7 +84,7 @@ public class DataStatusBar extends Region {
     }
 
     private void redraw() {
-        if (totalSegments.get() == 0) {
+        if (totalSegments.get() <= 0) {
             return;
         }
 
