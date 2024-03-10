@@ -39,6 +39,13 @@ public class BencodedTorrent extends BencodedObject {
     public static final String KEY_INFO = "info";
 
     private final String announce;
+    /**
+     * Optional field.
+     * List of tiers, each containing a list of tracker URLs.
+     * If this field is present, the announce field is ignored.
+     *
+     * @see <a href="https://www.bittorrent.org/beps/bep_0012.html">BEP 12 - Multitracker Metadata Extension</a>
+     */
     private final List<List<String>> announceList;
     private final Long creationDate;
     private final String comment;
