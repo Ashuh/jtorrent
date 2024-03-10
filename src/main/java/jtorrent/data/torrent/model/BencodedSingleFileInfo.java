@@ -1,6 +1,8 @@
 package jtorrent.data.torrent.model;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
@@ -28,6 +30,18 @@ public class BencodedSingleFileInfo extends BencodedInfo {
         long length = MapUtil.getValueAsLong(map, KEY_LENGTH).orElseThrow();
 
         return new BencodedSingleFileInfo(pieceLength, pieces, name, length);
+    }
+
+    public static BencodedSingleFileInfo fromPath(Path source, int pieceSize)
+            throws IOException {
+        if (Files.isDirectory(source)) {
+            throw new IllegalArgumentException("Source must be a file");
+        }
+
+        byte[] hashes = computeHashes(Files.newInputStream(source), pieceSize);
+        String fileName = source.getFileName().toString();
+        long length = Files.size(source);
+        return new BencodedSingleFileInfo(pieceSize, hashes, fileName, length);
     }
 
     @Override

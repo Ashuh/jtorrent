@@ -2,6 +2,7 @@ package jtorrent.data.torrent.model;
 
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -31,6 +32,21 @@ public class BencodedFile extends BencodedObject {
                 .map(buffer -> new String(buffer.array()))
                 .collect(Collectors.toList());
         return new BencodedFile(length, path);
+    }
+
+    public static BencodedFile fromPath(Path relativePath, long length) {
+        List<String> pathComponents = getPathComponents(relativePath);
+        return new BencodedFile(length, pathComponents);
+    }
+
+    private static List<String> getPathComponents(Path path) {
+        List<String> pathComponents = new LinkedList<>();
+        Path current = path;
+        while (current != null) {
+            pathComponents.add(0, current.getFileName().toString());
+            current = current.getParent();
+        }
+        return pathComponents;
     }
 
     public long getLength() {

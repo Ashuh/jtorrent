@@ -8,6 +8,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -80,6 +81,13 @@ public class FileTorrentRepository implements TorrentRepository {
     public void removeTorrent(Torrent torrent) {
         infoHashToTorrent.remove(torrent.getInfoHash());
         torrents.remove(torrent);
+    }
+
+    @Override
+    public void saveTorrent(BencodedTorrent bencodedTorrent, Path savePath) throws IOException {
+        try (var outputStream = Files.newOutputStream(savePath)) {
+            outputStream.write(bencodedTorrent.bencode());
+        }
     }
 
     @Override

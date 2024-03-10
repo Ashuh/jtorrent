@@ -1,10 +1,11 @@
 package jtorrent.presentation.view;
 
+import java.io.File;
+
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Dialog;
-import jtorrent.presentation.model.UiNewTorrent;
 
-public class CreateNewTorrentDialog extends Dialog<UiNewTorrent> {
+public class CreateNewTorrentDialog extends Dialog<CreateNewTorrentDialog.Result> {
 
     private final CreateNewTorrentView createNewTorrentView;
 
@@ -16,11 +17,18 @@ public class CreateNewTorrentDialog extends Dialog<UiNewTorrent> {
         setResizable(false);
     }
 
-    private UiNewTorrent convertResult(ButtonType buttonType) {
+    private Result convertResult(ButtonType buttonType) {
         if (buttonType == ButtonType.OK) {
-            return createNewTorrentView.getNewTorrent();
+            File source = createNewTorrentView.getSource();
+            String trackers = createNewTorrentView.getTrackers();
+            int pieceSize = createNewTorrentView.getPieceSize();
+            String comment = createNewTorrentView.getComment();
+            return new Result(source, trackers, pieceSize, comment);
         } else {
             return null;
         }
+    }
+
+    public record Result(File source, String trackers, int pieceSize, String comment) {
     }
 }

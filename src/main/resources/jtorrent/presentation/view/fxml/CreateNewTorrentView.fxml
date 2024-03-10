@@ -53,9 +53,9 @@
                         <RowConstraints vgrow="SOMETIMES"/>
                     </rowConstraints>
                     <Label text="Trackers:" GridPane.columnIndex="0"/>
-                    <TextArea prefColumnCount="1" prefRowCount="3" GridPane.columnIndex="1"/>
+                    <TextArea fx:id="trackers" prefColumnCount="1" prefRowCount="3" GridPane.columnIndex="1"/>
                     <Label text="Comment:" GridPane.rowIndex="1"/>
-                    <TextField GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+                    <TextField fx:id="comment" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
                     <Label text="Piece size:" GridPane.rowIndex="2"/>
                     <HBox alignment="TOP_RIGHT" GridPane.columnIndex="1" GridPane.rowIndex="2">
                         <ChoiceBox fx:id="pieceSize"/>

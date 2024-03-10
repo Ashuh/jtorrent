@@ -9,6 +9,7 @@ import java.lang.System.Logger.Level;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -210,6 +211,18 @@ public class ViewModel {
             return;
         }
         client.removeTorrent(selectedTorrent);
+    }
+
+    public void createNewTorrent(File savePath, File source, String trackerUrls, String comment, int pieceSize)
+            throws IOException {
+        List<List<String>> trackerTiers = new ArrayList<>();
+
+        for (String tier : trackerUrls.split("\n\n")) {
+            List<String> trackers = Arrays.asList(tier.split("\n"));
+            trackerTiers.add(trackers);
+        }
+
+        client.createNewTorrent(savePath.toPath(), source.toPath(), trackerTiers, comment, pieceSize);
     }
 
     public ObservableList<UiTorrent> getTorrents() {

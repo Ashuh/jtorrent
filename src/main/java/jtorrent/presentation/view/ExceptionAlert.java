@@ -19,7 +19,7 @@ public class ExceptionAlert extends Alert {
         setStacktrace(exception);
     }
 
-    public void setStacktrace(Exception exception) {
+    private void setStacktrace(Exception exception) {
         StringWriter stringWriter = new StringWriter();
         PrintWriter printWriter = new PrintWriter(stringWriter);
         exception.printStackTrace(printWriter);

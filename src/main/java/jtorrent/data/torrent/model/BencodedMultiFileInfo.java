@@ -1,13 +1,20 @@
 package jtorrent.data.torrent.model;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import jtorrent.data.torrent.model.util.MapUtil;
+import jtorrent.domain.common.util.ContinuousMergedInputStream;
 import jtorrent.domain.torrent.model.File;
 import jtorrent.domain.torrent.model.FileInfo;
 import jtorrent.domain.torrent.model.MultiFileInfo;
@@ -31,6 +38,29 @@ public class BencodedMultiFileInfo extends BencodedInfo {
                 .collect(Collectors.toList());
 
         return new BencodedMultiFileInfo(pieceLength, pieces, name, files);
+    }
+
+    public static BencodedMultiFileInfo fromPath(Path source, int pieceSize) throws IOException {
+        if (!Files.isDirectory(source)) {
+            throw new IllegalArgumentException("Source must be a directory");
+        }
+
+        List<Path> filePaths = new ArrayList<>();
+        try (Stream<Path> stream = Files.walk(source)) {
+            stream.filter(Files::isRegularFile).forEach(filePaths::add);
+        }
+
+        List<InputStream> inputStreams = new ArrayList<>();
+        List<BencodedFile> files = new ArrayList<>();
+        for (Path filePath : filePaths) {
+            long length = Files.size(filePath);
+            files.add(BencodedFile.fromPath(filePath, length));
+            inputStreams.add(Files.newInputStream(filePath));
+        }
+
+        byte[] hashes = computeHashes(new ContinuousMergedInputStream(inputStreams), pieceSize);
+        String dirName = source.getFileName().toString();
+        return new BencodedMultiFileInfo(pieceSize, hashes, dirName, files);
     }
 
     @Override

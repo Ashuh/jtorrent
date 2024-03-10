@@ -1,9 +1,10 @@
 package jtorrent.presentation.view;
 
 import static jtorrent.domain.common.util.ValidationUtil.requireNonNull;
+import static jtorrent.presentation.util.FileChooserUtil.createTorrentFileChooser;
 
+import java.io.File;
 import java.io.IOException;
-import java.util.Optional;
 
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -14,8 +15,8 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ToolBar;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
+import javafx.stage.FileChooser;
 import javafx.stage.Window;
-import jtorrent.presentation.model.UiNewTorrent;
 import jtorrent.presentation.model.UiTorrentControlsState;
 import jtorrent.presentation.view.fxml.JTorrentFxmlLoader;
 import jtorrent.presentation.viewmodel.ViewModel;
@@ -68,15 +69,7 @@ public class TorrentControlsView extends ToolBar {
         addButton.onMouseClickedProperty().bind(viewModel.map(AddButtonMouseEventHandler::new));
         addUrlButton.onMouseClickedProperty().bind(viewModel.map(AddUrlButtonEventHandler::new));
         deleteButton.onMouseClickedProperty().bind(viewModel.map(DeleteButtonMouseEventHandler::new));
-
-        createButton.setOnMouseClicked(mouseEvent -> {
-            CreateNewTorrentDialog dialog = new CreateNewTorrentDialog();
-            dialog.initOwner(createButton.getScene().getWindow());
-            Optional<UiNewTorrent> result = dialog.showAndWait();
-            if (result.isPresent()) {
-                // TODO: create new torrent
-            }
-        });
+        createButton.onMouseClickedProperty().bind(viewModel.map(CreateButtonEventHandler::new));
     }
 
     private static class StartButtonMouseEventHandler implements EventHandler<MouseEvent> {
@@ -103,6 +96,21 @@ public class TorrentControlsView extends ToolBar {
         public void handle(MouseEvent event) {
             viewModel.stopSelectedTorrent();
         }
+    }
+
+    private static class DeleteButtonMouseEventHandler implements EventHandler<MouseEvent> {
+
+        private final ViewModel viewModel;
+
+        private DeleteButtonMouseEventHandler(ViewModel viewModel) {
+            this.viewModel = requireNonNull(viewModel);
+        }
+
+        @Override
+        public void handle(MouseEvent event) {
+            viewModel.removeSelectedTorrent();
+        }
+
     }
 
     private class AddButtonMouseEventHandler extends AddNewTorrentFileEventHandler<MouseEvent> {
@@ -139,16 +147,35 @@ public class TorrentControlsView extends ToolBar {
         }
     }
 
-    private static class DeleteButtonMouseEventHandler implements EventHandler<MouseEvent> {
+    private class CreateButtonEventHandler implements EventHandler<MouseEvent> {
+
         private final ViewModel viewModel;
 
-        private DeleteButtonMouseEventHandler(ViewModel viewModel) {
+        private CreateButtonEventHandler(ViewModel viewModel) {
             this.viewModel = requireNonNull(viewModel);
         }
 
         @Override
         public void handle(MouseEvent event) {
-            viewModel.removeSelectedTorrent();
+            CreateNewTorrentDialog dialog = new CreateNewTorrentDialog();
+            dialog.initOwner(getScene().getWindow());
+            dialog.showAndWait().ifPresent(result -> {
+                try {
+                    FileChooser chooser = createTorrentFileChooser("Select where to save the .torrent");
+                    File saveFile = chooser.showSaveDialog(getScene().getWindow());
+                    createNewTorrent(result, saveFile);
+                } catch (IOException e) {
+                    new ExceptionAlert("Error", "Error creating torrent", e).showAndWait();
+                }
+            });
+        }
+
+        private void createNewTorrent(CreateNewTorrentDialog.Result result, File saveFile) throws IOException {
+            File source = result.source();
+            String trackers = result.trackers();
+            String comment = result.comment();
+            int pieceSize = result.pieceSize();
+            viewModel.createNewTorrent(saveFile, source, trackers, comment, pieceSize);
         }
     }
 }

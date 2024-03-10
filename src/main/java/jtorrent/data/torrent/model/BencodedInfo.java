@@ -1,6 +1,7 @@
 package jtorrent.data.torrent.model;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -41,6 +42,25 @@ public abstract class BencodedInfo extends BencodedObject {
             pieceHashes.add(new Sha1Hash(pieceHash));
         }
         return pieceHashes;
+    }
+
+    protected static byte[] computeHashes(InputStream inputStream, int pieceSize) throws IOException {
+        List<Sha1Hash> hashes = new ArrayList<>();
+        int bytesRead;
+        byte[] buffer = new byte[pieceSize];
+        while ((bytesRead = inputStream.read(buffer)) != -1) {
+            byte[] piece = Arrays.copyOf(buffer, bytesRead);
+            hashes.add(Sha1Hash.of(piece));
+        }
+        return concatHashes(hashes);
+    }
+
+    private static byte[] concatHashes(List<Sha1Hash> hashes) {
+        byte[] hashesConcat = new byte[hashes.size() * Sha1Hash.HASH_SIZE];
+        for (int i = 0; i < hashes.size(); i++) {
+            System.arraycopy(hashes.get(i).getBytes(), 0, hashesConcat, i * Sha1Hash.HASH_SIZE, Sha1Hash.HASH_SIZE);
+        }
+        return hashesConcat;
     }
 
     public int getPieceLength() {

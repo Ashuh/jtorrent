@@ -7,10 +7,13 @@ import java.lang.System.Logger.Level;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URL;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import jtorrent.data.torrent.model.BencodedTorrent;
 import jtorrent.domain.common.util.BackgroundTask;
 import jtorrent.domain.common.util.Sha1Hash;
 import jtorrent.domain.common.util.rx.RxObservableList;
@@ -169,6 +172,12 @@ public class Client implements LocalServiceDiscoveryManager.Listener, TorrentHan
         return torrentRepository.getTorrents().getCollection().stream()
                 .mapToDouble(Torrent::getUploadRate)
                 .sum();
+    }
+
+    public void createNewTorrent(Path savePath, Path source, List<List<String>> trackerUrls, String comment,
+            int pieceSize) throws IOException {
+        BencodedTorrent torrent = BencodedTorrent.createNew(source, trackerUrls, comment, "JTorrent", pieceSize);
+        torrentRepository.saveTorrent(torrent, savePath);
     }
 
     private class HandleInboundConnectionsTask extends BackgroundTask {
