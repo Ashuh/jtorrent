@@ -19,11 +19,11 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import jtorrent.presentation.model.UiPeer;
 import jtorrent.presentation.view.fxml.JTorrentFxmlLoader;
-import jtorrent.presentation.viewmodel.ViewModel;
+import jtorrent.presentation.viewmodel.PeersTableViewModel;
 
 public class PeersTableView extends TableView<UiPeer> {
 
-    private final ObjectProperty<ViewModel> viewModel = new SimpleObjectProperty<>();
+    private final ObjectProperty<PeersTableViewModel> viewModel = new SimpleObjectProperty<>();
     @FXML
     private TableColumn<UiPeer, String> ip;
     @FXML
@@ -43,7 +43,7 @@ public class PeersTableView extends TableView<UiPeer> {
         }
     }
 
-    public ObjectProperty<ViewModel> viewModelProperty() {
+    public ObjectProperty<PeersTableViewModel> viewModelProperty() {
         return viewModel;
     }
 
@@ -51,7 +51,7 @@ public class PeersTableView extends TableView<UiPeer> {
     public void initialize() {
         setContextMenu(new ContextMenu(new AddPeerMenuItem()));
         itemsProperty().bind(viewModel
-                .map(ViewModel::getPeers)
+                .map(PeersTableViewModel::getUiPeers)
                 .map(SortedList::new)
                 .map(sortedList -> {
                     sortedList.comparatorProperty().bind(comparatorProperty());
@@ -73,9 +73,9 @@ public class PeersTableView extends TableView<UiPeer> {
         }
 
         private class AddPeerEventHandler implements EventHandler<ActionEvent> {
-            private final ViewModel viewModel;
+            private final PeersTableViewModel viewModel;
 
-            private AddPeerEventHandler(ViewModel viewModel) {
+            private AddPeerEventHandler(PeersTableViewModel viewModel) {
                 this.viewModel = requireNonNull(viewModel);
             }
 

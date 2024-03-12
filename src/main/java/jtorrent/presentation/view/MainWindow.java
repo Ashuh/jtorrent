@@ -79,7 +79,7 @@ public class MainWindow extends BorderPane {
         torrentsTableView.viewModelProperty().bind(viewModel.map(ViewModel::getTorrentsTableViewModel));
         torrentInfoView.viewModelProperty().bind(viewModel);
         filesView.viewModelProperty().bind(viewModel);
-        peersTableView.viewModelProperty().bind(viewModel);
+        peersTableView.viewModelProperty().bind(viewModel.map(ViewModel::getPeersTableViewModel));
         chartView.viewModelProperty().bind(viewModel);
     }
 
