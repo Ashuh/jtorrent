@@ -76,7 +76,7 @@ public class MainWindow extends BorderPane {
         addTorrentFromUrl.onActionProperty().bind(viewModel.map(AddUrlButtonEventHandler::new));
 
         torrentControlsView.viewModelProperty().bind(viewModel);
-        torrentsTableView.viewModelProperty().bind(viewModel);
+        torrentsTableView.viewModelProperty().bind(viewModel.map(ViewModel::getTorrentsTableViewModel));
         torrentInfoView.viewModelProperty().bind(viewModel);
         filesView.viewModelProperty().bind(viewModel);
         peersTableView.viewModelProperty().bind(viewModel);

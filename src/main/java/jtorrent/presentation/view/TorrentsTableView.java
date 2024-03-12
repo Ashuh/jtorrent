@@ -18,11 +18,11 @@ import javafx.scene.input.MouseEvent;
 import jtorrent.presentation.model.UiTorrent;
 import jtorrent.presentation.model.UiTorrentStatus;
 import jtorrent.presentation.view.fxml.JTorrentFxmlLoader;
-import jtorrent.presentation.viewmodel.ViewModel;
+import jtorrent.presentation.viewmodel.TorrentsTableViewModel;
 
 public class TorrentsTableView extends TableView<UiTorrent> {
 
-    private final ObjectProperty<ViewModel> viewModel = new SimpleObjectProperty<>();
+    private final ObjectProperty<TorrentsTableViewModel> viewModel = new SimpleObjectProperty<>();
     @FXML
     private TableColumn<UiTorrent, String> name;
     @FXML
@@ -46,7 +46,7 @@ public class TorrentsTableView extends TableView<UiTorrent> {
         }
     }
 
-    public ObjectProperty<ViewModel> viewModelProperty() {
+    public ObjectProperty<TorrentsTableViewModel> viewModelProperty() {
         return viewModel;
     }
 
@@ -55,7 +55,7 @@ public class TorrentsTableView extends TableView<UiTorrent> {
         viewModel.addListener(new ViewModelChangeListener());
 
         itemsProperty().bind(viewModel
-                .map(ViewModel::getTorrents)
+                .map(TorrentsTableViewModel::getUiTorrents)
                 .map(SortedList::new)
                 .map(sortedList -> {
                     sortedList.comparatorProperty().bind(comparatorProperty());
@@ -81,9 +81,9 @@ public class TorrentsTableView extends TableView<UiTorrent> {
         }
 
         private class MouseEventHandler implements EventHandler<MouseEvent> {
-            private final ViewModel viewModel;
+            private final TorrentsTableViewModel viewModel;
 
-            private MouseEventHandler(ViewModel viewModel) {
+            private MouseEventHandler(TorrentsTableViewModel viewModel) {
                 this.viewModel = requireNonNull(viewModel);
             }
 
@@ -101,12 +101,12 @@ public class TorrentsTableView extends TableView<UiTorrent> {
         }
     }
 
-    private class ViewModelChangeListener implements ChangeListener<ViewModel> {
+    private class ViewModelChangeListener implements ChangeListener<TorrentsTableViewModel> {
         private ChangeListener<UiTorrent> listener;
 
         @Override
-        public void changed(ObservableValue<? extends ViewModel> observable, ViewModel oldValue,
-                ViewModel newValue) {
+        public void changed(ObservableValue<? extends TorrentsTableViewModel> observable,
+                TorrentsTableViewModel oldValue, TorrentsTableViewModel newValue) {
             if (oldValue != null) {
                 getSelectionModel().selectedItemProperty().removeListener(listener);
             }
@@ -120,9 +120,9 @@ public class TorrentsTableView extends TableView<UiTorrent> {
         }
 
         private static class TorrentChangeListener implements ChangeListener<UiTorrent> {
-            private final ViewModel viewModel;
+            private final TorrentsTableViewModel viewModel;
 
-            private TorrentChangeListener(ViewModel viewModel) {
+            private TorrentChangeListener(TorrentsTableViewModel viewModel) {
                 this.viewModel = requireNonNull(viewModel);
             }
 

@@ -4,8 +4,6 @@ import static jtorrent.domain.common.util.ValidationUtil.requireNonNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.System.Logger;
-import java.lang.System.Logger.Level;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -30,69 +28,40 @@ import jtorrent.domain.torrent.model.Torrent;
 import jtorrent.presentation.model.UiChartData;
 import jtorrent.presentation.model.UiFileInfo;
 import jtorrent.presentation.model.UiPeer;
-import jtorrent.presentation.model.UiTorrent;
 import jtorrent.presentation.model.UiTorrentContents;
 import jtorrent.presentation.model.UiTorrentControlsState;
 import jtorrent.presentation.model.UiTorrentInfo;
 
 public class ViewModel {
 
-    private static final Logger LOGGER = System.getLogger(ViewModel.class.getName());
-    private static final String EXPLORER_EXE = "explorer.exe";
-
     private final Client client;
-    private final ObservableList<UiTorrent> uiTorrents = FXCollections.observableList(new ArrayList<>());
     private final ObservableList<UiPeer> uiPeers = FXCollections.observableList(new ArrayList<>());
     private final ObjectProperty<UiChartData> chartData = new SimpleObjectProperty<>();
     private final ObjectProperty<ObservableList<UiFileInfo>> uiFileInfos = new SimpleObjectProperty<>();
     private final ObjectProperty<UiTorrentInfo> uiTorrentInfo = new SimpleObjectProperty<>(null);
-    private final ObjectProperty<UiTorrent> selectedUiTorrent = new SimpleObjectProperty<>();
     private final ObjectProperty<UiTorrentControlsState> torrentControlsState = new SimpleObjectProperty<>();
-    private final Map<UiTorrent, Torrent> uiTorrentToTorrent = new HashMap<>();
     private final Map<Peer, UiPeer> peerToUiPeer = new HashMap<>();
-    private Torrent selectedTorrent;
     private final BehaviorSubject<Optional<Torrent>> selectedTorrentSubject = BehaviorSubject
             .createDefault(Optional.empty());
     private Disposable selectedTorrentPeersSubscription;
+    private final TorrentsTableViewModel torrentsTableViewModel;
 
     public ViewModel(Client client) {
         this.client = requireNonNull(client);
-
-        client.getTorrents().subscribe(event -> {
-            Optional<Integer> indexOptional = event.getIndex();
-            switch (event.getType()) {
-            case ADD:
-                UiTorrent uiTorrent = UiTorrent.fromDomain(event.getItem());
-                uiTorrentToTorrent.put(uiTorrent, event.getItem());
-                assert indexOptional.isPresent();
-                uiTorrents.add(indexOptional.get(), uiTorrent);
-                break;
-            case REMOVE:
-                assert indexOptional.isPresent();
-                UiTorrent removed = uiTorrents.remove(indexOptional.get().intValue());
-                removed.dispose();
-                uiTorrentToTorrent.remove(removed);
-                break;
-            case CLEAR:
-                uiTorrents.clear();
-                break;
-            default:
-                throw new AssertionError("Unknown event type: " + event.getType());
-            }
-        });
-
         torrentControlsState.set(UiTorrentControlsState.build(selectedTorrentSubject));
         chartData.set(UiChartData.build(client));
+        torrentsTableViewModel = new TorrentsTableViewModel(client, this::onTorrentSelected);
+    }
+
+    public TorrentsTableViewModel getTorrentsTableViewModel() {
+        return torrentsTableViewModel;
     }
 
     private void setSelectedTorrent(Torrent selectedTorrent) {
-        this.selectedTorrent = selectedTorrent;
         selectedTorrentSubject.onNext(Optional.ofNullable(selectedTorrent));
     }
 
-    public void setTorrentSelected(UiTorrent uiTorrent) {
-        selectedUiTorrent.set(uiTorrent);
-
+    private void onTorrentSelected(Torrent torrent) {
         if (selectedTorrentPeersSubscription != null) {
             selectedTorrentPeersSubscription.dispose();
             selectedTorrentPeersSubscription = null;
@@ -109,14 +78,13 @@ public class ViewModel {
         uiPeers.forEach(UiPeer::dispose);
         uiPeers.clear();
 
-        if (uiTorrent == null) {
+        if (torrent == null) {
             setSelectedTorrent(null);
             uiFileInfos.set(null);
             uiTorrentInfo.set(null);
             return;
         }
 
-        Torrent torrent = uiTorrentToTorrent.get(uiTorrent);
         setSelectedTorrent(torrent);
 
         selectedTorrentPeersSubscription = torrent.getPeersObservable().subscribe(event -> {
@@ -147,47 +115,24 @@ public class ViewModel {
         Platform.runLater(() -> uiTorrentInfo.set(selectedUiTorrentInfo));
     }
 
-    public ReadOnlyObjectProperty<UiTorrent> selectedTorrentProperty() {
-        return selectedUiTorrent;
-    }
-
     public boolean hasSelectedTorrent() {
-        return selectedTorrent != null;
+        return torrentsTableViewModel.hasSelectedTorrent();
     }
 
     public void addPeerForSelectedTorrent(String ipPort) throws UnknownHostException {
-        if (!hasSelectedTorrent()) {
-            return;
+        Optional<Torrent> selectedTorrent = torrentsTableViewModel.getSelectedTorrent();
+        if (selectedTorrent.isPresent()) {
+            PeerContactInfo peerContactInfo = PeerContactInfo.fromString(ipPort);
+            client.addPeer(selectedTorrent.get(), peerContactInfo);
         }
-
-        PeerContactInfo peerContactInfo = PeerContactInfo.fromString(ipPort);
-        client.addPeer(selectedTorrent, peerContactInfo);
     }
 
     public void startSelectedTorrent() {
-        if (!hasSelectedTorrent()) {
-            return;
-        }
-        client.startTorrent(selectedTorrent);
+        torrentsTableViewModel.getSelectedTorrent().ifPresent(client::startTorrent);
     }
 
     public void stopSelectedTorrent() {
-        if (!hasSelectedTorrent()) {
-            return;
-        }
-        client.stopTorrent(selectedTorrent);
-    }
-
-    public void showTorrentInFileExplorer(UiTorrent uiTorrent) {
-        Torrent torrent = uiTorrentToTorrent.get(uiTorrent);
-
-        // only works on windows. Doing this because Desktop::browseFileDirectory doesn't work on Windows 10
-        final String command = EXPLORER_EXE + " /SELECT,\"" + torrent.getSaveAsPath().toAbsolutePath() + "\"";
-        try {
-            Runtime.getRuntime().exec(command);
-        } catch (IOException e) {
-            LOGGER.log(Level.ERROR, "Failed to open file explorer", e);
-        }
+        torrentsTableViewModel.getSelectedTorrent().ifPresent(client::stopTorrent);
     }
 
     public UiTorrentContents loadTorrentContents(File file) throws IOException {
@@ -207,10 +152,7 @@ public class ViewModel {
     }
 
     public void removeSelectedTorrent() {
-        if (!hasSelectedTorrent()) {
-            return;
-        }
-        client.removeTorrent(selectedTorrent);
+        torrentsTableViewModel.getSelectedTorrent().ifPresent(client::removeTorrent);
     }
 
     public void createNewTorrent(File savePath, File source, String trackerUrls, String comment, int pieceSize)
@@ -223,10 +165,6 @@ public class ViewModel {
         }
 
         client.createNewTorrent(savePath.toPath(), source.toPath(), trackerTiers, comment, pieceSize);
-    }
-
-    public ObservableList<UiTorrent> getTorrents() {
-        return FXCollections.unmodifiableObservableList(uiTorrents);
     }
 
     public ObservableList<UiPeer> getPeers() {
