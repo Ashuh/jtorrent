@@ -5,12 +5,8 @@ import static jtorrent.domain.common.util.ValidationUtil.requireNonNull;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 
-import io.reactivex.rxjava3.subjects.BehaviorSubject;
 import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
@@ -22,7 +18,6 @@ import jtorrent.domain.torrent.model.Torrent;
 import jtorrent.presentation.model.UiChartData;
 import jtorrent.presentation.model.UiFileInfo;
 import jtorrent.presentation.model.UiTorrentContents;
-import jtorrent.presentation.model.UiTorrentControlsState;
 import jtorrent.presentation.model.UiTorrentInfo;
 
 public class ViewModel {
@@ -31,18 +26,20 @@ public class ViewModel {
     private final ObjectProperty<UiChartData> chartData = new SimpleObjectProperty<>();
     private final ObjectProperty<ObservableList<UiFileInfo>> uiFileInfos = new SimpleObjectProperty<>();
     private final ObjectProperty<UiTorrentInfo> uiTorrentInfo = new SimpleObjectProperty<>(null);
-    private final ObjectProperty<UiTorrentControlsState> torrentControlsState = new SimpleObjectProperty<>();
-    private final BehaviorSubject<Optional<Torrent>> selectedTorrentSubject = BehaviorSubject
-            .createDefault(Optional.empty());
+    private final TorrentControlsViewModel torrentControlsViewModel;
     private final TorrentsTableViewModel torrentsTableViewModel;
     private final PeersTableViewModel peersTableViewModel;
 
     public ViewModel(Client client) {
         this.client = requireNonNull(client);
-        torrentControlsState.set(UiTorrentControlsState.build(selectedTorrentSubject));
         chartData.set(UiChartData.build(client));
+        torrentControlsViewModel = new TorrentControlsViewModel(client);
         torrentsTableViewModel = new TorrentsTableViewModel(client, this::onTorrentSelected);
         peersTableViewModel = new PeersTableViewModel(client);
+    }
+
+    public TorrentControlsViewModel getTorrentControlsViewModel() {
+        return torrentControlsViewModel;
     }
 
     public TorrentsTableViewModel getTorrentsTableViewModel() {
@@ -53,11 +50,8 @@ public class ViewModel {
         return peersTableViewModel;
     }
 
-    private void setSelectedTorrent(Torrent selectedTorrent) {
-        selectedTorrentSubject.onNext(Optional.ofNullable(selectedTorrent));
-    }
-
     private void onTorrentSelected(Torrent torrent) {
+        torrentControlsViewModel.setSelectedTorrent(torrent);
         peersTableViewModel.setSelectedTorrent(torrent);
 
         if (uiFileInfos.get() != null) {
@@ -69,13 +63,10 @@ public class ViewModel {
         }
 
         if (torrent == null) {
-            setSelectedTorrent(null);
             uiFileInfos.set(null);
             uiTorrentInfo.set(null);
             return;
         }
-
-        setSelectedTorrent(torrent);
 
         List<UiFileInfo> selectedUiFilesInfos = torrent.getFilesWithInfo().stream()
                 .map(UiFileInfo::fromDomain)
@@ -84,14 +75,6 @@ public class ViewModel {
 
         UiTorrentInfo selectedUiTorrentInfo = UiTorrentInfo.fromDomain(torrent);
         Platform.runLater(() -> uiTorrentInfo.set(selectedUiTorrentInfo));
-    }
-
-    public void startSelectedTorrent() {
-        getSelectedTorrent().ifPresent(client::startTorrent);
-    }
-
-    public void stopSelectedTorrent() {
-        getSelectedTorrent().ifPresent(client::stopTorrent);
     }
 
     public UiTorrentContents loadTorrentContents(File file) throws IOException {
@@ -105,29 +88,9 @@ public class ViewModel {
         return UiTorrentContents.forTorrent(torrent);
     }
 
-    public void addTorrent(UiTorrentContents uiTorrentContents) throws IOException {
+    public void addTorrent(UiTorrentContents uiTorrentContents) {
         Torrent torrent = uiTorrentContents.getTorrent();
         client.addTorrent(torrent);
-    }
-
-    public void removeSelectedTorrent() {
-        getSelectedTorrent().ifPresent(client::removeTorrent);
-    }
-
-    public Optional<Torrent> getSelectedTorrent() {
-        return torrentsTableViewModel.getSelectedTorrent();
-    }
-
-    public void createNewTorrent(File savePath, File source, String trackerUrls, String comment, int pieceSize)
-            throws IOException {
-        List<List<String>> trackerTiers = new ArrayList<>();
-
-        for (String tier : trackerUrls.split("\n\n")) {
-            List<String> trackers = Arrays.asList(tier.split("\n"));
-            trackerTiers.add(trackers);
-        }
-
-        client.createNewTorrent(savePath.toPath(), source.toPath(), trackerTiers, comment, pieceSize);
     }
 
     public ObjectProperty<ObservableList<UiFileInfo>> getFileInfos() {
@@ -140,9 +103,5 @@ public class ViewModel {
 
     public ReadOnlyObjectProperty<UiChartData> chartDataProperty() {
         return chartData;
-    }
-
-    public ReadOnlyObjectProperty<UiTorrentControlsState> torrentControlsStateProperty() {
-        return torrentControlsState;
     }
 }

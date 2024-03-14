@@ -12,7 +12,11 @@ public class BindingUtils {
 
     public static <T> void subscribe(Observable<T> observable, Property<? super T> property,
             CompositeDisposable disposables) {
-        Disposable disposable = observable.subscribe(new UpdatePropertyConsumer<>(property));
+        Disposable disposable = subscribe(observable, property);
         disposables.add(disposable);
+    }
+
+    public static <T> Disposable subscribe(Observable<T> observable, Property<? super T> property) {
+        return observable.subscribe(new UpdatePropertyConsumer<>(property));
     }
 }

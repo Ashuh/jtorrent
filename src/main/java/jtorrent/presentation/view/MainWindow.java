@@ -1,5 +1,8 @@
 package jtorrent.presentation.view;
 
+import static jtorrent.domain.common.util.ValidationUtil.requireNonNull;
+
+import java.io.File;
 import java.io.IOException;
 
 import javafx.application.Platform;
@@ -14,6 +17,7 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Window;
+import jtorrent.presentation.model.UiTorrentContents;
 import jtorrent.presentation.view.fxml.JTorrentFxmlLoader;
 import jtorrent.presentation.viewmodel.ViewModel;
 
@@ -75,7 +79,7 @@ public class MainWindow extends BorderPane {
         addTorrentFromFile.onActionProperty().bind(viewModel.map(AddFileButtonEventHandler::new));
         addTorrentFromUrl.onActionProperty().bind(viewModel.map(AddUrlButtonEventHandler::new));
 
-        torrentControlsView.viewModelProperty().bind(viewModel);
+        torrentControlsView.viewModelProperty().bind(viewModel.map(ViewModel::getTorrentControlsViewModel));
         torrentsTableView.viewModelProperty().bind(viewModel.map(ViewModel::getTorrentsTableViewModel));
         torrentInfoView.viewModelProperty().bind(viewModel);
         filesView.viewModelProperty().bind(viewModel);
@@ -85,8 +89,10 @@ public class MainWindow extends BorderPane {
 
     private class AddFileButtonEventHandler extends AddNewTorrentFileEventHandler<ActionEvent> {
 
+        private final ViewModel viewModel;
+
         private AddFileButtonEventHandler(ViewModel viewModel) {
-            super(viewModel);
+            this.viewModel = requireNonNull(viewModel);
         }
 
         @Override
@@ -95,15 +101,27 @@ public class MainWindow extends BorderPane {
         }
 
         @Override
+        protected void addTorrent(UiTorrentContents torrentContents) {
+            viewModel.addTorrent(torrentContents);
+        }
+
+        @Override
         protected boolean shouldHandle(ActionEvent event) {
             return true;
+        }
+
+        @Override
+        protected UiTorrentContents getTorrentContents(File file) throws IOException {
+            return viewModel.loadTorrentContents(file);
         }
     }
 
     private class AddUrlButtonEventHandler extends AddNewTorrentUrlEventHandler<ActionEvent> {
 
+        private final ViewModel viewModel;
+
         private AddUrlButtonEventHandler(ViewModel viewModel) {
-            super(viewModel);
+            this.viewModel = requireNonNull(viewModel);
         }
 
         @Override
@@ -112,8 +130,18 @@ public class MainWindow extends BorderPane {
         }
 
         @Override
+        protected void addTorrent(UiTorrentContents torrentContents) {
+            viewModel.addTorrent(torrentContents);
+        }
+
+        @Override
         protected boolean shouldHandle(ActionEvent event) {
             return true;
+        }
+
+        @Override
+        protected UiTorrentContents getTorrentContents(String string) throws IOException {
+            return viewModel.loadTorrentContents(string);
         }
     }
 }

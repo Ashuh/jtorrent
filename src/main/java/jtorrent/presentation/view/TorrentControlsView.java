@@ -17,13 +17,15 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.FileChooser;
 import javafx.stage.Window;
-import jtorrent.presentation.model.UiTorrentControlsState;
+import jtorrent.domain.torrent.model.Torrent;
+import jtorrent.presentation.model.UiTorrentContents;
 import jtorrent.presentation.view.fxml.JTorrentFxmlLoader;
-import jtorrent.presentation.viewmodel.ViewModel;
+import jtorrent.presentation.viewmodel.TorrentControlsViewModel;
 
 public class TorrentControlsView extends ToolBar {
 
-    private final ObjectProperty<ViewModel> viewModel = new SimpleObjectProperty<>();
+    private final ObjectProperty<TorrentControlsViewModel> viewModel = new SimpleObjectProperty<>();
+
     @FXML
     private Button addButton;
     @FXML
@@ -45,23 +47,24 @@ public class TorrentControlsView extends ToolBar {
         }
     }
 
-    public ObjectProperty<ViewModel> viewModelProperty() {
+    public ObjectProperty<TorrentControlsViewModel> viewModelProperty() {
         return viewModel;
     }
 
     @FXML
     private void initialize() {
-        ObservableValue<UiTorrentControlsState> torrentControlsState = viewModel
-                .flatMap(ViewModel::torrentControlsStateProperty);
-
-        ObservableValue<Boolean> startButtonDisabledObservable = torrentControlsState
-                .flatMap(UiTorrentControlsState::startDisabledProperty)
-                .orElse(true);
+        ObservableValue<Boolean> startButtonDisabledObservable = viewModel
+                .flatMap(TorrentControlsViewModel::selectedTorrentStateProperty)
+                .map(optionalState -> optionalState.map(state -> state != Torrent.State.STOPPED)
+                        .orElse(true)
+                );
         startButton.disableProperty().bind(startButtonDisabledObservable);
 
-        ObservableValue<Boolean> stopButtonDisabledObservable = torrentControlsState
-                .flatMap(UiTorrentControlsState::stopDisabledProperty)
-                .orElse(true);
+        ObservableValue<Boolean> stopButtonDisabledObservable = viewModel
+                .flatMap(TorrentControlsViewModel::selectedTorrentStateProperty)
+                .map(optionalState -> optionalState.map(state -> state == Torrent.State.STOPPED)
+                        .orElse(true)
+                );
         stopButton.disableProperty().bind(stopButtonDisabledObservable);
 
         startButton.onMouseClickedProperty().bind(viewModel.map(StartButtonMouseEventHandler::new));
@@ -73,55 +76,69 @@ public class TorrentControlsView extends ToolBar {
     }
 
     private static class StartButtonMouseEventHandler implements EventHandler<MouseEvent> {
-        private final ViewModel viewModel;
 
-        private StartButtonMouseEventHandler(ViewModel viewModel) {
-            this.viewModel = requireNonNull(viewModel);
+        private final TorrentControlsViewModel vm;
+
+        private StartButtonMouseEventHandler(TorrentControlsViewModel vm) {
+            this.vm = requireNonNull(vm);
         }
 
         @Override
         public void handle(MouseEvent event) {
-            viewModel.startSelectedTorrent();
+            vm.startSelectedTorrent();
         }
     }
 
     private static class StopButtonMouseEventHandler implements EventHandler<MouseEvent> {
-        private final ViewModel viewModel;
 
-        private StopButtonMouseEventHandler(ViewModel viewModel) {
-            this.viewModel = requireNonNull(viewModel);
+        private final TorrentControlsViewModel vm;
+
+        private StopButtonMouseEventHandler(TorrentControlsViewModel vm) {
+            this.vm = requireNonNull(vm);
         }
 
         @Override
         public void handle(MouseEvent event) {
-            viewModel.stopSelectedTorrent();
+            vm.stopSelectedTorrent();
         }
     }
 
     private static class DeleteButtonMouseEventHandler implements EventHandler<MouseEvent> {
 
-        private final ViewModel viewModel;
+        private final TorrentControlsViewModel vm;
 
-        private DeleteButtonMouseEventHandler(ViewModel viewModel) {
-            this.viewModel = requireNonNull(viewModel);
+        private DeleteButtonMouseEventHandler(TorrentControlsViewModel vm) {
+            this.vm = requireNonNull(vm);
         }
 
         @Override
         public void handle(MouseEvent event) {
-            viewModel.removeSelectedTorrent();
+            vm.removeSelectedTorrent();
         }
 
     }
 
     private class AddButtonMouseEventHandler extends AddNewTorrentFileEventHandler<MouseEvent> {
 
-        private AddButtonMouseEventHandler(ViewModel viewModel) {
-            super(viewModel);
+        private final TorrentControlsViewModel vm;
+
+        private AddButtonMouseEventHandler(TorrentControlsViewModel vm) {
+            this.vm = requireNonNull(vm);
+        }
+
+        @Override
+        protected UiTorrentContents getTorrentContents(File userInput) throws IOException {
+            return vm.loadTorrentContents(userInput);
         }
 
         @Override
         protected Window getOwnerWindow() {
             return getScene().getWindow();
+        }
+
+        @Override
+        protected void addTorrent(UiTorrentContents torrentContents) {
+            vm.addTorrent(torrentContents);
         }
 
         @Override
@@ -132,13 +149,25 @@ public class TorrentControlsView extends ToolBar {
 
     private class AddUrlButtonEventHandler extends AddNewTorrentUrlEventHandler<MouseEvent> {
 
-        private AddUrlButtonEventHandler(ViewModel viewModel) {
-            super(viewModel);
+        private final TorrentControlsViewModel vm;
+
+        private AddUrlButtonEventHandler(TorrentControlsViewModel vm) {
+            this.vm = requireNonNull(vm);
+        }
+
+        @Override
+        protected UiTorrentContents getTorrentContents(String userInput) throws IOException {
+            return vm.loadTorrentContents(userInput);
         }
 
         @Override
         protected Window getOwnerWindow() {
             return getScene().getWindow();
+        }
+
+        @Override
+        protected void addTorrent(UiTorrentContents torrentContents) {
+            vm.addTorrent(torrentContents);
         }
 
         @Override
@@ -149,10 +178,10 @@ public class TorrentControlsView extends ToolBar {
 
     private class CreateButtonEventHandler implements EventHandler<MouseEvent> {
 
-        private final ViewModel viewModel;
+        private final TorrentControlsViewModel vm;
 
-        private CreateButtonEventHandler(ViewModel viewModel) {
-            this.viewModel = requireNonNull(viewModel);
+        private CreateButtonEventHandler(TorrentControlsViewModel vm) {
+            this.vm = requireNonNull(vm);
         }
 
         @Override
@@ -175,7 +204,7 @@ public class TorrentControlsView extends ToolBar {
             String trackers = result.trackers();
             String comment = result.comment();
             int pieceSize = result.pieceSize();
-            viewModel.createNewTorrent(saveFile, source, trackers, comment, pieceSize);
+            vm.createNewTorrent(saveFile, source, trackers, comment, pieceSize);
         }
     }
 }
