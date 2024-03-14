@@ -11,4 +11,5 @@ module jtorrent {
 
     opens jtorrent.presentation.view to javafx.fxml;
     opens jtorrent.presentation to javafx.graphics;
+    opens jtorrent.presentation.component to javafx.fxml;
 }

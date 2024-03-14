@@ -8,6 +8,7 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.fxml.FXML;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
+import jtorrent.presentation.component.DataStatusBar;
 import jtorrent.presentation.model.UiTorrentInfo;
 import jtorrent.presentation.view.fxml.JTorrentFxmlLoader;
 import jtorrent.presentation.viewmodel.ViewModel;

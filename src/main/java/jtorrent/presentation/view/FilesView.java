@@ -8,6 +8,7 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.fxml.FXML;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import jtorrent.presentation.component.DataStatusBarTableCell;
 import jtorrent.presentation.model.UiFileInfo;
 import jtorrent.presentation.view.fxml.JTorrentFxmlLoader;
 import jtorrent.presentation.viewmodel.ViewModel;

@@ -15,6 +15,7 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.input.MouseEvent;
+import jtorrent.presentation.component.TorrentStatusCell;
 import jtorrent.presentation.model.UiTorrent;
 import jtorrent.presentation.model.UiTorrentStatus;
 import jtorrent.presentation.view.fxml.JTorrentFxmlLoader;

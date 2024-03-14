@@ -1,4 +1,4 @@
-package jtorrent.presentation.view;
+package jtorrent.presentation.component;
 
 import java.util.BitSet;
 

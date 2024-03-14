@@ -1,4 +1,4 @@
-package jtorrent.presentation.view;
+package jtorrent.presentation.component;
 
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.TableCell;
