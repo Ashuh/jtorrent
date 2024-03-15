@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.net.URL;
 
 import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.ObservableList;
 import jtorrent.domain.Client;
@@ -26,15 +25,16 @@ public class ViewModel {
     private final TorrentInfoViewModel torrentInfoViewModel;
     private final FileInfoViewModel fileInfoViewModel;
     private final PeersTableViewModel peersTableViewModel;
+    private final ChartViewModel chartViewModel;
 
     public ViewModel(Client client) {
         this.client = requireNonNull(client);
-        chartData.set(UiChartData.build(client));
         torrentControlsViewModel = new TorrentControlsViewModel(client);
         torrentsTableViewModel = new TorrentsTableViewModel(client, this::onTorrentSelected);
         torrentInfoViewModel = new TorrentInfoViewModel(client);
         fileInfoViewModel = new FileInfoViewModel(client);
         peersTableViewModel = new PeersTableViewModel(client);
+        chartViewModel = new ChartViewModel(client);
     }
 
     public TorrentControlsViewModel getTorrentControlsViewModel() {
@@ -55,6 +55,10 @@ public class ViewModel {
 
     public PeersTableViewModel getPeersTableViewModel() {
         return peersTableViewModel;
+    }
+
+    public ChartViewModel getChartViewModel() {
+        return chartViewModel;
     }
 
     private void onTorrentSelected(Torrent torrent) {
@@ -78,9 +82,5 @@ public class ViewModel {
     public void addTorrent(UiTorrentContents uiTorrentContents) {
         Torrent torrent = uiTorrentContents.getTorrent();
         client.addTorrent(torrent);
-    }
-
-    public ReadOnlyObjectProperty<UiChartData> chartDataProperty() {
-        return chartData;
     }
 }

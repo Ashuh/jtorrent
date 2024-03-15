@@ -84,7 +84,7 @@ public class MainWindow extends BorderPane {
         torrentInfoView.viewModelProperty().bind(viewModel.map(ViewModel::getTorrentInfoViewModel));
         filesView.viewModelProperty().bind(viewModel.map(ViewModel::getFileInfoViewModel));
         peersTableView.viewModelProperty().bind(viewModel.map(ViewModel::getPeersTableViewModel));
-        chartView.viewModelProperty().bind(viewModel);
+        chartView.viewModelProperty().bind(viewModel.map(ViewModel::getChartViewModel));
     }
 
     private class AddFileButtonEventHandler extends AddNewTorrentFileEventHandler<ActionEvent> {

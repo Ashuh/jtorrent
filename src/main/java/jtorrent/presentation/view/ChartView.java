@@ -2,26 +2,23 @@ package jtorrent.presentation.view;
 
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.value.ObservableValue;
 import javafx.geometry.Side;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
-import jtorrent.presentation.model.UiChartData;
-import jtorrent.presentation.viewmodel.ViewModel;
+import jtorrent.presentation.viewmodel.ChartViewModel;
 
 public class ChartView extends LineChart<Number, Number> {
 
-    private final ObjectProperty<ViewModel> viewModel = new SimpleObjectProperty<>();
+    private final ObjectProperty<ChartViewModel> viewModel = new SimpleObjectProperty<>();
 
     public ChartView() {
         super(buildTimeAxis(), buildRateAxis());
         setCreateSymbols(false);
         setAnimated(false);
-        ObservableValue<UiChartData> uiChartData = viewModel.flatMap(ViewModel::chartDataProperty);
-        dataProperty().bind(uiChartData.map(UiChartData::getChartData));
-        getTimeAxis().lowerBoundProperty().bind(uiChartData.flatMap(UiChartData::lowerBoundProperty));
-        getTimeAxis().upperBoundProperty().bind(uiChartData.flatMap(UiChartData::upperBoundProperty));
-        getRateAxis().tickLabelFormatterProperty().bind(uiChartData.flatMap(UiChartData::rateAxisFormatterProperty));
+        dataProperty().bind(viewModel.map(ChartViewModel::getChartData));
+        getTimeAxis().lowerBoundProperty().bind(viewModel.flatMap(ChartViewModel::lowerBoundProperty));
+        getTimeAxis().upperBoundProperty().bind(viewModel.flatMap(ChartViewModel::upperBoundProperty));
+        getRateAxis().tickLabelFormatterProperty().bind(viewModel.flatMap(ChartViewModel::rateAxisFormatterProperty));
     }
 
     private static NumberAxis buildTimeAxis() {
@@ -51,7 +48,7 @@ public class ChartView extends LineChart<Number, Number> {
         return (NumberAxis) getYAxis();
     }
 
-    public ObjectProperty<ViewModel> viewModelProperty() {
+    public ObjectProperty<ChartViewModel> viewModelProperty() {
         return viewModel;
     }
 }
