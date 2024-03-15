@@ -17,7 +17,6 @@ import javafx.scene.control.TableView;
 import javafx.scene.input.MouseEvent;
 import jtorrent.presentation.component.TorrentStatusCell;
 import jtorrent.presentation.model.UiTorrent;
-import jtorrent.presentation.model.UiTorrentStatus;
 import jtorrent.presentation.view.fxml.JTorrentFxmlLoader;
 import jtorrent.presentation.viewmodel.TorrentsTableViewModel;
 
@@ -29,7 +28,7 @@ public class TorrentsTableView extends TableView<UiTorrent> {
     @FXML
     private TableColumn<UiTorrent, String> size;
     @FXML
-    private TableColumn<UiTorrent, UiTorrentStatus> status;
+    private TableColumn<UiTorrent, TorrentStatusCell.Status> status;
     @FXML
     private TableColumn<UiTorrent, String> downSpeed;
     @FXML

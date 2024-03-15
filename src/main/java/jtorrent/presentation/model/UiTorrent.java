@@ -11,6 +11,7 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import jtorrent.domain.torrent.model.Torrent;
+import jtorrent.presentation.component.TorrentStatusCell;
 import jtorrent.presentation.util.BindingUtils;
 import jtorrent.presentation.util.CalculateEtaCombiner;
 import jtorrent.presentation.util.DataSize;
@@ -23,12 +24,12 @@ public class UiTorrent {
     private final StringProperty upSpeed;
     private final StringProperty eta;
     private final StringProperty saveDirectory;
-    private final ObjectProperty<UiTorrentStatus> status;
+    private final ObjectProperty<TorrentStatusCell.Status> status;
     private final CompositeDisposable disposables;
 
     public UiTorrent(StringProperty name, StringProperty size, StringProperty downSpeed,
             StringProperty upSpeed, StringProperty eta, StringProperty saveDirectory,
-            ObjectProperty<UiTorrentStatus> status, CompositeDisposable disposables) {
+            ObjectProperty<TorrentStatusCell.Status> status, CompositeDisposable disposables) {
         this.name = requireNonNull(name);
         this.size = requireNonNull(size);
         this.downSpeed = requireNonNull(downSpeed);
@@ -50,7 +51,8 @@ public class UiTorrent {
         StringProperty saveDirectory = new SimpleStringProperty(torrent.getSaveDirectory().toString());
         StringProperty state = new SimpleStringProperty();
         DoubleProperty progress = new SimpleDoubleProperty(0.0);
-        ObjectProperty<UiTorrentStatus> status = new SimpleObjectProperty<>(new UiTorrentStatus(state, progress));
+        ObjectProperty<TorrentStatusCell.Status> status =
+                new SimpleObjectProperty<>(new TorrentStatusCell.Status(state, progress));
         CompositeDisposable disposables = new CompositeDisposable();
 
         Observable<Double> downloadRateObservable = torrent.getDownloadRateObservable();
@@ -150,7 +152,7 @@ public class UiTorrent {
         return saveDirectory;
     }
 
-    public ObjectProperty<UiTorrentStatus> statusProperty() {
+    public ObjectProperty<TorrentStatusCell.Status> statusProperty() {
         return status;
     }
 
