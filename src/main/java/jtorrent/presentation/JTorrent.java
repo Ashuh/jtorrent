@@ -14,7 +14,7 @@ import jtorrent.domain.inbound.InboundConnectionListener;
 import jtorrent.domain.lsd.LocalServiceDiscoveryManager;
 import jtorrent.domain.torrent.repository.PieceRepository;
 import jtorrent.domain.torrent.repository.TorrentRepository;
-import jtorrent.presentation.viewmodel.ViewModel;
+import jtorrent.presentation.viewmodel.MainViewModel;
 
 public class JTorrent extends Application {
 
@@ -38,7 +38,7 @@ public class JTorrent extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-        uiManager = new UiManager(primaryStage, new ViewModel(client));
+        uiManager = new UiManager(primaryStage, new MainViewModel(client));
         uiManager.show();
     }
 

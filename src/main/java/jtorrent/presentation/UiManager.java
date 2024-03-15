@@ -5,18 +5,18 @@ import atlantafx.base.theme.Theme;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
-import jtorrent.presentation.view.MainWindow;
-import jtorrent.presentation.viewmodel.ViewModel;
+import jtorrent.presentation.view.MainView;
+import jtorrent.presentation.viewmodel.MainViewModel;
 
 public class UiManager {
 
     private final Stage primaryStage;
 
-    public UiManager(Stage primaryStage, ViewModel viewModel) {
+    public UiManager(Stage primaryStage, MainViewModel viewModel) {
         this.primaryStage = primaryStage;
-        MainWindow mainWindow = new MainWindow();
-        mainWindow.setViewModel(viewModel);
-        Scene scene = new Scene(mainWindow, 1200, 1000);
+        MainView mainView = new MainView();
+        mainView.setViewModel(viewModel);
+        Scene scene = new Scene(mainView, 1200, 1000);
         primaryStage.setTitle("JTorrent");
         primaryStage.setScene(scene);
         setTheme(new PrimerDark());

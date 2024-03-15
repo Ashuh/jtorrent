@@ -15,7 +15,7 @@ import jtorrent.presentation.model.UiChartData;
 import jtorrent.presentation.model.UiFileInfo;
 import jtorrent.presentation.model.UiTorrentContents;
 
-public class ViewModel {
+public class MainViewModel {
 
     private final Client client;
     private final ObjectProperty<UiChartData> chartData = new SimpleObjectProperty<>();
@@ -27,7 +27,7 @@ public class ViewModel {
     private final PeersTableViewModel peersTableViewModel;
     private final ChartViewModel chartViewModel;
 
-    public ViewModel(Client client) {
+    public MainViewModel(Client client) {
         this.client = requireNonNull(client);
         torrentControlsViewModel = new TorrentControlsViewModel(client);
         torrentsTableViewModel = new TorrentsTableViewModel(client, this::onTorrentSelected);

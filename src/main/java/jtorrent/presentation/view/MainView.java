@@ -19,11 +19,11 @@ import javafx.scene.layout.BorderPane;
 import javafx.stage.Window;
 import jtorrent.presentation.model.UiTorrentContents;
 import jtorrent.presentation.view.fxml.JTorrentFxmlLoader;
-import jtorrent.presentation.viewmodel.ViewModel;
+import jtorrent.presentation.viewmodel.MainViewModel;
 
-public class MainWindow extends BorderPane {
+public class MainView extends BorderPane {
 
-    private final ObjectProperty<ViewModel> viewModel = new SimpleObjectProperty<>();
+    private final ObjectProperty<MainViewModel> viewModel = new SimpleObjectProperty<>();
     @FXML
     private MenuBar menuBar;
     @FXML
@@ -49,7 +49,7 @@ public class MainWindow extends BorderPane {
     @FXML
     private ChartView chartView;
 
-    public MainWindow() {
+    public MainView() {
         try {
             JTorrentFxmlLoader.loadView(this);
         } catch (IOException e) {
@@ -57,7 +57,7 @@ public class MainWindow extends BorderPane {
         }
     }
 
-    public void setViewModel(ViewModel viewModel) {
+    public void setViewModel(MainViewModel viewModel) {
         this.viewModel.set(viewModel);
     }
 
@@ -79,19 +79,19 @@ public class MainWindow extends BorderPane {
         addTorrentFromFile.onActionProperty().bind(viewModel.map(AddFileButtonEventHandler::new));
         addTorrentFromUrl.onActionProperty().bind(viewModel.map(AddUrlButtonEventHandler::new));
 
-        torrentControlsView.viewModelProperty().bind(viewModel.map(ViewModel::getTorrentControlsViewModel));
-        torrentsTableView.viewModelProperty().bind(viewModel.map(ViewModel::getTorrentsTableViewModel));
-        torrentInfoView.viewModelProperty().bind(viewModel.map(ViewModel::getTorrentInfoViewModel));
-        filesView.viewModelProperty().bind(viewModel.map(ViewModel::getFileInfoViewModel));
-        peersTableView.viewModelProperty().bind(viewModel.map(ViewModel::getPeersTableViewModel));
-        chartView.viewModelProperty().bind(viewModel.map(ViewModel::getChartViewModel));
+        torrentControlsView.viewModelProperty().bind(viewModel.map(MainViewModel::getTorrentControlsViewModel));
+        torrentsTableView.viewModelProperty().bind(viewModel.map(MainViewModel::getTorrentsTableViewModel));
+        torrentInfoView.viewModelProperty().bind(viewModel.map(MainViewModel::getTorrentInfoViewModel));
+        filesView.viewModelProperty().bind(viewModel.map(MainViewModel::getFileInfoViewModel));
+        peersTableView.viewModelProperty().bind(viewModel.map(MainViewModel::getPeersTableViewModel));
+        chartView.viewModelProperty().bind(viewModel.map(MainViewModel::getChartViewModel));
     }
 
     private class AddFileButtonEventHandler extends AddNewTorrentFileEventHandler<ActionEvent> {
 
-        private final ViewModel viewModel;
+        private final MainViewModel viewModel;
 
-        private AddFileButtonEventHandler(ViewModel viewModel) {
+        private AddFileButtonEventHandler(MainViewModel viewModel) {
             this.viewModel = requireNonNull(viewModel);
         }
 
@@ -118,9 +118,9 @@ public class MainWindow extends BorderPane {
 
     private class AddUrlButtonEventHandler extends AddNewTorrentUrlEventHandler<ActionEvent> {
 
-        private final ViewModel viewModel;
+        private final MainViewModel viewModel;
 
-        private AddUrlButtonEventHandler(ViewModel viewModel) {
+        private AddUrlButtonEventHandler(MainViewModel viewModel) {
             this.viewModel = requireNonNull(viewModel);
         }
 
