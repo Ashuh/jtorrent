@@ -18,16 +18,15 @@ import jtorrent.domain.torrent.model.Torrent;
 import jtorrent.presentation.model.UiChartData;
 import jtorrent.presentation.model.UiFileInfo;
 import jtorrent.presentation.model.UiTorrentContents;
-import jtorrent.presentation.model.UiTorrentInfo;
 
 public class ViewModel {
 
     private final Client client;
     private final ObjectProperty<UiChartData> chartData = new SimpleObjectProperty<>();
     private final ObjectProperty<ObservableList<UiFileInfo>> uiFileInfos = new SimpleObjectProperty<>();
-    private final ObjectProperty<UiTorrentInfo> uiTorrentInfo = new SimpleObjectProperty<>(null);
     private final TorrentControlsViewModel torrentControlsViewModel;
     private final TorrentsTableViewModel torrentsTableViewModel;
+    private final TorrentInfoViewModel torrentInfoViewModel;
     private final PeersTableViewModel peersTableViewModel;
 
     public ViewModel(Client client) {
@@ -35,6 +34,7 @@ public class ViewModel {
         chartData.set(UiChartData.build(client));
         torrentControlsViewModel = new TorrentControlsViewModel(client);
         torrentsTableViewModel = new TorrentsTableViewModel(client, this::onTorrentSelected);
+        torrentInfoViewModel = new TorrentInfoViewModel(client);
         peersTableViewModel = new PeersTableViewModel(client);
     }
 
@@ -46,25 +46,25 @@ public class ViewModel {
         return torrentsTableViewModel;
     }
 
+    public TorrentInfoViewModel getTorrentInfoViewModel() {
+        return torrentInfoViewModel;
+    }
+
     public PeersTableViewModel getPeersTableViewModel() {
         return peersTableViewModel;
     }
 
     private void onTorrentSelected(Torrent torrent) {
         torrentControlsViewModel.setSelectedTorrent(torrent);
+        torrentInfoViewModel.setSelectedTorrent(torrent);
         peersTableViewModel.setSelectedTorrent(torrent);
 
         if (uiFileInfos.get() != null) {
             uiFileInfos.get().forEach(UiFileInfo::dispose);
         }
 
-        if (uiTorrentInfo.get() != null) {
-            uiTorrentInfo.get().dispose();
-        }
-
         if (torrent == null) {
             uiFileInfos.set(null);
-            uiTorrentInfo.set(null);
             return;
         }
 
@@ -72,9 +72,6 @@ public class ViewModel {
                 .map(UiFileInfo::fromDomain)
                 .toList();
         Platform.runLater(() -> uiFileInfos.set(FXCollections.observableList(selectedUiFilesInfos)));
-
-        UiTorrentInfo selectedUiTorrentInfo = UiTorrentInfo.fromDomain(torrent);
-        Platform.runLater(() -> uiTorrentInfo.set(selectedUiTorrentInfo));
     }
 
     public UiTorrentContents loadTorrentContents(File file) throws IOException {
@@ -95,10 +92,6 @@ public class ViewModel {
 
     public ObjectProperty<ObservableList<UiFileInfo>> getFileInfos() {
         return uiFileInfos;
-    }
-
-    public ObjectProperty<UiTorrentInfo> getTorrentInfo() {
-        return uiTorrentInfo;
     }
 
     public ReadOnlyObjectProperty<UiChartData> chartDataProperty() {
