@@ -5,13 +5,10 @@ import static jtorrent.domain.common.util.ValidationUtil.requireNonNull;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.util.List;
 
-import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import jtorrent.domain.Client;
 import jtorrent.domain.torrent.model.Torrent;
@@ -27,6 +24,7 @@ public class ViewModel {
     private final TorrentControlsViewModel torrentControlsViewModel;
     private final TorrentsTableViewModel torrentsTableViewModel;
     private final TorrentInfoViewModel torrentInfoViewModel;
+    private final FileInfoViewModel fileInfoViewModel;
     private final PeersTableViewModel peersTableViewModel;
 
     public ViewModel(Client client) {
@@ -35,6 +33,7 @@ public class ViewModel {
         torrentControlsViewModel = new TorrentControlsViewModel(client);
         torrentsTableViewModel = new TorrentsTableViewModel(client, this::onTorrentSelected);
         torrentInfoViewModel = new TorrentInfoViewModel(client);
+        fileInfoViewModel = new FileInfoViewModel(client);
         peersTableViewModel = new PeersTableViewModel(client);
     }
 
@@ -50,6 +49,10 @@ public class ViewModel {
         return torrentInfoViewModel;
     }
 
+    public FileInfoViewModel getFileInfoViewModel() {
+        return fileInfoViewModel;
+    }
+
     public PeersTableViewModel getPeersTableViewModel() {
         return peersTableViewModel;
     }
@@ -57,21 +60,8 @@ public class ViewModel {
     private void onTorrentSelected(Torrent torrent) {
         torrentControlsViewModel.setSelectedTorrent(torrent);
         torrentInfoViewModel.setSelectedTorrent(torrent);
+        fileInfoViewModel.setSelectedTorrent(torrent);
         peersTableViewModel.setSelectedTorrent(torrent);
-
-        if (uiFileInfos.get() != null) {
-            uiFileInfos.get().forEach(UiFileInfo::dispose);
-        }
-
-        if (torrent == null) {
-            uiFileInfos.set(null);
-            return;
-        }
-
-        List<UiFileInfo> selectedUiFilesInfos = torrent.getFilesWithInfo().stream()
-                .map(UiFileInfo::fromDomain)
-                .toList();
-        Platform.runLater(() -> uiFileInfos.set(FXCollections.observableList(selectedUiFilesInfos)));
     }
 
     public UiTorrentContents loadTorrentContents(File file) throws IOException {
@@ -88,10 +78,6 @@ public class ViewModel {
     public void addTorrent(UiTorrentContents uiTorrentContents) {
         Torrent torrent = uiTorrentContents.getTorrent();
         client.addTorrent(torrent);
-    }
-
-    public ObjectProperty<ObservableList<UiFileInfo>> getFileInfos() {
-        return uiFileInfos;
     }
 
     public ReadOnlyObjectProperty<UiChartData> chartDataProperty() {

@@ -11,11 +11,11 @@ import javafx.scene.control.TableView;
 import jtorrent.presentation.component.DataStatusBarTableCell;
 import jtorrent.presentation.model.UiFileInfo;
 import jtorrent.presentation.view.fxml.JTorrentFxmlLoader;
-import jtorrent.presentation.viewmodel.ViewModel;
+import jtorrent.presentation.viewmodel.FileInfoViewModel;
 
 public class FilesView extends TableView<UiFileInfo> {
 
-    private final ObjectProperty<ViewModel> viewModel = new SimpleObjectProperty<>();
+    private final ObjectProperty<FileInfoViewModel> viewModel = new SimpleObjectProperty<>();
     @FXML
     private TableColumn<UiFileInfo, String> path;
     @FXML
@@ -57,7 +57,7 @@ public class FilesView extends TableView<UiFileInfo> {
 
     @FXML
     public void initialize() {
-        itemsProperty().bind(viewModel.flatMap(ViewModel::getFileInfos));
+        itemsProperty().bind(viewModel.map(FileInfoViewModel::getFileInfos));
 
         path.setCellValueFactory(param -> param.getValue().pathProperty());
         size.setCellValueFactory(param -> param.getValue().sizeProperty());
@@ -81,7 +81,7 @@ public class FilesView extends TableView<UiFileInfo> {
         codecs.setCellValueFactory(param -> param.getValue().codecsProperty());
     }
 
-    public ObjectProperty<ViewModel> viewModelProperty() {
+    public ObjectProperty<FileInfoViewModel> viewModelProperty() {
         return viewModel;
     }
 }
