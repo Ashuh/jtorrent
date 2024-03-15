@@ -6,20 +6,13 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
-import javafx.collections.ObservableList;
 import jtorrent.domain.Client;
 import jtorrent.domain.torrent.model.Torrent;
-import jtorrent.presentation.model.UiChartData;
-import jtorrent.presentation.model.UiFileInfo;
 import jtorrent.presentation.model.UiTorrentContents;
 
 public class MainViewModel {
 
     private final Client client;
-    private final ObjectProperty<UiChartData> chartData = new SimpleObjectProperty<>();
-    private final ObjectProperty<ObservableList<UiFileInfo>> uiFileInfos = new SimpleObjectProperty<>();
     private final TorrentControlsViewModel torrentControlsViewModel;
     private final TorrentsTableViewModel torrentsTableViewModel;
     private final TorrentInfoViewModel torrentInfoViewModel;
