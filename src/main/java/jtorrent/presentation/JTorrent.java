@@ -14,7 +14,7 @@ import jtorrent.domain.inbound.InboundConnectionListener;
 import jtorrent.domain.lsd.LocalServiceDiscoveryManager;
 import jtorrent.domain.torrent.repository.PieceRepository;
 import jtorrent.domain.torrent.repository.TorrentRepository;
-import jtorrent.presentation.viewmodel.MainViewModel;
+import jtorrent.presentation.main.viewmodel.MainViewModel;
 
 public class JTorrent extends Application {
 

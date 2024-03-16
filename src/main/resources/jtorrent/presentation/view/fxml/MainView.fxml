@@ -11,12 +11,12 @@
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.VBox?>
-<?import jtorrent.presentation.view.ChartView?>
-<?import jtorrent.presentation.view.FileInfoView?>
-<?import jtorrent.presentation.view.PeersTableView?>
-<?import jtorrent.presentation.view.TorrentControlsView?>
-<?import jtorrent.presentation.view.TorrentInfoView?>
-<?import jtorrent.presentation.view.TorrentsTableView?>
+<?import jtorrent.presentation.main.view.ChartView?>
+<?import jtorrent.presentation.main.view.FileInfoView?>
+<?import jtorrent.presentation.main.view.PeersTableView?>
+<?import jtorrent.presentation.main.view.TorrentControlsView?>
+<?import jtorrent.presentation.main.view.TorrentInfoView?>
+<?import jtorrent.presentation.main.view.TorrentsTableView?>
 <fx:root xmlns:fx="http://javafx.com/fxml/1" type="BorderPane" xmlns="http://javafx.com/javafx/17.0.2-ea">
     <top>
         <MenuBar fx:id="menuBar" BorderPane.alignment="CENTER">

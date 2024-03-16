@@ -9,7 +9,12 @@ module jtorrent {
     requires org.kordamp.ikonli.javafx;
     requires org.kordamp.ikonli.materialdesign2;
 
-    opens jtorrent.presentation.view to javafx.fxml;
     opens jtorrent.presentation to javafx.graphics;
-    opens jtorrent.presentation.component to javafx.fxml;
+    opens jtorrent.presentation.common.component to javafx.fxml;
+    opens jtorrent.presentation.main.view to javafx.fxml;
+    opens jtorrent.presentation.addnewtorrent.view to javafx.fxml;
+    opens jtorrent.presentation.peerinput.view to javafx.fxml;
+    opens jtorrent.presentation.createnewtorrent.view to javafx.fxml;
+    opens jtorrent.presentation.exception.view to javafx.fxml;
+    opens jtorrent.presentation.preferences.view to javafx.fxml;
 }

@@ -5,8 +5,8 @@ import atlantafx.base.theme.Theme;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
-import jtorrent.presentation.view.MainView;
-import jtorrent.presentation.viewmodel.MainViewModel;
+import jtorrent.presentation.main.view.MainView;
+import jtorrent.presentation.main.viewmodel.MainViewModel;
 
 public class UiManager {
 
