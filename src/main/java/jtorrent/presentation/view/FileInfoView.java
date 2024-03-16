@@ -13,7 +13,7 @@ import jtorrent.presentation.model.UiFileInfo;
 import jtorrent.presentation.view.fxml.JTorrentFxmlLoader;
 import jtorrent.presentation.viewmodel.FileInfoViewModel;
 
-public class FilesView extends TableView<UiFileInfo> {
+public class FileInfoView extends TableView<UiFileInfo> {
 
     private final ObjectProperty<FileInfoViewModel> viewModel = new SimpleObjectProperty<>();
     @FXML
@@ -47,7 +47,7 @@ public class FilesView extends TableView<UiFileInfo> {
     @FXML
     private TableColumn<UiFileInfo, String> codecs;
 
-    public FilesView() {
+    public FileInfoView() {
         try {
             JTorrentFxmlLoader.loadView(this);
         } catch (IOException e) {

@@ -12,7 +12,7 @@
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.VBox?>
 <?import jtorrent.presentation.view.ChartView?>
-<?import jtorrent.presentation.view.FilesView?>
+<?import jtorrent.presentation.view.FileInfoView?>
 <?import jtorrent.presentation.view.PeersTableView?>
 <?import jtorrent.presentation.view.TorrentControlsView?>
 <?import jtorrent.presentation.view.TorrentInfoView?>
@@ -54,7 +54,7 @@
                     <TabPane fx:id="tabPane" tabClosingPolicy="UNAVAILABLE" AnchorPane.bottomAnchor="0.0"
                              AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                         <Tab closable="false" text="Files">
-                            <FilesView fx:id="filesView"/>
+                            <FileInfoView fx:id="fileInfoView"/>
                         </Tab>
                         <Tab closable="false" text="Info">
                             <TorrentInfoView fx:id="torrentInfoView"/>

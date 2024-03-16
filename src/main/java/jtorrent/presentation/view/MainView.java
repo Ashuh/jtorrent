@@ -45,7 +45,7 @@ public class MainView extends BorderPane {
     @FXML
     private TorrentInfoView torrentInfoView;
     @FXML
-    private FilesView filesView;
+    private FileInfoView fileInfoView;
     @FXML
     private ChartView chartView;
 
@@ -82,7 +82,7 @@ public class MainView extends BorderPane {
         torrentControlsView.viewModelProperty().bind(viewModel.map(MainViewModel::getTorrentControlsViewModel));
         torrentsTableView.viewModelProperty().bind(viewModel.map(MainViewModel::getTorrentsTableViewModel));
         torrentInfoView.viewModelProperty().bind(viewModel.map(MainViewModel::getTorrentInfoViewModel));
-        filesView.viewModelProperty().bind(viewModel.map(MainViewModel::getFileInfoViewModel));
+        fileInfoView.viewModelProperty().bind(viewModel.map(MainViewModel::getFileInfoViewModel));
         peersTableView.viewModelProperty().bind(viewModel.map(MainViewModel::getPeersTableViewModel));
         chartView.viewModelProperty().bind(viewModel.map(MainViewModel::getChartViewModel));
     }
