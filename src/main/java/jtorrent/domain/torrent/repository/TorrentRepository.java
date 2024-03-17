@@ -13,9 +13,9 @@ public interface TorrentRepository {
 
     void addTorrent(Torrent torrent);
 
-    Torrent loadTorrent(File file) throws IOException;
+    BencodedTorrent loadTorrent(File file) throws IOException;
 
-    Torrent loadTorrent(URL url) throws IOException;
+    BencodedTorrent loadTorrent(URL url) throws IOException;
 
     void saveTorrent(BencodedTorrent bencodedTorrent, Path savePath) throws IOException;
 

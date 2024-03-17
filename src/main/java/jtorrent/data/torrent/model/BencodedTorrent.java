@@ -13,6 +13,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -131,6 +132,18 @@ public class BencodedTorrent extends BencodedObject {
 
     public BencodedInfo getInfo() {
         return info;
+    }
+
+    public String getName() {
+        return getInfo().getName();
+    }
+
+    public long getTotalSize() {
+        return getInfo().getTotalSize();
+    }
+
+    public Collection<BencodedFile> getFiles() {
+        return getInfo().getFiles();
     }
 
     public Torrent toDomain() {

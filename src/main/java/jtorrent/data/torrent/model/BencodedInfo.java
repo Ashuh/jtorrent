@@ -82,6 +82,8 @@ public abstract class BencodedInfo extends BencodedObject {
 
     public abstract List<BencodedFile> getFiles();
 
+    public abstract long getTotalSize();
+
     public abstract FileInfo toDomain();
 
     @Override

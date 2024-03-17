@@ -17,8 +17,9 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.FileChooser;
 import javafx.stage.Window;
+import jtorrent.data.torrent.model.BencodedTorrent;
 import jtorrent.domain.torrent.model.Torrent;
-import jtorrent.presentation.common.model.UiTorrentContents;
+import jtorrent.presentation.addnewtorrent.view.AddNewTorrentDialog;
 import jtorrent.presentation.common.util.JTorrentFxmlLoader;
 import jtorrent.presentation.createnewtorrent.view.CreateNewTorrentDialog;
 import jtorrent.presentation.exception.view.ExceptionAlert;
@@ -131,7 +132,7 @@ public class TorrentControlsView extends ToolBar {
         }
 
         @Override
-        protected UiTorrentContents getTorrentContents(File userInput) throws IOException {
+        protected BencodedTorrent loadTorrent(File userInput) throws IOException {
             return vm.loadTorrentContents(userInput);
         }
 
@@ -141,8 +142,8 @@ public class TorrentControlsView extends ToolBar {
         }
 
         @Override
-        protected void addTorrent(UiTorrentContents torrentContents) {
-            vm.addTorrent(torrentContents);
+        protected void addTorrent(BencodedTorrent bencodedTorrent, AddNewTorrentDialog.Result result) {
+            vm.addTorrent(bencodedTorrent, result);
         }
 
         @Override
@@ -160,7 +161,7 @@ public class TorrentControlsView extends ToolBar {
         }
 
         @Override
-        protected UiTorrentContents getTorrentContents(String userInput) throws IOException {
+        protected BencodedTorrent loadTorrent(String userInput) throws IOException {
             return vm.loadTorrentContents(userInput);
         }
 
@@ -170,8 +171,8 @@ public class TorrentControlsView extends ToolBar {
         }
 
         @Override
-        protected void addTorrent(UiTorrentContents torrentContents) {
-            vm.addTorrent(torrentContents);
+        protected void addTorrent(BencodedTorrent bencodedTorrent, AddNewTorrentDialog.Result result) {
+            vm.addTorrent(bencodedTorrent, result);
         }
 
         @Override

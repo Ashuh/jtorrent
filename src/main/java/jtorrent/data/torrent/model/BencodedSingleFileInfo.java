@@ -50,6 +50,11 @@ public class BencodedSingleFileInfo extends BencodedInfo {
     }
 
     @Override
+    public long getTotalSize() {
+        return length;
+    }
+
+    @Override
     public FileInfo toDomain() {
         File domainFile = new File(length, Path.of(name));
         return SingleFileInfo.build(domainFile, pieceLength, getDomainPieceHashes());

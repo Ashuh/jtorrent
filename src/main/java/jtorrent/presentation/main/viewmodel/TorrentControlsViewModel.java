@@ -5,6 +5,7 @@ import static jtorrent.domain.common.util.ValidationUtil.requireNonNull;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -15,9 +16,10 @@ import io.reactivex.rxjava3.disposables.Disposable;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
+import jtorrent.data.torrent.model.BencodedTorrent;
 import jtorrent.domain.Client;
 import jtorrent.domain.torrent.model.Torrent;
-import jtorrent.presentation.common.model.UiTorrentContents;
+import jtorrent.presentation.addnewtorrent.view.AddNewTorrentDialog;
 import jtorrent.presentation.common.util.BindingUtils;
 
 public class TorrentControlsViewModel {
@@ -71,19 +73,20 @@ public class TorrentControlsViewModel {
         client.removeTorrent(selectedTorrent);
     }
 
-    public UiTorrentContents loadTorrentContents(String urlString) throws IOException {
+    public BencodedTorrent loadTorrentContents(String urlString) throws IOException {
         URL url = new URL(urlString);
-        Torrent torrent = client.loadTorrent(url);
-        return UiTorrentContents.forTorrent(torrent);
+        return client.loadTorrent(url);
     }
 
-    public UiTorrentContents loadTorrentContents(File file) throws IOException {
-        Torrent torrent = client.loadTorrent(file);
-        return UiTorrentContents.forTorrent(torrent);
+    public BencodedTorrent loadTorrentContents(File file) throws IOException {
+        return client.loadTorrent(file);
     }
 
-    public void addTorrent(UiTorrentContents torrentContents) {
-        client.addTorrent(torrentContents.getTorrent());
+    public void addTorrent(BencodedTorrent bencodedTorrent, AddNewTorrentDialog.Result result) {
+        Torrent torrent = bencodedTorrent.toDomain();
+        torrent.setName(result.name());
+        torrent.setSaveDirectory(Path.of(result.saveDirectory()));
+        client.addTorrent(torrent);
     }
 
     public void createNewTorrent(File savePath, File source, String trackerUrls, String comment, int pieceSize)

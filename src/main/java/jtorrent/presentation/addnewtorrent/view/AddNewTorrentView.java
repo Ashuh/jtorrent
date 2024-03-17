@@ -1,24 +1,29 @@
 package jtorrent.presentation.addnewtorrent.view;
 
+import static jtorrent.domain.common.util.ValidationUtil.requireNonNull;
+
 import java.io.File;
 import java.io.IOException;
 
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.DialogPane;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TreeTableColumn;
 import javafx.scene.control.TreeTableView;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.text.Text;
 import javafx.stage.DirectoryChooser;
-import jtorrent.presentation.common.model.UiTorrentContents;
+import jtorrent.presentation.addnewtorrent.model.UiFileInfo;
+import jtorrent.presentation.addnewtorrent.viewmodel.AddNewTorrentViewModel;
 import jtorrent.presentation.common.util.JTorrentFxmlLoader;
 
 public class AddNewTorrentView extends DialogPane {
 
-    private final ObjectProperty<UiTorrentContents> torrentContents = new SimpleObjectProperty<>();
+    private final ObjectProperty<AddNewTorrentViewModel> viewModel = new SimpleObjectProperty<>();
     @FXML
     private TextField nameInput;
     @FXML
@@ -34,11 +39,11 @@ public class AddNewTorrentView extends DialogPane {
     @FXML
     private Text date;
     @FXML
-    private TreeTableView<UiTorrentContents.FileInfo> tableView;
+    private TreeTableView<UiFileInfo> tableView;
     @FXML
-    private TreeTableColumn<UiTorrentContents.FileInfo, String> fileName;
+    private TreeTableColumn<UiFileInfo, String> fileName;
     @FXML
-    private TreeTableColumn<UiTorrentContents.FileInfo, String> fileSize;
+    private TreeTableColumn<UiFileInfo, String> fileSize;
 
     public AddNewTorrentView() {
         try {
@@ -48,16 +53,8 @@ public class AddNewTorrentView extends DialogPane {
         }
     }
 
-    public void setTorrentContents(UiTorrentContents torrentContents) {
-        this.torrentContents.set(torrentContents);
-    }
-
-    public UiTorrentContents getTorrentContents() {
-        return torrentContents.get();
-    }
-
-    public ObjectProperty<UiTorrentContents> torrentContentsProperty() {
-        return torrentContents;
+    public void setViewModel(AddNewTorrentViewModel viewModel) {
+        this.viewModel.set(viewModel);
     }
 
     public String getSaveDirectory() {
@@ -70,7 +67,7 @@ public class AddNewTorrentView extends DialogPane {
 
     @FXML
     public void initialize() {
-        torrentContents.addListener((observable, oldValue, newValue) -> {
+        viewModel.addListener((observable, oldValue, newValue) -> {
             if (oldValue != null) {
                 nameInput.textProperty().unbindBidirectional(oldValue.nameProperty());
                 saveDirectoryInput.textProperty().unbindBidirectional(oldValue.saveDirectoryProperty());
@@ -81,19 +78,31 @@ public class AddNewTorrentView extends DialogPane {
             }
         });
 
-        name.textProperty().bind(torrentContents.flatMap(UiTorrentContents::nameProperty));
-        comment.textProperty().bind(torrentContents.flatMap(UiTorrentContents::commentProperty));
-        size.textProperty().bind(torrentContents.flatMap(UiTorrentContents::sizeProperty));
-        date.textProperty().bind(torrentContents.flatMap(UiTorrentContents::dateProperty));
+        name.textProperty().bind(viewModel.flatMap(AddNewTorrentViewModel::nameProperty));
+        comment.textProperty().bind(viewModel.flatMap(AddNewTorrentViewModel::commentProperty));
+        size.textProperty().bind(viewModel.flatMap(AddNewTorrentViewModel::sizeProperty));
+        date.textProperty().bind(viewModel.flatMap(AddNewTorrentViewModel::dateProperty));
         fileName.setCellValueFactory(cellData -> cellData.getValue().getValue().name());
         fileSize.setCellValueFactory(cellData -> cellData.getValue().getValue().size());
-        tableView.rootProperty().bind(torrentContents.map(UiTorrentContents::getFiles));
-        browseButton.disableProperty().bind(torrentContents.isNull());
+        tableView.rootProperty().bind(viewModel.flatMap(AddNewTorrentViewModel::getFiles));
+        browseButton.disableProperty().bind(viewModel.isNull());
+        browseButton.onMouseClickedProperty().bind(viewModel.map(BrowseButtonMouseEventHandler::new));
+    }
 
-        browseButton.setOnMouseClicked(event -> {
+    private class BrowseButtonMouseEventHandler implements EventHandler<MouseEvent> {
+
+        private final AddNewTorrentViewModel vm;
+
+        private BrowseButtonMouseEventHandler(AddNewTorrentViewModel vm) {
+            this.vm = requireNonNull(vm);
+        }
+
+        @Override
+        public void handle(MouseEvent event) {
+
             DirectoryChooser directoryChooser = new DirectoryChooser();
-            directoryChooser.setTitle("Choose where to download '" + torrentContents.getName() + "' to");
-            File dir = new File(torrentContents.get().getSaveDirectory());
+            directoryChooser.setTitle("Choose where to download '" + vm.getName() + "' to");
+            File dir = new File(vm.getSaveDirectory());
             // TODO: strip invalid path until a valid path is found
             if (dir.exists()) {
                 directoryChooser.setInitialDirectory(dir);
@@ -102,6 +111,6 @@ public class AddNewTorrentView extends DialogPane {
             if (selectedDir != null) {
                 saveDirectoryInput.setText(selectedDir.getAbsolutePath());
             }
-        });
+        }
     }
 }

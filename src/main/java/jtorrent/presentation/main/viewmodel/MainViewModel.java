@@ -5,10 +5,12 @@ import static jtorrent.domain.common.util.ValidationUtil.requireNonNull;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.file.Path;
 
+import jtorrent.data.torrent.model.BencodedTorrent;
 import jtorrent.domain.Client;
 import jtorrent.domain.torrent.model.Torrent;
-import jtorrent.presentation.common.model.UiTorrentContents;
+import jtorrent.presentation.addnewtorrent.view.AddNewTorrentDialog;
 
 public class MainViewModel {
 
@@ -28,6 +30,13 @@ public class MainViewModel {
         fileInfoViewModel = new FileInfoViewModel(client);
         peersTableViewModel = new PeersTableViewModel(client);
         chartViewModel = new ChartViewModel(client);
+    }
+
+    private void onTorrentSelected(Torrent torrent) {
+        torrentControlsViewModel.setSelectedTorrent(torrent);
+        torrentInfoViewModel.setSelectedTorrent(torrent);
+        fileInfoViewModel.setSelectedTorrent(torrent);
+        peersTableViewModel.setSelectedTorrent(torrent);
     }
 
     public TorrentControlsViewModel getTorrentControlsViewModel() {
@@ -54,26 +63,19 @@ public class MainViewModel {
         return chartViewModel;
     }
 
-    private void onTorrentSelected(Torrent torrent) {
-        torrentControlsViewModel.setSelectedTorrent(torrent);
-        torrentInfoViewModel.setSelectedTorrent(torrent);
-        fileInfoViewModel.setSelectedTorrent(torrent);
-        peersTableViewModel.setSelectedTorrent(torrent);
+    public BencodedTorrent loadTorrent(File file) throws IOException {
+        return client.loadTorrent(file);
     }
 
-    public UiTorrentContents loadTorrentContents(File file) throws IOException {
-        Torrent torrent = client.loadTorrent(file);
-        return UiTorrentContents.forTorrent(torrent);
-    }
-
-    public UiTorrentContents loadTorrentContents(String urlString) throws IOException {
+    public BencodedTorrent loadTorrent(String urlString) throws IOException {
         URL url = new URL(urlString);
-        Torrent torrent = client.loadTorrent(url);
-        return UiTorrentContents.forTorrent(torrent);
+        return client.loadTorrent(url);
     }
 
-    public void addTorrent(UiTorrentContents uiTorrentContents) {
-        Torrent torrent = uiTorrentContents.getTorrent();
+    public void addTorrent(BencodedTorrent bencodedTorrent, AddNewTorrentDialog.Result result) {
+        Torrent torrent = bencodedTorrent.toDomain();
+        torrent.setName(result.name());
+        torrent.setSaveDirectory(Path.of(result.saveDirectory()));
         client.addTorrent(torrent);
     }
 }

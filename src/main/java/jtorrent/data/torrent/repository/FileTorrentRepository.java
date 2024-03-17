@@ -29,26 +29,25 @@ public class FileTorrentRepository implements TorrentRepository {
     public FileTorrentRepository() {
         // TODO: temporary
         try {
-            addTorrent(loadTorrent(Path.of("ubuntu-23.04-desktop-amd64.iso.torrent")));
+            addTorrent(loadTorrent(Path.of("ubuntu-23.04-desktop-amd64.iso.torrent")).toDomain());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public Torrent loadTorrent(Path path) throws IOException {
+    public BencodedTorrent loadTorrent(Path path) throws IOException {
         File file = path.toFile();
         return loadTorrent(file);
     }
 
     @Override
-    public Torrent loadTorrent(File file) throws IOException {
+    public BencodedTorrent loadTorrent(File file) throws IOException {
         InputStream inputStream = new FileInputStream(file);
-        BencodedTorrent bencodedTorrent = BencodedTorrent.decode(inputStream);
-        return bencodedTorrent.toDomain();
+        return loadTorrent(inputStream);
     }
 
     @Override
-    public Torrent loadTorrent(URL url) throws IOException {
+    public BencodedTorrent loadTorrent(URL url) throws IOException {
         // For some reason decoding directly from the URL stream doesn't work, so we have to read it into a byte array
         // first.
         try (BufferedInputStream in = new BufferedInputStream(url.openStream());
@@ -61,10 +60,13 @@ public class FileTorrentRepository implements TorrentRepository {
             }
 
             try (InputStream inputStream = new ByteArrayInputStream(out.toByteArray())) {
-                BencodedTorrent bencodedTorrent = BencodedTorrent.decode(inputStream);
-                return bencodedTorrent.toDomain();
+                return loadTorrent(inputStream);
             }
         }
+    }
+
+    private BencodedTorrent loadTorrent(InputStream inputStream) throws IOException {
+        return BencodedTorrent.decode(inputStream);
     }
 
     @Override

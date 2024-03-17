@@ -17,7 +17,8 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Window;
-import jtorrent.presentation.common.model.UiTorrentContents;
+import jtorrent.data.torrent.model.BencodedTorrent;
+import jtorrent.presentation.addnewtorrent.view.AddNewTorrentDialog;
 import jtorrent.presentation.common.util.JTorrentFxmlLoader;
 import jtorrent.presentation.main.util.AddNewTorrentFileEventHandler;
 import jtorrent.presentation.main.util.AddNewTorrentUrlEventHandler;
@@ -104,8 +105,8 @@ public class MainView extends BorderPane {
         }
 
         @Override
-        protected void addTorrent(UiTorrentContents torrentContents) {
-            viewModel.addTorrent(torrentContents);
+        protected void addTorrent(BencodedTorrent bencodedTorrent, AddNewTorrentDialog.Result result) {
+            viewModel.addTorrent(bencodedTorrent, result);
         }
 
         @Override
@@ -114,8 +115,8 @@ public class MainView extends BorderPane {
         }
 
         @Override
-        protected UiTorrentContents getTorrentContents(File file) throws IOException {
-            return viewModel.loadTorrentContents(file);
+        protected BencodedTorrent loadTorrent(File file) throws IOException {
+            return viewModel.loadTorrent(file);
         }
     }
 
@@ -133,8 +134,8 @@ public class MainView extends BorderPane {
         }
 
         @Override
-        protected void addTorrent(UiTorrentContents torrentContents) {
-            viewModel.addTorrent(torrentContents);
+        protected void addTorrent(BencodedTorrent bencodedTorrent, AddNewTorrentDialog.Result result) {
+            viewModel.addTorrent(bencodedTorrent, result);
         }
 
         @Override
@@ -143,8 +144,8 @@ public class MainView extends BorderPane {
         }
 
         @Override
-        protected UiTorrentContents getTorrentContents(String string) throws IOException {
-            return viewModel.loadTorrentContents(string);
+        protected BencodedTorrent loadTorrent(String string) throws IOException {
+            return viewModel.loadTorrent(string);
         }
     }
 }

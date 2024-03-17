@@ -69,6 +69,13 @@ public class BencodedMultiFileInfo extends BencodedInfo {
     }
 
     @Override
+    public long getTotalSize() {
+        return files.stream()
+                .mapToLong(BencodedFile::getLength)
+                .sum();
+    }
+
+    @Override
     public FileInfo toDomain() {
         List<File> domainFiles = this.files.stream()
                 .map(BencodedFile::toDomain)
