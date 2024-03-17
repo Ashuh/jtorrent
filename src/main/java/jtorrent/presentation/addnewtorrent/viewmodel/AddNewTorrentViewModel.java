@@ -41,33 +41,39 @@ public class AddNewTorrentViewModel {
     }
 
     private static TreeItem<UiFileInfo> buildFileTree(Collection<BencodedFile> files) {
-        Map<TreeItem<UiFileInfo>, Long> treeItemToTotalSize = new HashMap<>();
+        Map<String, Long> pathToTotalSize = new HashMap<>();
+
+        for (BencodedFile file : files) {
+            String fullPath = "";
+            for (String component : file.getPath()) {
+                fullPath += "/" + component;
+                pathToTotalSize.merge(fullPath, file.getLength(), Long::sum);
+            }
+        }
+
         TreeItem<UiFileInfo> root = new TreeItem<>();
 
         for (BencodedFile file : files) {
             TreeItem<UiFileInfo> current = root;
+            String fullPath = "";
 
             for (String component : file.getPath()) {
+                fullPath += "/" + component;
+                String size = DataSize.bestFitBytes(pathToTotalSize.get(fullPath)).toString();
+
                 TreeItem<UiFileInfo> currentTemp = current;
                 boolean isDirectory = !file.getPath().get(file.getPath().size() - 1).equals(component);
 
                 current = current.getChildren().stream()
-                        .filter(item -> item.getValue().name().get().equals(component))
+                        .filter(item -> item.getValue().getName().equals(component))
                         .findFirst()
                         .orElseGet(() -> {
-                            UiFileInfo fileInfo = new UiFileInfo(component, "", isDirectory);
+                            UiFileInfo fileInfo = new UiFileInfo(component, size, isDirectory);
                             TreeItem<UiFileInfo> item = new TreeItem<>(fileInfo);
                             currentTemp.getChildren().add(item);
                             return item;
                         });
-
-                treeItemToTotalSize.merge(current, file.getLength(), Long::sum);
             }
-
-            treeItemToTotalSize.forEach((item, totalSize) -> {
-                String size = DataSize.bestFitBytes(totalSize).toString();
-                item.getValue().size().set(size);
-            });
         }
         return root;
     }

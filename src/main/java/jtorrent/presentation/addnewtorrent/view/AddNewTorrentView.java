@@ -82,8 +82,8 @@ public class AddNewTorrentView extends DialogPane {
         comment.textProperty().bind(viewModel.flatMap(AddNewTorrentViewModel::commentProperty));
         size.textProperty().bind(viewModel.flatMap(AddNewTorrentViewModel::sizeProperty));
         date.textProperty().bind(viewModel.flatMap(AddNewTorrentViewModel::dateProperty));
-        fileName.setCellValueFactory(cellData -> cellData.getValue().getValue().name());
-        fileSize.setCellValueFactory(cellData -> cellData.getValue().getValue().size());
+        fileName.setCellValueFactory(cellData -> cellData.getValue().getValue().nameProperty());
+        fileSize.setCellValueFactory(cellData -> cellData.getValue().getValue().sizeProperty());
         tableView.rootProperty().bind(viewModel.flatMap(AddNewTorrentViewModel::getFiles));
         browseButton.disableProperty().bind(viewModel.isNull());
         browseButton.onMouseClickedProperty().bind(viewModel.map(BrowseButtonMouseEventHandler::new));
