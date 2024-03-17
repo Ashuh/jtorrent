@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import io.reactivex.rxjava3.disposables.Disposable;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import jtorrent.domain.Client;
@@ -24,7 +25,6 @@ public class PeersTableViewModel {
 
     private Torrent selectedTorrent;
     private Disposable selectedTorrentPeersSubscription;
-
 
     public PeersTableViewModel(Client client) {
         this.client = requireNonNull(client);
@@ -53,7 +53,7 @@ public class PeersTableViewModel {
         }
 
         uiPeers.forEach(UiPeer::dispose);
-        uiPeers.clear();
+        Platform.runLater(uiPeers::clear);
     }
 
     private Disposable subscribeToPeers(Torrent torrent) {
@@ -62,14 +62,14 @@ public class PeersTableViewModel {
             case ADD:
                 UiPeer uiPeer = UiPeer.fromDomain(event.getItem());
                 peerToUiPeer.put(event.getItem(), uiPeer);
-                uiPeers.add(uiPeer);
+                Platform.runLater(() -> uiPeers.add(uiPeer));
                 break;
             case REMOVE:
                 UiPeer removed = peerToUiPeer.remove(event.getItem());
-                uiPeers.remove(removed);
+                Platform.runLater(() -> uiPeers.remove(removed));
                 break;
             case CLEAR:
-                uiPeers.clear();
+                Platform.runLater(uiPeers::clear);
                 break;
             default:
                 throw new AssertionError("Unknown event type: " + event.getType());
