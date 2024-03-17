@@ -18,10 +18,10 @@ public abstract class CombinedObservable<T, R> extends Observable<R> {
     private final Map<Observable<T>, Observable<T>> originalToActual = new HashMap<>();
     private final Set<ObservableSource<T>> sources = new HashSet<>();
     private final Subject<Collection<ObservableSource<T>>> sourcesSubject = BehaviorSubject.create();
-    private final Observable<R> combined;
+    private final BehaviorSubject<R> combined = BehaviorSubject.createDefault(combineEmpty());
 
     protected CombinedObservable() {
-        combined = sourcesSubject.switchMap(this::combineLatest);
+        sourcesSubject.switchMap(this::combineLatest).subscribe(combined);
     }
 
     public synchronized void addSource(Observable<T> source) {
