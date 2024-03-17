@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import jtorrent.domain.Client;
@@ -22,6 +23,7 @@ public class TorrentsTableViewModel {
 
     private final ObservableList<UiTorrent> uiTorrents = FXCollections.observableList(new ArrayList<>());
     private final Map<UiTorrent, Torrent> uiTorrentToTorrent = new HashMap<>();
+    private final Map<Torrent, UiTorrent> torrentUiTorrent = new HashMap<>();
 
     private final Consumer<Torrent> torrentSelectedConsumer;
     private Torrent selectedTorrent;
@@ -35,17 +37,22 @@ public class TorrentsTableViewModel {
             case ADD:
                 UiTorrent uiTorrent = UiTorrent.fromDomain(event.getItem());
                 uiTorrentToTorrent.put(uiTorrent, event.getItem());
+                torrentUiTorrent.put(event.getItem(), uiTorrent);
                 assert indexOptional.isPresent();
-                uiTorrents.add(indexOptional.get(), uiTorrent);
+                Platform.runLater(() -> uiTorrents.add(indexOptional.get(), uiTorrent));
                 break;
             case REMOVE:
                 assert indexOptional.isPresent();
-                UiTorrent removed = uiTorrents.remove(indexOptional.get().intValue());
-                removed.dispose();
+                UiTorrent removed = torrentUiTorrent.remove(event.getItem());
                 uiTorrentToTorrent.remove(removed);
+                removed.dispose();
+                Platform.runLater(() -> uiTorrents.remove(removed));
                 break;
             case CLEAR:
-                uiTorrents.clear();
+                torrentUiTorrent.clear();
+                uiTorrentToTorrent.clear();
+                uiTorrents.forEach(UiTorrent::dispose);
+                Platform.runLater(uiTorrents::clear);
                 break;
             default:
                 throw new AssertionError("Unknown event type: " + event.getType());
