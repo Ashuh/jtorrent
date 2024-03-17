@@ -66,9 +66,11 @@ public class PeersTableViewModel {
                 break;
             case REMOVE:
                 UiPeer removed = peerToUiPeer.remove(event.getItem());
+                removed.dispose();
                 Platform.runLater(() -> uiPeers.remove(removed));
                 break;
             case CLEAR:
+                uiPeers.forEach(UiPeer::dispose);
                 Platform.runLater(uiPeers::clear);
                 break;
             default:
