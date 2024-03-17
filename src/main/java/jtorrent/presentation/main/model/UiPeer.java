@@ -4,23 +4,23 @@ import static jtorrent.domain.common.util.ValidationUtil.requireNonNull;
 
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
+import javafx.beans.property.ReadOnlyStringProperty;
+import javafx.beans.property.ReadOnlyStringWrapper;
 import jtorrent.domain.peer.model.Peer;
 import jtorrent.presentation.common.util.BindingUtils;
 import jtorrent.presentation.common.util.DataSize;
 
 public class UiPeer {
 
-    private final StringProperty ip;
-    private final StringProperty port;
-    private final StringProperty client;
-    private final StringProperty downSpeed;
-    private final StringProperty upSpeed;
+    private final ReadOnlyStringWrapper ip;
+    private final ReadOnlyStringWrapper port;
+    private final ReadOnlyStringWrapper client;
+    private final ReadOnlyStringWrapper downSpeed;
+    private final ReadOnlyStringWrapper upSpeed;
     private final CompositeDisposable disposables;
 
-    public UiPeer(StringProperty ip, StringProperty port, StringProperty client, StringProperty downSpeed,
-            StringProperty upSpeed, CompositeDisposable disposables) {
+    public UiPeer(ReadOnlyStringWrapper ip, ReadOnlyStringWrapper port, ReadOnlyStringWrapper client,
+            ReadOnlyStringWrapper downSpeed, ReadOnlyStringWrapper upSpeed, CompositeDisposable disposables) {
         this.ip = requireNonNull(ip);
         this.port = requireNonNull(port);
         this.client = requireNonNull(client);
@@ -30,11 +30,11 @@ public class UiPeer {
     }
 
     public static UiPeer fromDomain(Peer peer) {
-        SimpleStringProperty ip = new SimpleStringProperty(peer.getAddress().getHostAddress());
-        SimpleStringProperty port = new SimpleStringProperty(String.valueOf(peer.getPort()));
-        SimpleStringProperty client = new SimpleStringProperty("Placeholder");
-        SimpleStringProperty downSpeed = new SimpleStringProperty("");
-        SimpleStringProperty upSpeed = new SimpleStringProperty("");
+        ReadOnlyStringWrapper ip = new ReadOnlyStringWrapper(peer.getAddress().getHostAddress());
+        ReadOnlyStringWrapper port = new ReadOnlyStringWrapper(String.valueOf(peer.getPort()));
+        ReadOnlyStringWrapper client = new ReadOnlyStringWrapper("Placeholder");
+        ReadOnlyStringWrapper downSpeed = new ReadOnlyStringWrapper("");
+        ReadOnlyStringWrapper upSpeed = new ReadOnlyStringWrapper("");
         CompositeDisposable disposables = new CompositeDisposable();
 
         Observable<Double> downloadRateObservable = peer.getDownloadRateObservable();
@@ -48,44 +48,24 @@ public class UiPeer {
         return new UiPeer(ip, port, client, downSpeed, upSpeed, disposables);
     }
 
-    public String getIp() {
-        return ip.get();
+    public ReadOnlyStringProperty ipProperty() {
+        return ip.getReadOnlyProperty();
     }
 
-    public StringProperty ipProperty() {
-        return ip;
+    public ReadOnlyStringProperty portProperty() {
+        return port.getReadOnlyProperty();
     }
 
-    public String getPort() {
-        return port.get();
+    public ReadOnlyStringProperty clientProperty() {
+        return client.getReadOnlyProperty();
     }
 
-    public StringProperty portProperty() {
-        return port;
+    public ReadOnlyStringProperty downSpeedProperty() {
+        return downSpeed.getReadOnlyProperty();
     }
 
-    public String getClient() {
-        return client.get();
-    }
-
-    public StringProperty clientProperty() {
-        return client;
-    }
-
-    public String getDownSpeed() {
-        return downSpeed.get();
-    }
-
-    public StringProperty downSpeedProperty() {
-        return downSpeed;
-    }
-
-    public String getUpSpeed() {
-        return upSpeed.get();
-    }
-
-    public StringProperty upSpeedProperty() {
-        return upSpeed;
+    public ReadOnlyStringProperty upSpeedProperty() {
+        return upSpeed.getReadOnlyProperty();
     }
 
     public void dispose() {

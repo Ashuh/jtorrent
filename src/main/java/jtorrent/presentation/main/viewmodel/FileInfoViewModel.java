@@ -35,6 +35,6 @@ public class FileInfoViewModel {
     }
 
     public ObservableList<UiFileInfo> getFileInfos() {
-        return fileInfos;
+        return FXCollections.unmodifiableObservableList(fileInfos);
     }
 }

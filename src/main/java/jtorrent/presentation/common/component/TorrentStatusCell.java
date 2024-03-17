@@ -2,10 +2,8 @@ package jtorrent.presentation.common.component;
 
 import static jtorrent.domain.common.util.ValidationUtil.requireNonNull;
 
-import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.ReadOnlyStringProperty;
-import javafx.beans.property.StringProperty;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.TableCell;
 import javafx.scene.layout.StackPane;
@@ -37,10 +35,10 @@ public class TorrentStatusCell extends TableCell<UiTorrent, TorrentStatusCell.St
 
     public static class Status {
 
-        private final StringProperty state;
-        private final DoubleProperty progress;
+        private final ReadOnlyStringProperty state;
+        private final ReadOnlyDoubleProperty progress;
 
-        public Status(StringProperty state, DoubleProperty progress) {
+        public Status(ReadOnlyStringProperty state, ReadOnlyDoubleProperty progress) {
             this.state = requireNonNull(state);
             this.progress = requireNonNull(progress);
         }

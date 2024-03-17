@@ -17,9 +17,9 @@ import javafx.beans.property.ReadOnlyStringWrapper;
 import jtorrent.domain.Client;
 import jtorrent.domain.torrent.model.Torrent;
 import jtorrent.presentation.common.util.BindingUtils;
-import jtorrent.presentation.main.util.CalculateEtaCombiner;
 import jtorrent.presentation.common.util.DataSize;
 import jtorrent.presentation.common.util.DateFormatter;
+import jtorrent.presentation.main.util.CalculateEtaCombiner;
 
 public class TorrentInfoViewModel {
 

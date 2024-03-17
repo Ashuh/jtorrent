@@ -2,8 +2,8 @@ package jtorrent.presentation.common.component;
 
 import java.util.BitSet;
 
-import javafx.beans.property.IntegerProperty;
-import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.ReadOnlyIntegerProperty;
+import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.geometry.Pos;
 import javafx.scene.control.TableCell;
@@ -41,6 +41,6 @@ public class DataStatusBarTableCell extends TableCell<UiFileInfo, DataStatusBarT
         }
     }
 
-    public record State(IntegerProperty totalSegments, ObjectProperty<BitSet> availability) {
+    public record State(ReadOnlyIntegerProperty totalSegments, ReadOnlyObjectProperty<BitSet> availability) {
     }
 }

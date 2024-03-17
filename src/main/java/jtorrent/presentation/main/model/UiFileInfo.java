@@ -4,12 +4,12 @@ import java.util.BitSet;
 
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
-import javafx.beans.property.IntegerProperty;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleIntegerProperty;
-import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
+import javafx.beans.property.ReadOnlyIntegerProperty;
+import javafx.beans.property.ReadOnlyIntegerWrapper;
+import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.beans.property.ReadOnlyStringProperty;
+import javafx.beans.property.ReadOnlyStringWrapper;
 import jtorrent.domain.torrent.model.File;
 import jtorrent.domain.torrent.model.FilePieceInfo;
 import jtorrent.domain.torrent.model.FileWithPieceInfo;
@@ -18,27 +18,28 @@ import jtorrent.presentation.common.util.DataSize;
 
 public class UiFileInfo {
 
-    private final StringProperty path;
-    private final StringProperty size;
-    private final StringProperty done;
-    private final StringProperty percentDone;
-    private final IntegerProperty firstPiece;
-    private final IntegerProperty numPieces;
-    private final ObjectProperty<BitSet> downloadedPieces;
-    private final StringProperty priority;
-    private final StringProperty mode;
-    private final StringProperty rate;
-    private final StringProperty resolution;
-    private final StringProperty duration;
-    private final StringProperty streamable;
-    private final StringProperty hasHeader;
-    private final StringProperty codecs;
+    private final ReadOnlyStringWrapper path;
+    private final ReadOnlyStringWrapper size;
+    private final ReadOnlyStringWrapper done;
+    private final ReadOnlyStringWrapper percentDone;
+    private final ReadOnlyIntegerWrapper firstPiece;
+    private final ReadOnlyIntegerWrapper numPieces;
+    private final ReadOnlyObjectWrapper<BitSet> downloadedPieces;
+    private final ReadOnlyStringWrapper priority;
+    private final ReadOnlyStringWrapper mode;
+    private final ReadOnlyStringWrapper rate;
+    private final ReadOnlyStringWrapper resolution;
+    private final ReadOnlyStringWrapper duration;
+    private final ReadOnlyStringWrapper streamable;
+    private final ReadOnlyStringWrapper hasHeader;
+    private final ReadOnlyStringWrapper codecs;
     private final CompositeDisposable disposables;
 
-    private UiFileInfo(StringProperty path, StringProperty size, StringProperty done, StringProperty percentDone,
-            IntegerProperty firstPiece, IntegerProperty numPieces, ObjectProperty<BitSet> downloadedPieces,
-            StringProperty priority, StringProperty mode, StringProperty rate, StringProperty resolution,
-            StringProperty duration, StringProperty streamable, StringProperty hasHeader, StringProperty codecs,
+    private UiFileInfo(ReadOnlyStringWrapper path, ReadOnlyStringWrapper size, ReadOnlyStringWrapper done,
+            ReadOnlyStringWrapper percentDone, ReadOnlyIntegerWrapper firstPiece, ReadOnlyIntegerWrapper numPieces,
+            ReadOnlyObjectWrapper<BitSet> downloadedPieces, ReadOnlyStringWrapper priority, ReadOnlyStringWrapper mode,
+            ReadOnlyStringWrapper rate, ReadOnlyStringWrapper resolution, ReadOnlyStringWrapper duration,
+            ReadOnlyStringWrapper streamable, ReadOnlyStringWrapper hasHeader, ReadOnlyStringWrapper codecs,
             CompositeDisposable disposables) {
         this.path = path;
         this.size = size;
@@ -62,21 +63,21 @@ public class UiFileInfo {
         File file = fileWithPieceInfo.file();
         FilePieceInfo filePieceInfo = fileWithPieceInfo.filePieceInfo();
 
-        StringProperty path = new SimpleStringProperty(file.getPath().toString());
-        StringProperty size = new SimpleStringProperty(DataSize.bestFitBytes(file.getSize()).toString());
-        StringProperty done = new SimpleStringProperty("");
-        StringProperty percentDone = new SimpleStringProperty("");
-        IntegerProperty firstPiece = new SimpleIntegerProperty(filePieceInfo.firstPiece());
-        IntegerProperty numPieces = new SimpleIntegerProperty(filePieceInfo.numPieces());
-        ObjectProperty<BitSet> pieces = new SimpleObjectProperty<>(new BitSet());
-        StringProperty priority = new SimpleStringProperty("");
-        StringProperty mode = new SimpleStringProperty("");
-        StringProperty rate = new SimpleStringProperty("");
-        StringProperty resolution = new SimpleStringProperty("");
-        StringProperty duration = new SimpleStringProperty("");
-        StringProperty streamable = new SimpleStringProperty("");
-        StringProperty hasHeader = new SimpleStringProperty("");
-        StringProperty codecs = new SimpleStringProperty("");
+        ReadOnlyStringWrapper path = new ReadOnlyStringWrapper(file.getPath().toString());
+        ReadOnlyStringWrapper size = new ReadOnlyStringWrapper(DataSize.bestFitBytes(file.getSize()).toString());
+        ReadOnlyStringWrapper done = new ReadOnlyStringWrapper("");
+        ReadOnlyStringWrapper percentDone = new ReadOnlyStringWrapper("");
+        ReadOnlyIntegerWrapper firstPiece = new ReadOnlyIntegerWrapper(filePieceInfo.firstPiece());
+        ReadOnlyIntegerWrapper numPieces = new ReadOnlyIntegerWrapper(filePieceInfo.numPieces());
+        ReadOnlyObjectWrapper<BitSet> pieces = new ReadOnlyObjectWrapper<>(new BitSet());
+        ReadOnlyStringWrapper priority = new ReadOnlyStringWrapper("");
+        ReadOnlyStringWrapper mode = new ReadOnlyStringWrapper("");
+        ReadOnlyStringWrapper rate = new ReadOnlyStringWrapper("");
+        ReadOnlyStringWrapper resolution = new ReadOnlyStringWrapper("");
+        ReadOnlyStringWrapper duration = new ReadOnlyStringWrapper("");
+        ReadOnlyStringWrapper streamable = new ReadOnlyStringWrapper("");
+        ReadOnlyStringWrapper hasHeader = new ReadOnlyStringWrapper("");
+        ReadOnlyStringWrapper codecs = new ReadOnlyStringWrapper("");
         CompositeDisposable disposables = new CompositeDisposable();
 
         Observable<String> doneObservable = filePieceInfo.getVerifiedBytesObservable()
@@ -96,184 +97,64 @@ public class UiFileInfo {
                 rate, resolution, duration, streamable, hasHeader, codecs, disposables);
     }
 
-    public String getPath() {
-        return path.get();
+    public ReadOnlyStringProperty pathProperty() {
+        return path.getReadOnlyProperty();
     }
 
-    public StringProperty pathProperty() {
-        return path;
+    public ReadOnlyStringProperty sizeProperty() {
+        return size.getReadOnlyProperty();
     }
 
-    public void setPath(String path) {
-        this.path.set(path);
+    public ReadOnlyStringProperty doneProperty() {
+        return done.getReadOnlyProperty();
     }
 
-    public String getSize() {
-        return size.get();
+    public ReadOnlyStringProperty percentDoneProperty() {
+        return percentDone.getReadOnlyProperty();
     }
 
-    public StringProperty sizeProperty() {
-        return size;
+    public ReadOnlyIntegerProperty firstPieceProperty() {
+        return firstPiece.getReadOnlyProperty();
     }
 
-    public void setSize(String size) {
-        this.size.set(size);
+    public ReadOnlyIntegerProperty numPiecesProperty() {
+        return numPieces.getReadOnlyProperty();
     }
 
-    public String getDone() {
-        return done.get();
+    public ReadOnlyObjectProperty<BitSet> downloadedPiecesProperty() {
+        return downloadedPieces.getReadOnlyProperty();
     }
 
-    public StringProperty doneProperty() {
-        return done;
+    public ReadOnlyStringProperty priorityProperty() {
+        return priority.getReadOnlyProperty();
     }
 
-    public void setDone(String done) {
-        this.done.set(done);
+    public ReadOnlyStringProperty modeProperty() {
+        return mode.getReadOnlyProperty();
     }
 
-    public String getPercentDone() {
-        return percentDone.get();
+    public ReadOnlyStringProperty rateProperty() {
+        return rate.getReadOnlyProperty();
     }
 
-    public StringProperty percentDoneProperty() {
-        return percentDone;
+    public ReadOnlyStringProperty resolutionProperty() {
+        return resolution.getReadOnlyProperty();
     }
 
-    public void setPercentDone(String percentDone) {
-        this.percentDone.set(percentDone);
+    public ReadOnlyStringProperty durationProperty() {
+        return duration.getReadOnlyProperty();
     }
 
-    public int getFirstPiece() {
-        return firstPiece.get();
+    public ReadOnlyStringProperty streamableProperty() {
+        return streamable.getReadOnlyProperty();
     }
 
-    public IntegerProperty firstPieceProperty() {
-        return firstPiece;
+    public ReadOnlyStringProperty hasHeaderProperty() {
+        return hasHeader.getReadOnlyProperty();
     }
 
-    public void setFirstPiece(int firstPiece) {
-        this.firstPiece.set(firstPiece);
-    }
-
-    public int getNumPieces() {
-        return numPieces.get();
-    }
-
-    public IntegerProperty numPiecesProperty() {
-        return numPieces;
-    }
-
-    public void setNumPieces(int numPieces) {
-        this.numPieces.set(numPieces);
-    }
-
-    public BitSet getDownloadedPieces() {
-        return downloadedPieces.get();
-    }
-
-    public ObjectProperty<BitSet> downloadedPiecesProperty() {
-        return downloadedPieces;
-    }
-
-    public void setDownloadedPieces(BitSet downloadedPieces) {
-        this.downloadedPieces.set(downloadedPieces);
-    }
-
-    public String getPriority() {
-        return priority.get();
-    }
-
-    public StringProperty priorityProperty() {
-        return priority;
-    }
-
-    public void setPriority(String priority) {
-        this.priority.set(priority);
-    }
-
-    public String getMode() {
-        return mode.get();
-    }
-
-    public StringProperty modeProperty() {
-        return mode;
-    }
-
-    public void setMode(String mode) {
-        this.mode.set(mode);
-    }
-
-    public String getRate() {
-        return rate.get();
-    }
-
-    public StringProperty rateProperty() {
-        return rate;
-    }
-
-    public void setRate(String rate) {
-        this.rate.set(rate);
-    }
-
-    public String getResolution() {
-        return resolution.get();
-    }
-
-    public StringProperty resolutionProperty() {
-        return resolution;
-    }
-
-    public void setResolution(String resolution) {
-        this.resolution.set(resolution);
-    }
-
-    public String getDuration() {
-        return duration.get();
-    }
-
-    public StringProperty durationProperty() {
-        return duration;
-    }
-
-    public void setDuration(String duration) {
-        this.duration.set(duration);
-    }
-
-    public String getStreamable() {
-        return streamable.get();
-    }
-
-    public StringProperty streamableProperty() {
-        return streamable;
-    }
-
-    public void setStreamable(String streamable) {
-        this.streamable.set(streamable);
-    }
-
-    public String getHasHeader() {
-        return hasHeader.get();
-    }
-
-    public StringProperty hasHeaderProperty() {
-        return hasHeader;
-    }
-
-    public void setHasHeader(String hasHeader) {
-        this.hasHeader.set(hasHeader);
-    }
-
-    public String getCodecs() {
-        return codecs.get();
-    }
-
-    public StringProperty codecsProperty() {
-        return codecs;
-    }
-
-    public void setCodecs(String codecs) {
-        this.codecs.set(codecs);
+    public ReadOnlyStringProperty codecsProperty() {
+        return codecs.getReadOnlyProperty();
     }
 
     public void dispose() {

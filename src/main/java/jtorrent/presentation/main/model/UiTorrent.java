@@ -5,11 +5,11 @@ import static jtorrent.domain.common.util.ValidationUtil.requireNonNull;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
 import javafx.beans.property.DoubleProperty;
-import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.beans.property.ReadOnlyStringProperty;
+import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.beans.property.SimpleDoubleProperty;
-import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
 import jtorrent.domain.torrent.model.Torrent;
 import jtorrent.presentation.common.component.TorrentStatusCell;
 import jtorrent.presentation.common.util.BindingUtils;
@@ -18,18 +18,18 @@ import jtorrent.presentation.main.util.CalculateEtaCombiner;
 
 public class UiTorrent {
 
-    private final StringProperty name;
-    private final StringProperty size;
-    private final StringProperty downSpeed;
-    private final StringProperty upSpeed;
-    private final StringProperty eta;
-    private final StringProperty saveDirectory;
-    private final ObjectProperty<TorrentStatusCell.Status> status;
+    private final ReadOnlyStringWrapper name;
+    private final ReadOnlyStringWrapper size;
+    private final ReadOnlyStringWrapper downSpeed;
+    private final ReadOnlyStringWrapper upSpeed;
+    private final ReadOnlyStringWrapper eta;
+    private final ReadOnlyStringWrapper saveDirectory;
+    private final ReadOnlyObjectWrapper<TorrentStatusCell.Status> status;
     private final CompositeDisposable disposables;
 
-    public UiTorrent(StringProperty name, StringProperty size, StringProperty downSpeed,
-            StringProperty upSpeed, StringProperty eta, StringProperty saveDirectory,
-            ObjectProperty<TorrentStatusCell.Status> status, CompositeDisposable disposables) {
+    public UiTorrent(ReadOnlyStringWrapper name, ReadOnlyStringWrapper size, ReadOnlyStringWrapper downSpeed,
+            ReadOnlyStringWrapper upSpeed, ReadOnlyStringWrapper eta, ReadOnlyStringWrapper saveDirectory,
+            ReadOnlyObjectWrapper<TorrentStatusCell.Status> status, CompositeDisposable disposables) {
         this.name = requireNonNull(name);
         this.size = requireNonNull(size);
         this.downSpeed = requireNonNull(downSpeed);
@@ -43,16 +43,16 @@ public class UiTorrent {
     public static UiTorrent fromDomain(Torrent torrent) {
         long torrentSize = torrent.getTotalSize();
 
-        StringProperty name = new SimpleStringProperty(torrent.getName());
-        StringProperty size = new SimpleStringProperty(DataSize.bestFitBytes(torrentSize).toString());
-        StringProperty downSpeed = new SimpleStringProperty("");
-        StringProperty upSpeed = new SimpleStringProperty("");
-        StringProperty eta = new SimpleStringProperty("");
-        StringProperty saveDirectory = new SimpleStringProperty(torrent.getSaveDirectory().toString());
-        StringProperty state = new SimpleStringProperty();
+        ReadOnlyStringWrapper name = new ReadOnlyStringWrapper(torrent.getName());
+        ReadOnlyStringWrapper size = new ReadOnlyStringWrapper(DataSize.bestFitBytes(torrentSize).toString());
+        ReadOnlyStringWrapper downSpeed = new ReadOnlyStringWrapper("");
+        ReadOnlyStringWrapper upSpeed = new ReadOnlyStringWrapper("");
+        ReadOnlyStringWrapper eta = new ReadOnlyStringWrapper("");
+        ReadOnlyStringWrapper saveDirectory = new ReadOnlyStringWrapper(torrent.getSaveDirectory().toString());
+        ReadOnlyStringWrapper state = new ReadOnlyStringWrapper();
         DoubleProperty progress = new SimpleDoubleProperty(0.0);
-        ObjectProperty<TorrentStatusCell.Status> status =
-                new SimpleObjectProperty<>(new TorrentStatusCell.Status(state, progress));
+        ReadOnlyObjectWrapper<TorrentStatusCell.Status> status =
+                new ReadOnlyObjectWrapper<>(new TorrentStatusCell.Status(state, progress));
         CompositeDisposable disposables = new CompositeDisposable();
 
         Observable<Double> downloadRateObservable = torrent.getDownloadRateObservable();
@@ -104,56 +104,32 @@ public class UiTorrent {
         return state.toString();
     }
 
-    public String getName() {
-        return name.get();
+    public ReadOnlyStringProperty nameProperty() {
+        return name.getReadOnlyProperty();
     }
 
-    public StringProperty nameProperty() {
-        return name;
+    public ReadOnlyStringProperty sizeProperty() {
+        return size.getReadOnlyProperty();
     }
 
-    public String getSize() {
-        return size.get();
+    public ReadOnlyStringProperty downSpeedProperty() {
+        return downSpeed.getReadOnlyProperty();
     }
 
-    public StringProperty sizeProperty() {
-        return size;
+    public ReadOnlyStringProperty upSpeedProperty() {
+        return upSpeed.getReadOnlyProperty();
     }
 
-    public String getDownSpeed() {
-        return downSpeed.get();
+    public ReadOnlyStringProperty etaProperty() {
+        return eta.getReadOnlyProperty();
     }
 
-    public StringProperty downSpeedProperty() {
-        return downSpeed;
+    public ReadOnlyStringProperty saveDirectoryProperty() {
+        return saveDirectory.getReadOnlyProperty();
     }
 
-    public String getUpSpeed() {
-        return upSpeed.get();
-    }
-
-    public StringProperty upSpeedProperty() {
-        return upSpeed;
-    }
-
-    public String getEta() {
-        return eta.get();
-    }
-
-    public StringProperty etaProperty() {
-        return eta;
-    }
-
-    public String getSaveDirectory() {
-        return saveDirectory.get();
-    }
-
-    public StringProperty saveDirectoryProperty() {
-        return saveDirectory;
-    }
-
-    public ObjectProperty<TorrentStatusCell.Status> statusProperty() {
-        return status;
+    public ReadOnlyObjectProperty<TorrentStatusCell.Status> statusProperty() {
+        return status.getReadOnlyProperty();
     }
 
     public void dispose() {
