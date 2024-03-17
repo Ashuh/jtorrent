@@ -108,6 +108,7 @@ public class DataStatusBar extends Region {
     private void updateAvailability(BitSet previous, BitSet current) {
         BitSet changed = computeChangedBits(previous, current);
         changed.stream()
+                .filter(i -> i < totalSegments.get())
                 .mapToObj(this::segmentToPixels)
                 .flatMapToInt(BitSet::stream)
                 .distinct()
