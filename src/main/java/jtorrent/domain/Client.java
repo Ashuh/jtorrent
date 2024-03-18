@@ -180,6 +180,10 @@ public class Client implements LocalServiceDiscoveryManager.Listener, TorrentHan
         torrentRepository.saveTorrent(torrent, savePath);
     }
 
+    public Torrent getTorrent(Sha1Hash infoHash) {
+        return torrentRepository.getTorrent(infoHash);
+    }
+
     private class HandleInboundConnectionsTask extends BackgroundTask {
 
         @Override

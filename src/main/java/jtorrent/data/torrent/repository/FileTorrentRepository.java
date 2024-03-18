@@ -97,6 +97,11 @@ public class FileTorrentRepository implements TorrentRepository {
         return torrents;
     }
 
+    @Override
+    public Torrent getTorrent(Sha1Hash infoHash) {
+        return infoHashToTorrent.get(infoHash);
+    }
+
     private boolean isExistingTorrent(Torrent torrent) {
         return infoHashToTorrent.containsKey(torrent.getInfoHash());
     }

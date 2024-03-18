@@ -13,6 +13,7 @@ import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import jtorrent.domain.Client;
+import jtorrent.domain.common.util.Sha1Hash;
 import jtorrent.domain.torrent.model.Torrent;
 import jtorrent.presentation.main.model.UiTorrent;
 
@@ -21,36 +22,40 @@ public class TorrentsTableViewModel {
     private static final System.Logger LOGGER = System.getLogger(TorrentsTableViewModel.class.getName());
     private static final String EXPLORER_EXE = "explorer.exe";
 
+    private final Client client;
     private final ObservableList<UiTorrent> uiTorrents = FXCollections.observableList(new ArrayList<>());
-    private final Map<UiTorrent, Torrent> uiTorrentToTorrent = new HashMap<>();
-    private final Map<Torrent, UiTorrent> torrentUiTorrent = new HashMap<>();
-
+    private final Map<UiTorrent, Sha1Hash> uiTorrentToInfoHash = new HashMap<>();
+    private final Map<Sha1Hash, UiTorrent> infoHashToUiTorrent = new HashMap<>();
     private final Consumer<Torrent> torrentSelectedConsumer;
     private Torrent selectedTorrent;
 
     public TorrentsTableViewModel(Client client, Consumer<Torrent> torrentSelectedConsumer) {
+        this.client = requireNonNull(client);
         this.torrentSelectedConsumer = requireNonNull(torrentSelectedConsumer);
 
         client.getTorrents().subscribe(event -> {
             Optional<Integer> indexOptional = event.getIndex();
+            Sha1Hash infoHash;
             switch (event.getType()) {
             case ADD:
                 UiTorrent uiTorrent = UiTorrent.fromDomain(event.getItem());
-                uiTorrentToTorrent.put(uiTorrent, event.getItem());
-                torrentUiTorrent.put(event.getItem(), uiTorrent);
+                infoHash = event.getItem().getInfoHash();
+                uiTorrentToInfoHash.put(uiTorrent, infoHash);
+                infoHashToUiTorrent.put(infoHash, uiTorrent);
                 assert indexOptional.isPresent();
                 Platform.runLater(() -> uiTorrents.add(indexOptional.get(), uiTorrent));
                 break;
             case REMOVE:
                 assert indexOptional.isPresent();
-                UiTorrent removed = torrentUiTorrent.remove(event.getItem());
-                uiTorrentToTorrent.remove(removed);
+                infoHash = event.getItem().getInfoHash();
+                UiTorrent removed = infoHashToUiTorrent.remove(infoHash);
+                uiTorrentToInfoHash.remove(removed);
                 removed.dispose();
                 Platform.runLater(() -> uiTorrents.remove(removed));
                 break;
             case CLEAR:
-                torrentUiTorrent.clear();
-                uiTorrentToTorrent.clear();
+                uiTorrentToInfoHash.clear();
+                infoHashToUiTorrent.clear();
                 uiTorrents.forEach(UiTorrent::dispose);
                 Platform.runLater(uiTorrents::clear);
                 break;
@@ -61,9 +66,14 @@ public class TorrentsTableViewModel {
     }
 
     public void setTorrentSelected(UiTorrent uiTorrent) {
-        Torrent torrent = uiTorrentToTorrent.get(uiTorrent);
+        Torrent torrent = getTorrentFromUiTorrent(uiTorrent);
         selectedTorrent = torrent;
         torrentSelectedConsumer.accept(torrent);
+    }
+
+    private Torrent getTorrentFromUiTorrent(UiTorrent uiTorrent) {
+        Sha1Hash infoHash = uiTorrentToInfoHash.get(uiTorrent);
+        return client.getTorrent(infoHash);
     }
 
     public boolean hasSelectedTorrent() {
@@ -75,7 +85,7 @@ public class TorrentsTableViewModel {
     }
 
     public void showTorrentInFileExplorer(UiTorrent uiTorrent) {
-        Torrent torrent = uiTorrentToTorrent.get(uiTorrent);
+        Torrent torrent = getTorrentFromUiTorrent(uiTorrent);
 
         // only works on windows. Doing this because Desktop::browseFileDirectory doesn't work on Windows 10
         final String command = EXPLORER_EXE + " /SELECT,\"" + torrent.getSaveAsPath().toAbsolutePath() + "\"";
