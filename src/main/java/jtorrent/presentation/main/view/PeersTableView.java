@@ -17,6 +17,7 @@ import javafx.scene.control.Dialog;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.input.ContextMenuEvent;
 import jtorrent.presentation.common.util.JTorrentFxmlLoader;
 import jtorrent.presentation.exception.view.ExceptionAlert;
 import jtorrent.presentation.main.model.UiPeer;
@@ -51,6 +52,13 @@ public class PeersTableView extends TableView<UiPeer> {
 
     @FXML
     public void initialize() {
+        addEventFilter(ContextMenuEvent.CONTEXT_MENU_REQUESTED, event -> {
+            PeersTableViewModel vm = viewModel.get();
+            if (vm == null || !vm.hasSelectedTorrent()) {
+                event.consume();
+            }
+        });
+
         setContextMenu(new ContextMenu(new AddPeerMenuItem()));
         itemsProperty().bind(viewModel
                 .map(PeersTableViewModel::getUiPeers)
