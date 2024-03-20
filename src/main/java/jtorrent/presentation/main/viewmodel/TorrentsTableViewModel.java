@@ -27,7 +27,6 @@ public class TorrentsTableViewModel {
     private final Map<UiTorrent, Sha1Hash> uiTorrentToInfoHash = new HashMap<>();
     private final Map<Sha1Hash, UiTorrent> infoHashToUiTorrent = new HashMap<>();
     private final Consumer<Torrent> torrentSelectedConsumer;
-    private Torrent selectedTorrent;
 
     public TorrentsTableViewModel(Client client, Consumer<Torrent> torrentSelectedConsumer) {
         this.client = requireNonNull(client);
@@ -67,21 +66,12 @@ public class TorrentsTableViewModel {
 
     public void setTorrentSelected(UiTorrent uiTorrent) {
         Torrent torrent = getTorrentFromUiTorrent(uiTorrent);
-        selectedTorrent = torrent;
         torrentSelectedConsumer.accept(torrent);
     }
 
     private Torrent getTorrentFromUiTorrent(UiTorrent uiTorrent) {
         Sha1Hash infoHash = uiTorrentToInfoHash.get(uiTorrent);
         return client.getTorrent(infoHash);
-    }
-
-    public boolean hasSelectedTorrent() {
-        return selectedTorrent != null;
-    }
-
-    public Optional<Torrent> getSelectedTorrent() {
-        return Optional.ofNullable(selectedTorrent);
     }
 
     public void showTorrentInFileExplorer(UiTorrent uiTorrent) {
