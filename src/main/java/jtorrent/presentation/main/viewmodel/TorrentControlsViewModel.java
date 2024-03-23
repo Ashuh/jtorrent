@@ -19,6 +19,7 @@ import javafx.beans.property.ReadOnlyObjectWrapper;
 import jtorrent.data.torrent.model.BencodedTorrent;
 import jtorrent.domain.Client;
 import jtorrent.domain.torrent.model.Torrent;
+import jtorrent.domain.torrent.model.TorrentMetadata;
 import jtorrent.presentation.addnewtorrent.view.AddNewTorrentDialog;
 import jtorrent.presentation.common.util.BindingUtils;
 
@@ -83,10 +84,8 @@ public class TorrentControlsViewModel {
     }
 
     public void addTorrent(BencodedTorrent bencodedTorrent, AddNewTorrentDialog.Result result) {
-        Torrent torrent = bencodedTorrent.toDomain();
-        torrent.setName(result.name());
-        torrent.setSaveDirectory(Path.of(result.saveDirectory()));
-        client.addTorrent(torrent);
+        TorrentMetadata torrentMetaData = bencodedTorrent.toDomain();
+        client.addTorrent(torrentMetaData, result.name(), Path.of(result.saveDirectory()));
     }
 
     public void createNewTorrent(File savePath, File source, String trackerUrls, String comment, int pieceSize)

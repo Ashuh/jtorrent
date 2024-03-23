@@ -12,33 +12,20 @@ public class MultiFileInfo extends FileInfo {
 
     private final String directory;
 
-    public MultiFileInfo(String directory, List<FileWithPieceInfo> fileWithPieceInfos, int pieceSize,
-            long totalFileSize, List<Sha1Hash> pieceHashes) {
-        super(fileWithPieceInfos, pieceSize, totalFileSize, pieceHashes);
+    public MultiFileInfo(String directory, List<FileMetadata> fileMetaData, int pieceSize,
+            List<Sha1Hash> pieceHashes) {
+        super(fileMetaData, pieceSize, pieceHashes);
         this.directory = requireNonNull(directory);
-    }
-
-    public static MultiFileInfo build(String directory, List<File> files, int pieceSize, List<Sha1Hash> pieceHashes) {
-        List<FileWithPieceInfo> fileWithPieceInfos = build(files, pieceSize);
-        long totalFileSize = files.stream()
-                .mapToLong(File::getSize)
-                .sum();
-        return new MultiFileInfo(directory, fileWithPieceInfos, pieceSize, totalFileSize, pieceHashes);
-    }
-
-    @Override
-    public boolean isSingleFile() {
-        return false;
     }
 
     @Override
     public Path getFileRoot() {
-        return getSaveDirectory().resolve(directory);
+        return Path.of(directory);
     }
 
     @Override
-    public Path getSaveAsPath() {
-        return getFileRoot();
+    public String getName() {
+        return directory;
     }
 
     @Override
@@ -65,11 +52,9 @@ public class MultiFileInfo extends FileInfo {
     public String toString() {
         return "MultiFileInfo{"
                 + "directory='" + directory + '\''
-                + ", fileWithPieceInfos=" + fileWithPieceInfos
+                + ", fileWithPieceInfos=" + fileMetaData
                 + ", pieceHashes=" + pieceHashes
                 + ", pieceSize=" + pieceSize
-                + ", totalFileSize=" + totalFileSize
-                + ", saveDirectory=" + saveDirectory
                 + '}';
     }
 }

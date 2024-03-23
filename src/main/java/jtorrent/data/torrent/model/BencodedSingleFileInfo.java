@@ -10,8 +10,8 @@ import java.util.Map;
 import java.util.Objects;
 
 import jtorrent.data.torrent.model.util.MapUtil;
-import jtorrent.domain.torrent.model.File;
 import jtorrent.domain.torrent.model.FileInfo;
+import jtorrent.domain.torrent.model.FileMetadata;
 import jtorrent.domain.torrent.model.SingleFileInfo;
 
 public class BencodedSingleFileInfo extends BencodedInfo {
@@ -56,8 +56,18 @@ public class BencodedSingleFileInfo extends BencodedInfo {
 
     @Override
     public FileInfo toDomain() {
-        File domainFile = new File(length, Path.of(name));
-        return SingleFileInfo.build(domainFile, pieceLength, getDomainPieceHashes());
+        FileMetadata fileMetaData = buildFileMetaData();
+        return new SingleFileInfo(fileMetaData, pieceLength, getDomainPieceHashes());
+    }
+
+    private FileMetadata buildFileMetaData() {
+        Path filePath = Path.of(name);
+        int lastPiece = getNumPieces() - 1;
+        long fileEnd = length - 1;
+        int lastPieceEnd = (int) (fileEnd % pieceLength);
+
+        return new FileMetadata(length, filePath, 0, 0,
+                lastPiece, lastPieceEnd, 0, fileEnd);
     }
 
     @Override

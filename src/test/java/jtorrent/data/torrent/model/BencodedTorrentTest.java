@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.net.InetSocketAddress;
+import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.security.NoSuchAlgorithmException;
@@ -23,13 +23,11 @@ import org.junit.jupiter.api.Test;
 import com.dampcake.bencode.BencodeOutputStream;
 
 import jtorrent.domain.common.util.Sha1Hash;
-import jtorrent.domain.torrent.model.File;
 import jtorrent.domain.torrent.model.FileInfo;
+import jtorrent.domain.torrent.model.FileMetadata;
 import jtorrent.domain.torrent.model.MultiFileInfo;
 import jtorrent.domain.torrent.model.SingleFileInfo;
-import jtorrent.domain.torrent.model.Torrent;
-import jtorrent.domain.tracker.model.Tracker;
-import jtorrent.domain.tracker.model.udp.UdpTracker;
+import jtorrent.domain.torrent.model.TorrentMetadata;
 
 class BencodedTorrentTest {
 
@@ -238,20 +236,26 @@ class BencodedTorrentTest {
                 .setCreatedBy("created by")
                 .setInfo(info)
                 .build();
-        Torrent actual = bencodedTorrent.toDomain();
+        TorrentMetadata actual = bencodedTorrent.toDomain();
 
-        Torrent expected = new TorrentBuilder()
-                .setTrackers(Set.of(new UdpTracker(InetSocketAddress.createUnresolved("tracker.example.com", 80))))
+        TorrentMetadata expected = new TorrentMetadataBuilder()
+                .setTrackers(Set.of(URI.create("udp://tracker.example.com:80/announce")))
                 .setCreationDate(LocalDateTime.ofEpochSecond(123456789L, 0, OffsetDateTime.now().getOffset()))
                 .setComment("comment")
                 .setCreatedBy("created by")
                 .setPieceSize(100)
                 .setPieceHashes(List.of(new Sha1Hash(new byte[20])))
                 .setName("name")
-                .setFiles(List.of(
-                        new FileBuilder()
+                .setFileMetadata(List.of(
+                        new FileMetadataBuilder()
                                 .setLength(100)
                                 .setPath(Path.of("name"))
+                                .setFirstPiece(0)
+                                .setFirstPieceStart(0)
+                                .setLastPiece(0)
+                                .setLastPieceEnd(99)
+                                .setStart(0)
+                                .setEnd(99)
                                 .build()
                 ))
                 .setInfoHash(new Sha1Hash(info.getInfoHash()))
@@ -285,10 +289,10 @@ class BencodedTorrentTest {
                 .setCreatedBy("created by")
                 .setInfo(info)
                 .build();
-        Torrent actual = bencodedTorrent.toDomain();
+        TorrentMetadata actual = bencodedTorrent.toDomain();
 
-        Torrent expected = new TorrentBuilder()
-                .setTrackers(Set.of(new UdpTracker(InetSocketAddress.createUnresolved("tracker.example.com", 80))))
+        TorrentMetadata expected = new TorrentMetadataBuilder()
+                .setTrackers(Set.of(URI.create("udp://tracker.example.com:80/announce")))
                 .setCreationDate(LocalDateTime.ofEpochSecond(123456789L, 0, OffsetDateTime.now().getOffset()))
                 .setComment("comment")
                 .setCreatedBy("created by")
@@ -296,14 +300,26 @@ class BencodedTorrentTest {
                 .setPieceHashes(List.of(new Sha1Hash(new byte[20])))
                 .setName("name")
                 .setDirectory("name")
-                .setFiles(List.of(
-                        new FileBuilder()
+                .setFileMetadata(List.of(
+                        new FileMetadataBuilder()
                                 .setLength(100)
                                 .setPath(Path.of("path1", "path2"))
+                                .setFirstPiece(0)
+                                .setFirstPieceStart(0)
+                                .setLastPiece(0)
+                                .setLastPieceEnd(99)
+                                .setStart(0)
+                                .setEnd(99)
                                 .build(),
-                        new FileBuilder()
+                        new FileMetadataBuilder()
                                 .setLength(200)
                                 .setPath(Path.of("path3", "path4"))
+                                .setFirstPiece(1)
+                                .setFirstPieceStart(0)
+                                .setLastPiece(2)
+                                .setLastPieceEnd(99)
+                                .setStart(100)
+                                .setEnd(299)
                                 .build()
                 ))
                 .setInfoHash(new Sha1Hash(info.getInfoHash()))
@@ -440,9 +456,9 @@ class BencodedTorrentTest {
         }
     }
 
-    private static class TorrentBuilder {
+    private static class TorrentMetadataBuilder {
 
-        private Set<Tracker> trackers = Collections.emptySet();
+        private Set<URI> trackers = Collections.emptySet();
         private LocalDateTime creationDate = LocalDateTime.ofEpochSecond(0, 0, ZoneOffset.UTC);
         private String comment = "";
         private String createdBy = "";
@@ -450,90 +466,127 @@ class BencodedTorrentTest {
         private List<Sha1Hash> pieceHashes = Collections.emptyList();
         private String name = "";
         private String directory;
-        private List<File> files = Collections.emptyList();
+        private List<FileMetadata> fileMetadata = Collections.emptyList();
         private Sha1Hash infoHash = new Sha1Hash(new byte[20]);
 
-        public TorrentBuilder setTrackers(Set<Tracker> trackers) {
+        public TorrentMetadataBuilder setTrackers(Set<URI> trackers) {
             this.trackers = trackers;
             return this;
         }
 
-        public TorrentBuilder setCreationDate(LocalDateTime creationDate) {
+        public TorrentMetadataBuilder setCreationDate(LocalDateTime creationDate) {
             this.creationDate = creationDate;
             return this;
         }
 
-        public TorrentBuilder setComment(String comment) {
+        public TorrentMetadataBuilder setComment(String comment) {
             this.comment = comment;
             return this;
         }
 
-        public TorrentBuilder setCreatedBy(String createdBy) {
+        public TorrentMetadataBuilder setCreatedBy(String createdBy) {
             this.createdBy = createdBy;
             return this;
         }
 
-        public TorrentBuilder setPieceSize(int pieceSize) {
+        public TorrentMetadataBuilder setPieceSize(int pieceSize) {
             this.pieceSize = pieceSize;
             return this;
         }
 
-        public TorrentBuilder setPieceHashes(List<Sha1Hash> pieceHashes) {
+        public TorrentMetadataBuilder setPieceHashes(List<Sha1Hash> pieceHashes) {
             this.pieceHashes = pieceHashes;
             return this;
         }
 
-        public TorrentBuilder setName(String name) {
+        public TorrentMetadataBuilder setName(String name) {
             this.name = name;
             return this;
         }
 
-        public TorrentBuilder setDirectory(String directory) {
+        public TorrentMetadataBuilder setDirectory(String directory) {
             this.directory = directory;
             return this;
         }
 
-        public TorrentBuilder setFiles(List<File> files) {
-            this.files = files;
+        public TorrentMetadataBuilder setFileMetadata(List<FileMetadata> fileMetadata) {
+            this.fileMetadata = fileMetadata;
             return this;
         }
 
-        public TorrentBuilder setInfoHash(Sha1Hash infoHash) {
+        public TorrentMetadataBuilder setInfoHash(Sha1Hash infoHash) {
             this.infoHash = infoHash;
             return this;
         }
 
-        public Torrent build() {
+        public TorrentMetadata build() {
             FileInfo fileInfo;
             if (directory == null) {
-                if (files.size() != 1) {
+                if (fileMetadata.size() != 1) {
                     throw new IllegalArgumentException("Number of files must be 1 if directory is null");
                 }
-                fileInfo = SingleFileInfo.build(files.get(0), pieceSize, pieceHashes);
+                FileMetadata fileMetadata = this.fileMetadata.get(0);
+                fileInfo = new SingleFileInfo(fileMetadata, pieceSize, pieceHashes);
             } else {
-                fileInfo = MultiFileInfo.build(directory, files, pieceSize, pieceHashes);
+                fileInfo = new MultiFileInfo(directory, fileMetadata, pieceSize, pieceHashes);
             }
-            return new Torrent(trackers, creationDate, comment, createdBy, name, fileInfo, infoHash);
+            return new TorrentMetadata(trackers, creationDate, comment, createdBy, fileInfo, infoHash);
         }
     }
 
-    private static class FileBuilder {
+    private static class FileMetadataBuilder {
 
-        private int length = 0;
+        private int length;
         private Path path = Path.of("");
+        private int firstPiece;
+        private int firstPieceStart;
+        private int lastPiece;
+        private int lastPieceEnd;
+        private long start;
+        private long end;
 
-        public FileBuilder setLength(int length) {
+        public FileMetadataBuilder setLength(int length) {
             this.length = length;
             return this;
         }
 
-        public FileBuilder setPath(Path path) {
+        public FileMetadataBuilder setPath(Path path) {
             this.path = path;
             return this;
         }
 
-        public File build() {
-            return new File(length, path);
+        public FileMetadataBuilder setFirstPiece(int firstPiece) {
+            this.firstPiece = firstPiece;
+            return this;
+        }
+
+        public FileMetadataBuilder setFirstPieceStart(int firstPieceStart) {
+            this.firstPieceStart = firstPieceStart;
+            return this;
+        }
+
+        public FileMetadataBuilder setLastPiece(int lastPiece) {
+            this.lastPiece = lastPiece;
+            return this;
+        }
+
+        public FileMetadataBuilder setLastPieceEnd(int lastPieceEnd) {
+            this.lastPieceEnd = lastPieceEnd;
+            return this;
+        }
+
+        public FileMetadataBuilder setStart(long start) {
+            this.start = start;
+            return this;
+        }
+
+        public FileMetadataBuilder setEnd(long end) {
+            this.end = end;
+            return this;
+        }
+
+        public FileMetadata build() {
+            return new FileMetadata(length, path, firstPiece, firstPieceStart, lastPiece, lastPieceEnd, start, end);
         }
     }
 }

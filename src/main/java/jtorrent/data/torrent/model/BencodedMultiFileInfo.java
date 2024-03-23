@@ -15,8 +15,8 @@ import java.util.stream.Stream;
 
 import jtorrent.data.torrent.model.util.MapUtil;
 import jtorrent.domain.common.util.ContinuousMergedInputStream;
-import jtorrent.domain.torrent.model.File;
 import jtorrent.domain.torrent.model.FileInfo;
+import jtorrent.domain.torrent.model.FileMetadata;
 import jtorrent.domain.torrent.model.MultiFileInfo;
 
 public class BencodedMultiFileInfo extends BencodedInfo {
@@ -77,10 +77,51 @@ public class BencodedMultiFileInfo extends BencodedInfo {
 
     @Override
     public FileInfo toDomain() {
-        List<File> domainFiles = this.files.stream()
-                .map(BencodedFile::toDomain)
+        List<FileMetadata> fileMetaData = buildFileMetaData();
+        return new MultiFileInfo(name, fileMetaData, pieceLength, getDomainPieceHashes());
+    }
+
+    protected List<FileMetadata> buildFileMetaData() {
+        List<FileMetadata> fileMetaData = new ArrayList<>();
+
+        int prevLastPiece = 0; // inclusive
+        int prevLastPieceEnd = -1; // inclusive
+
+        for (BencodedFile file : getFiles()) {
+            long fileSize = file.getLength();
+
+            int firstPiece = prevLastPiece;
+            int firstPieceStart = prevLastPieceEnd + 1;
+            boolean isPrevLastPieceFullyOccupied = firstPieceStart == pieceLength;
+            if (isPrevLastPieceFullyOccupied) {
+                firstPiece++;
+                firstPieceStart = 0;
+            }
+
+            long fileStart = firstPiece * pieceLength + firstPieceStart;
+            long firstPieceBytes = Math.min(pieceLength - firstPieceStart, fileSize);
+            long remainingFileBytes = fileSize - firstPieceBytes;
+            int numRemainingPieces = (int) Math.ceil(remainingFileBytes / (double) pieceLength);
+            int lastPiece = firstPiece + numRemainingPieces;
+            long fileEnd = fileStart + fileSize - 1;
+            int lastPieceEnd = (int) (fileEnd % pieceLength);
+
+            prevLastPiece = lastPiece;
+            prevLastPieceEnd = lastPieceEnd;
+
+            Path filePath = Path.of(String.join("/", sanitizePath(file.getPath())));
+            FileMetadata fileMetadataItem = new FileMetadata(fileSize, filePath, firstPiece,
+                    firstPieceStart, lastPiece, lastPieceEnd, fileStart, fileEnd);
+            fileMetaData.add(fileMetadataItem);
+        }
+
+        return fileMetaData;
+    }
+
+    protected static List<String> sanitizePath(List<String> path) {
+        return path.stream()
+                .map(part -> part.replaceAll("[\\\\/:*?\"<>|]", "_"))
                 .toList();
-        return MultiFileInfo.build(name, domainFiles, pieceLength, getDomainPieceHashes());
     }
 
     @Override

@@ -8,9 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
-import jtorrent.domain.torrent.model.File;
-import jtorrent.domain.torrent.model.FilePieceInfo;
-import jtorrent.domain.torrent.model.FileWithPieceInfo;
+import jtorrent.domain.torrent.model.FileMetadata;
 import jtorrent.domain.torrent.model.Torrent;
 import jtorrent.domain.torrent.repository.PieceRepository;
 
@@ -40,14 +38,12 @@ public class FilePieceRepository implements PieceRepository {
         ByteBuffer buffer = ByteBuffer.allocate(length);
         long end = start + length - 1; // inclusive
 
-        List<FileWithPieceInfo> fileWithPieceInfos = torrent.getFileWithInfosInRange(start, end);
-        for (FileWithPieceInfo fileWithPieceInfo : fileWithPieceInfos) {
-            File file = fileWithPieceInfo.file();
-            FilePieceInfo filePieceInfo = fileWithPieceInfo.filePieceInfo();
-            long startOffsetInFile = Math.max(start - filePieceInfo.start(), 0);
-            long endOffsetInFile = Math.min(filePieceInfo.end(), end) - filePieceInfo.start();
+        List<FileMetadata> fileMetadata = torrent.getFileMetadataInRange(start, end);
+        for (FileMetadata metadataItem : fileMetadata) {
+            long startOffsetInFile = Math.max(start - metadataItem.start(), 0);
+            long endOffsetInFile = Math.min(metadataItem.end(), end) - metadataItem.start();
             int readLength = (int) (endOffsetInFile - startOffsetInFile + 1);
-            Path path = torrent.getRootSaveDirectory().resolve(file.getPath());
+            Path path = torrent.getRootSaveDirectory().resolve(metadataItem.path());
             buffer.put(read(path, startOffsetInFile, readLength));
         }
         return buffer.array();
@@ -61,16 +57,14 @@ public class FilePieceRepository implements PieceRepository {
         long end = start + data.length - 1; // inclusive
 
         ByteBuffer buffer = ByteBuffer.wrap(data);
-        List<FileWithPieceInfo> fileWithPieceInfos = torrent.getFileWithInfosInRange(start, end);
-        for (FileWithPieceInfo fileWithPieceInfo : fileWithPieceInfos) {
-            File file = fileWithPieceInfo.file();
-            FilePieceInfo filePieceInfo = fileWithPieceInfo.filePieceInfo();
-            long startOffsetInFile = Math.max(start - filePieceInfo.start(), 0);
-            long endOffsetInFile = Math.min(filePieceInfo.end(), end) - filePieceInfo.start();
+        List<FileMetadata> fileMetadata = torrent.getFileMetadataInRange(start, end);
+        for (FileMetadata metadataItem : fileMetadata) {
+            long startOffsetInFile = Math.max(start - metadataItem.start(), 0);
+            long endOffsetInFile = Math.min(metadataItem.end(), end) - metadataItem.start();
             int writeLength = (int) (endOffsetInFile - startOffsetInFile + 1);
             byte[] fileData = new byte[writeLength];
             buffer.get(fileData);
-            Path path = torrent.getRootSaveDirectory().resolve(file.getPath());
+            Path path = torrent.getRootSaveDirectory().resolve(metadataItem.path());
             write(path, startOffsetInFile, fileData);
         }
     }

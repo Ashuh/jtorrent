@@ -10,9 +10,9 @@ import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.ReadOnlyStringProperty;
 import javafx.beans.property.ReadOnlyStringWrapper;
-import jtorrent.domain.torrent.model.File;
-import jtorrent.domain.torrent.model.FilePieceInfo;
-import jtorrent.domain.torrent.model.FileWithPieceInfo;
+import jtorrent.domain.torrent.model.FileMetadata;
+import jtorrent.domain.torrent.model.FileMetadataWithState;
+import jtorrent.domain.torrent.model.FileProgress;
 import jtorrent.presentation.common.util.BindingUtils;
 import jtorrent.presentation.common.util.DataSize;
 
@@ -59,16 +59,16 @@ public class UiFileInfo {
         this.disposables = disposables;
     }
 
-    public static UiFileInfo fromDomain(FileWithPieceInfo fileWithPieceInfo) {
-        File file = fileWithPieceInfo.file();
-        FilePieceInfo filePieceInfo = fileWithPieceInfo.filePieceInfo();
+    public static UiFileInfo fromDomain(FileMetadataWithState fileMetadataWithState) {
+        FileMetadata fileMetadata = fileMetadataWithState.fileMetaData();
+        FileProgress fileProgress = fileMetadataWithState.fileProgress();
 
-        ReadOnlyStringWrapper path = new ReadOnlyStringWrapper(file.getPath().toString());
-        ReadOnlyStringWrapper size = new ReadOnlyStringWrapper(DataSize.bestFitBytes(file.getSize()).toString());
+        ReadOnlyStringWrapper path = new ReadOnlyStringWrapper(fileMetadata.path().toString());
+        ReadOnlyStringWrapper size = new ReadOnlyStringWrapper(DataSize.bestFitBytes(fileMetadata.size()).toString());
         ReadOnlyStringWrapper done = new ReadOnlyStringWrapper("");
         ReadOnlyStringWrapper percentDone = new ReadOnlyStringWrapper("");
-        ReadOnlyIntegerWrapper firstPiece = new ReadOnlyIntegerWrapper(filePieceInfo.firstPiece());
-        ReadOnlyIntegerWrapper numPieces = new ReadOnlyIntegerWrapper(filePieceInfo.numPieces());
+        ReadOnlyIntegerWrapper firstPiece = new ReadOnlyIntegerWrapper(fileMetadata.firstPiece());
+        ReadOnlyIntegerWrapper numPieces = new ReadOnlyIntegerWrapper(fileMetadata.numPieces());
         ReadOnlyObjectWrapper<BitSet> pieces = new ReadOnlyObjectWrapper<>(new BitSet());
         ReadOnlyStringWrapper priority = new ReadOnlyStringWrapper("");
         ReadOnlyStringWrapper mode = new ReadOnlyStringWrapper("");
@@ -80,17 +80,17 @@ public class UiFileInfo {
         ReadOnlyStringWrapper codecs = new ReadOnlyStringWrapper("");
         CompositeDisposable disposables = new CompositeDisposable();
 
-        Observable<String> doneObservable = filePieceInfo.getVerifiedBytesObservable()
+        Observable<String> doneObservable = fileProgress.getVerifiedBytesObservable()
                 .map(DataSize::bestFitBytes)
                 .map(DataSize::toString);
         BindingUtils.subscribe(doneObservable, done, disposables);
 
-        Observable<String> percentDoneObservable = filePieceInfo.getVerifiedBytesObservable()
-                .map(verifiedBytes -> (double) verifiedBytes / file.getSize())
+        Observable<String> percentDoneObservable = fileProgress.getVerifiedBytesObservable()
+                .map(verifiedBytes -> (double) verifiedBytes / fileMetadata.size())
                 .map(percent -> String.format("%.1f%%", percent * 100));
         BindingUtils.subscribe(percentDoneObservable, percentDone, disposables);
 
-        Observable<BitSet> fileVerifiedPiecesObservable = filePieceInfo.getVerifiedPiecesObservable();
+        Observable<BitSet> fileVerifiedPiecesObservable = fileProgress.getVerifiedPiecesObservable();
         BindingUtils.subscribe(fileVerifiedPiecesObservable, pieces, disposables);
 
         return new UiFileInfo(path, size, done, percentDone, firstPiece, numPieces, pieces, priority, mode,

@@ -10,6 +10,7 @@ import java.nio.file.Path;
 import jtorrent.data.torrent.model.BencodedTorrent;
 import jtorrent.domain.Client;
 import jtorrent.domain.torrent.model.Torrent;
+import jtorrent.domain.torrent.model.TorrentMetadata;
 import jtorrent.presentation.addnewtorrent.view.AddNewTorrentDialog;
 
 public class MainViewModel {
@@ -73,9 +74,7 @@ public class MainViewModel {
     }
 
     public void addTorrent(BencodedTorrent bencodedTorrent, AddNewTorrentDialog.Result result) {
-        Torrent torrent = bencodedTorrent.toDomain();
-        torrent.setName(result.name());
-        torrent.setSaveDirectory(Path.of(result.saveDirectory()));
-        client.addTorrent(torrent);
+        TorrentMetadata torrentMetaData = bencodedTorrent.toDomain();
+        client.addTorrent(torrentMetaData, result.name(), Path.of(result.saveDirectory()));
     }
 }

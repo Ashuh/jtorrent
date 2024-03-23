@@ -5,8 +5,6 @@ import static jtorrent.domain.common.util.ValidationUtil.requireNonNegative;
 import static jtorrent.domain.common.util.ValidationUtil.requireNonNull;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.IntStream;
@@ -15,82 +13,47 @@ import jtorrent.domain.common.util.Sha1Hash;
 
 public abstract class FileInfo {
 
-    protected final List<FileWithPieceInfo> fileWithPieceInfos;
+    private static final int BLOCK_SIZE = 16384;
+
+    protected final List<FileMetadata> fileMetaData;
     protected final List<Sha1Hash> pieceHashes;
     protected final int pieceSize;
-    protected final long totalFileSize;
-    protected Path saveDirectory = Paths.get("download").toAbsolutePath(); // TODO: use default downloads folder?
 
-    protected FileInfo(List<FileWithPieceInfo> fileWithPieceInfos, int pieceSize, long totalFileSize,
-            List<Sha1Hash> pieceHashes) {
-        this.fileWithPieceInfos = fileWithPieceInfos;
+    protected FileInfo(List<FileMetadata> fileMetaData, int pieceSize, List<Sha1Hash> pieceHashes) {
+        this.fileMetaData = fileMetaData;
         this.pieceSize = pieceSize;
-        this.totalFileSize = totalFileSize;
         this.pieceHashes = requireNonNull(pieceHashes);
     }
 
-    protected static List<FileWithPieceInfo> build(List<File> files, int pieceSize) {
-        List<FileWithPieceInfo> fileWithPieceInfos = new ArrayList<>();
-
-        int prevLastPiece = 0; // inclusive
-        int prevLastPieceEnd = -1; // inclusive
-
-        for (File file : files) {
-            int firstPiece = prevLastPiece;
-            int firstPieceStart = prevLastPieceEnd + 1;
-            boolean isPrevLastPieceFullyOccupied = firstPieceStart == pieceSize;
-            if (isPrevLastPieceFullyOccupied) {
-                firstPiece++;
-                firstPieceStart = 0;
-            }
-
-            long fileStart = firstPiece * pieceSize + firstPieceStart;
-            long firstPieceBytes = Math.min(pieceSize - firstPieceStart, file.getSize());
-            long remainingFileBytes = file.getSize() - firstPieceBytes;
-            int numRemainingPieces = (int) Math.ceil(remainingFileBytes / (double) pieceSize);
-            int lastPiece = firstPiece + numRemainingPieces;
-            long fileEnd = fileStart + file.getSize() - 1;
-            int lastPieceEnd = (int) (fileEnd % pieceSize);
-
-            prevLastPiece = lastPiece;
-            prevLastPieceEnd = lastPieceEnd;
-            FilePieceInfo filePieceInfo =
-                    new FilePieceInfo(firstPiece, firstPieceStart, lastPiece, lastPieceEnd, fileStart, fileEnd);
-            fileWithPieceInfos.add(new FileWithPieceInfo(file, filePieceInfo));
-        }
-
-        return fileWithPieceInfos;
-    }
-
     /**
-     * Returns a list of {@link FileWithPieceInfo} that fall within the given byte range.
+     * Returns a list of {@link FileMetadataWithState} that fall within the given byte range.
      * The returned list is sorted by the start byte offset of the file.
      *
      * @param start the byte offset to start at (inclusive)
      * @param end   the byte offset to end at (inclusive)
-     * @return a list of {@link FileWithPieceInfo} that fall within the given byte range
+     * @return a list of {@link FileMetadataWithState} that fall within the given byte range
      */
-    public List<FileWithPieceInfo> getInRange(long start, long end) {
+    public List<FileMetadata> getInRange(long start, long end) {
         int startIndex = getFileIndex(start); // inclusive
         int endIndex = getFileIndex(end); // inclusive
 
         return IntStream.range(startIndex, endIndex + 1)
-                .mapToObj(fileWithPieceInfos::get)
+                .mapToObj(fileMetaData::get)
                 .toList();
     }
 
     private int getFileIndex(long offset) {
         requireNonNegative(offset);
-        requireAtMost(offset, totalFileSize - 1);
+        requireAtMost(offset, getTotalFileSize() - 1);
 
         int low = 0;
         int high = getNumFiles() - 1;
 
         while (low < high) {
             int mid = low + (high - low) / 2;
-            FilePieceInfo midFilePieceInfo = getFileInfo(mid);
-            long midStart = midFilePieceInfo.start();
-            long midEnd = midFilePieceInfo.end();
+            FileMetadata metaData = fileMetaData.get(mid);
+            long midStart = metaData.start();
+            long midEnd = metaData.end();
             boolean isOffsetWithinMidFile = offset >= midStart && offset <= midEnd;
 
             if (isOffsetWithinMidFile) {
@@ -105,36 +68,51 @@ public abstract class FileInfo {
         return high;
     }
 
-    public int getNumFiles() {
-        return fileWithPieceInfos.size();
+    public int getBlockSize() {
+        return BLOCK_SIZE;
     }
 
-    public FilePieceInfo getFileInfo(int index) {
-        return fileWithPieceInfos.get(index).filePieceInfo();
+    public int getBlockSize(int pieceIndex, int blockIndex) {
+        if (blockIndex == getNumBlocks(pieceIndex) - 1) {
+            int remainder = getPieceSize(pieceIndex) % BLOCK_SIZE;
+            return remainder == 0 ? BLOCK_SIZE : remainder;
+        }
+        return BLOCK_SIZE;
     }
 
-    public abstract boolean isSingleFile();
+    public int getNumBlocks(int pieceIndex) {
+        return (int) Math.ceil((double) getPieceSize(pieceIndex) / BLOCK_SIZE);
+    }
 
-    public List<FileWithPieceInfo> getFileWithInfos() {
-        return fileWithPieceInfos;
+    public int getPieceSize(int piece) {
+        if (piece == getNumPieces() - 1) {
+            int remainder = (int) (getTotalFileSize() % pieceSize);
+            return remainder == 0 ? pieceSize : remainder;
+        }
+
+        return pieceSize;
     }
 
     public int getPieceSize() {
         return pieceSize;
     }
 
+    public long getPieceOffset(int piece) {
+        return (long) getPieceSize() * piece;
+    }
+
+    public int getNumFiles() {
+        return fileMetaData.size();
+    }
+
     public long getTotalFileSize() {
-        return totalFileSize;
+        return getFileMetaData().stream()
+                .mapToLong(FileMetadata::size)
+                .sum();
     }
 
-    public List<File> getFiles() {
-        return fileWithPieceInfos.stream()
-                .map(FileWithPieceInfo::file)
-                .toList();
-    }
-
-    public List<Sha1Hash> getPieceHashes() {
-        return pieceHashes;
+    public List<FileMetadata> getFileMetaData() {
+        return fileMetaData;
     }
 
     public Sha1Hash getPieceHash(int index) {
@@ -146,33 +124,21 @@ public abstract class FileInfo {
     }
 
     /**
-     * Gets the {@link Path} to the directory that is used to save the torrent contents.
-     * Torrent contents refer to either a single file in the case of a single file torrent,
-     * or a directory in the case of a multi-file torrent.
-     */
-    public Path getSaveDirectory() {
-        return saveDirectory;
-    }
-
-    public void setSaveDirectory(Path saveDirectory) {
-        this.saveDirectory = requireNonNull(saveDirectory);
-    }
-
-    /**
-     * Gets the root directory of the {@link File}s that this {@link FileInfo} contains.
+     * Gets the root directory of the files that this {@link FileInfo} contains.
      */
     public abstract Path getFileRoot();
 
     /**
-     * Gets the path to the file or directory to which the torrent contents should be saved.
-     * If the torrent is a single file torrent, then the returned path is the path to the file.
-     * If the torrent is a multi-file torrent, then the returned path is the path to the directory containing the files.
+     * Gets the name of the file or directory that the torrent contents should be saved as.
+     *
+     * @return the name of the file if the torrent is a single file torrent,
+     * or the name of the directory if the torrent is a multi-file torrent
      */
-    public abstract Path getSaveAsPath();
+    public abstract String getName();
 
     @Override
     public int hashCode() {
-        return Objects.hash(fileWithPieceInfos, pieceHashes, pieceSize, totalFileSize, saveDirectory);
+        return Objects.hash(fileMetaData, pieceHashes, pieceSize);
     }
 
     @Override
@@ -185,9 +151,7 @@ public abstract class FileInfo {
         }
         FileInfo fileInfo = (FileInfo) o;
         return pieceSize == fileInfo.pieceSize
-                && totalFileSize == fileInfo.totalFileSize
-                && Objects.equals(fileWithPieceInfos, fileInfo.fileWithPieceInfos)
-                && Objects.equals(pieceHashes, fileInfo.pieceHashes)
-                && Objects.equals(saveDirectory, fileInfo.saveDirectory);
+                && Objects.equals(fileMetaData, fileInfo.fileMetaData)
+                && Objects.equals(pieceHashes, fileInfo.pieceHashes);
     }
 }

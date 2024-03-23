@@ -27,9 +27,7 @@ import jtorrent.data.torrent.model.exception.MappingException;
 import jtorrent.domain.common.util.Sha1Hash;
 import jtorrent.domain.common.util.bencode.BencodedObject;
 import jtorrent.domain.torrent.model.FileInfo;
-import jtorrent.domain.torrent.model.Torrent;
-import jtorrent.domain.tracker.model.Tracker;
-import jtorrent.domain.tracker.model.factory.TrackerFactory;
+import jtorrent.domain.torrent.model.TorrentMetadata;
 
 public class BencodedTorrent extends BencodedObject {
 
@@ -146,22 +144,20 @@ public class BencodedTorrent extends BencodedObject {
         return getInfo().getFiles();
     }
 
-    public Torrent toDomain() {
+    public TorrentMetadata toDomain() {
         try {
-            Set<Tracker> trackers = new HashSet<>();
-            trackers.add(TrackerFactory.fromUri(URI.create(announce)));
+            Set<URI> trackers = new HashSet<>();
+            trackers.add(URI.create(announce));
             announceList.stream()
                     .flatMap(List::stream)
                     .map(URI::create)
-                    .map(TrackerFactory::fromUri)
                     .collect(Collectors.toCollection(() -> trackers));
 
             LocalDateTime creationDateTime = LocalDateTime.ofEpochSecond(creationDate, 0,
                     OffsetDateTime.now().getOffset());
-            String name = info.getName();
             FileInfo fileInfo = info.toDomain();
             Sha1Hash infoHash = new Sha1Hash(info.getInfoHash());
-            return new Torrent(trackers, creationDateTime, comment, createdBy, name, fileInfo, infoHash);
+            return new TorrentMetadata(trackers, creationDateTime, comment, createdBy, fileInfo, infoHash);
         } catch (Exception e) {
             throw new MappingException("Failed to map BencodedTorrent to Torrent", e);
         }

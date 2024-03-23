@@ -28,7 +28,7 @@ public class FileInfoViewModel {
             return;
         }
 
-        List<UiFileInfo> selectedUiFilesInfos = torrent.getFilesWithInfo().stream()
+        List<UiFileInfo> selectedUiFilesInfos = torrent.getFileMetaDataWithState().stream()
                 .map(UiFileInfo::fromDomain)
                 .toList();
         Platform.runLater(() -> fileInfos.setAll(selectedUiFilesInfos));

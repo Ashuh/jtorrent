@@ -63,6 +63,10 @@ public abstract class BencodedInfo extends BencodedObject {
         return hashesConcat;
     }
 
+    public int getNumPieces() {
+        return pieces.length / Sha1Hash.HASH_SIZE;
+    }
+
     public int getPieceLength() {
         return pieceLength;
     }

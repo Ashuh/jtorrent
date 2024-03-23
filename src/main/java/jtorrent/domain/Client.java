@@ -26,6 +26,7 @@ import jtorrent.domain.peer.communication.PeerSocket;
 import jtorrent.domain.peer.model.PeerContactInfo;
 import jtorrent.domain.torrent.handler.TorrentHandler;
 import jtorrent.domain.torrent.model.Torrent;
+import jtorrent.domain.torrent.model.TorrentMetadata;
 import jtorrent.domain.torrent.repository.PieceRepository;
 import jtorrent.domain.torrent.repository.TorrentRepository;
 
@@ -85,7 +86,8 @@ public class Client implements LocalServiceDiscoveryManager.Listener, TorrentHan
         infoHashToTorrentHandler.values().forEach(TorrentHandler::stop);
     }
 
-    public void addTorrent(Torrent torrent) {
+    public void addTorrent(TorrentMetadata torrentMetaData, String name, Path saveDirectory) {
+        Torrent torrent = new Torrent(torrentMetaData, name, saveDirectory);
         torrentRepository.addTorrent(torrent);
     }
 

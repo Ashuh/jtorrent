@@ -29,7 +29,11 @@ public class FileTorrentRepository implements TorrentRepository {
     public FileTorrentRepository() {
         // TODO: temporary
         try {
-            addTorrent(loadTorrent(Path.of("ubuntu-23.04-desktop-amd64.iso.torrent")).toDomain());
+            Torrent torrent = new Torrent(
+                    loadTorrent(Path.of("ubuntu-23.04-desktop-amd64.iso.torrent")).toDomain(),
+                    "ubuntu-23.04-desktop-amd64.iso",
+                    Path.of("ubuntu-23.04-desktop-amd64.iso"));
+            addTorrent(torrent);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
