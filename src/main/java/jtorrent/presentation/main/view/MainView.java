@@ -17,7 +17,7 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Window;
-import jtorrent.data.torrent.model.BencodedTorrent;
+import jtorrent.domain.torrent.model.TorrentMetadata;
 import jtorrent.presentation.addnewtorrent.view.AddNewTorrentDialog;
 import jtorrent.presentation.common.util.JTorrentFxmlLoader;
 import jtorrent.presentation.main.util.AddNewTorrentFileEventHandler;
@@ -105,8 +105,8 @@ public class MainView extends BorderPane {
         }
 
         @Override
-        protected void addTorrent(BencodedTorrent bencodedTorrent, AddNewTorrentDialog.Result result) {
-            viewModel.addTorrent(bencodedTorrent, result);
+        protected void addTorrent(TorrentMetadata torrentMetadata, AddNewTorrentDialog.Result result) {
+            viewModel.addTorrent(torrentMetadata, result);
         }
 
         @Override
@@ -115,7 +115,7 @@ public class MainView extends BorderPane {
         }
 
         @Override
-        protected BencodedTorrent loadTorrent(File file) throws IOException {
+        protected TorrentMetadata loadTorrent(File file) throws IOException {
             return viewModel.loadTorrent(file);
         }
     }
@@ -134,8 +134,8 @@ public class MainView extends BorderPane {
         }
 
         @Override
-        protected void addTorrent(BencodedTorrent bencodedTorrent, AddNewTorrentDialog.Result result) {
-            viewModel.addTorrent(bencodedTorrent, result);
+        protected void addTorrent(TorrentMetadata torrentMetadata, AddNewTorrentDialog.Result result) {
+            viewModel.addTorrent(torrentMetadata, result);
         }
 
         @Override
@@ -144,7 +144,7 @@ public class MainView extends BorderPane {
         }
 
         @Override
-        protected BencodedTorrent loadTorrent(String string) throws IOException {
+        protected TorrentMetadata loadTorrent(String string) throws IOException {
             return viewModel.loadTorrent(string);
         }
     }

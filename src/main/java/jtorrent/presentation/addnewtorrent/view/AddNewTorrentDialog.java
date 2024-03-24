@@ -2,16 +2,16 @@ package jtorrent.presentation.addnewtorrent.view;
 
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Dialog;
-import jtorrent.data.torrent.model.BencodedTorrent;
+import jtorrent.domain.torrent.model.TorrentMetadata;
 import jtorrent.presentation.addnewtorrent.viewmodel.AddNewTorrentViewModel;
 
 public class AddNewTorrentDialog extends Dialog<AddNewTorrentDialog.Result> {
 
     private final AddNewTorrentView addNewTorrentView;
 
-    public AddNewTorrentDialog(BencodedTorrent bencodedTorrent) {
+    public AddNewTorrentDialog(TorrentMetadata torrentMetadata) {
         addNewTorrentView = new AddNewTorrentView();
-        AddNewTorrentViewModel viewModel = new AddNewTorrentViewModel(bencodedTorrent);
+        AddNewTorrentViewModel viewModel = new AddNewTorrentViewModel(torrentMetadata);
         addNewTorrentView.setViewModel(viewModel);
         setDialogPane(addNewTorrentView);
         setTitle(viewModel.getName() + " - Add New Torrent");

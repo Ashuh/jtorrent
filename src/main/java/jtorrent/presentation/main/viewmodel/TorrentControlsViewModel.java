@@ -16,7 +16,6 @@ import io.reactivex.rxjava3.disposables.Disposable;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
-import jtorrent.data.torrent.model.BencodedTorrent;
 import jtorrent.domain.Client;
 import jtorrent.domain.torrent.model.Torrent;
 import jtorrent.domain.torrent.model.TorrentMetadata;
@@ -74,18 +73,17 @@ public class TorrentControlsViewModel {
         client.removeTorrent(selectedTorrent);
     }
 
-    public BencodedTorrent loadTorrentContents(String urlString) throws IOException {
+    public TorrentMetadata loadTorrentContents(String urlString) throws IOException {
         URL url = new URL(urlString);
         return client.loadTorrent(url);
     }
 
-    public BencodedTorrent loadTorrentContents(File file) throws IOException {
+    public TorrentMetadata loadTorrentContents(File file) throws IOException {
         return client.loadTorrent(file);
     }
 
-    public void addTorrent(BencodedTorrent bencodedTorrent, AddNewTorrentDialog.Result result) {
-        TorrentMetadata torrentMetaData = bencodedTorrent.toDomain();
-        client.addTorrent(torrentMetaData, result.name(), Path.of(result.saveDirectory()));
+    public void addTorrent(TorrentMetadata torrentMetadata, AddNewTorrentDialog.Result result) {
+        client.addTorrent(torrentMetadata, result.name(), Path.of(result.saveDirectory()));
     }
 
     public void createNewTorrent(File savePath, File source, String trackerUrls, String comment, int pieceSize)

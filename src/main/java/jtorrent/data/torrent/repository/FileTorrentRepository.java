@@ -19,6 +19,7 @@ import jtorrent.domain.common.util.Sha1Hash;
 import jtorrent.domain.common.util.rx.MutableRxObservableList;
 import jtorrent.domain.common.util.rx.RxObservableList;
 import jtorrent.domain.torrent.model.Torrent;
+import jtorrent.domain.torrent.model.TorrentMetadata;
 import jtorrent.domain.torrent.repository.TorrentRepository;
 
 public class FileTorrentRepository implements TorrentRepository {
@@ -30,7 +31,7 @@ public class FileTorrentRepository implements TorrentRepository {
         // TODO: temporary
         try {
             Torrent torrent = new Torrent(
-                    loadTorrent(Path.of("ubuntu-23.04-desktop-amd64.iso.torrent")).toDomain(),
+                    loadTorrent(Path.of("ubuntu-23.04-desktop-amd64.iso.torrent")),
                     "ubuntu-23.04-desktop-amd64.iso",
                     Path.of("ubuntu-23.04-desktop-amd64.iso"));
             addTorrent(torrent);
@@ -39,19 +40,19 @@ public class FileTorrentRepository implements TorrentRepository {
         }
     }
 
-    public BencodedTorrent loadTorrent(Path path) throws IOException {
+    public TorrentMetadata loadTorrent(Path path) throws IOException {
         File file = path.toFile();
         return loadTorrent(file);
     }
 
     @Override
-    public BencodedTorrent loadTorrent(File file) throws IOException {
+    public TorrentMetadata loadTorrent(File file) throws IOException {
         InputStream inputStream = new FileInputStream(file);
         return loadTorrent(inputStream);
     }
 
     @Override
-    public BencodedTorrent loadTorrent(URL url) throws IOException {
+    public TorrentMetadata loadTorrent(URL url) throws IOException {
         // For some reason decoding directly from the URL stream doesn't work, so we have to read it into a byte array
         // first.
         try (BufferedInputStream in = new BufferedInputStream(url.openStream());
@@ -69,8 +70,8 @@ public class FileTorrentRepository implements TorrentRepository {
         }
     }
 
-    private BencodedTorrent loadTorrent(InputStream inputStream) throws IOException {
-        return BencodedTorrent.decode(inputStream);
+    private TorrentMetadata loadTorrent(InputStream inputStream) throws IOException {
+        return BencodedTorrent.decode(inputStream).toDomain();
     }
 
     @Override

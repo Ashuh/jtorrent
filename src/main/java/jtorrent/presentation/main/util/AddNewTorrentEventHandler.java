@@ -6,7 +6,7 @@ import java.util.Optional;
 import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.stage.Window;
-import jtorrent.data.torrent.model.BencodedTorrent;
+import jtorrent.domain.torrent.model.TorrentMetadata;
 import jtorrent.presentation.addnewtorrent.view.AddNewTorrentDialog;
 import jtorrent.presentation.exception.view.ExceptionAlert;
 
@@ -27,11 +27,11 @@ public abstract class AddNewTorrentEventHandler<T, E extends Event> implements E
         }
 
         try {
-            BencodedTorrent bencodedTorrent = loadTorrent(userInput.get());
-            AddNewTorrentDialog dialog = new AddNewTorrentDialog(bencodedTorrent);
+            TorrentMetadata torrentMetadata = loadTorrent(userInput.get());
+            AddNewTorrentDialog dialog = new AddNewTorrentDialog(torrentMetadata);
             dialog.initOwner(getOwnerWindow());
             Optional<AddNewTorrentDialog.Result> result = dialog.showAndWait();
-            result.ifPresent(r -> addTorrent(bencodedTorrent, r));
+            result.ifPresent(r -> addTorrent(torrentMetadata, r));
         } catch (IOException e) {
             ExceptionAlert alert = new ExceptionAlert("Error", "Failed to load torrent", e);
             alert.showAndWait();
@@ -40,11 +40,11 @@ public abstract class AddNewTorrentEventHandler<T, E extends Event> implements E
 
     protected abstract Optional<T> getUserInput();
 
-    protected abstract BencodedTorrent loadTorrent(T userInput) throws IOException;
+    protected abstract TorrentMetadata loadTorrent(T userInput) throws IOException;
 
     protected abstract Window getOwnerWindow();
 
-    protected abstract void addTorrent(BencodedTorrent bencodedTorrent, AddNewTorrentDialog.Result result);
+    protected abstract void addTorrent(TorrentMetadata torrentMetadata, AddNewTorrentDialog.Result result);
 
     protected abstract boolean shouldHandle(E event);
 }

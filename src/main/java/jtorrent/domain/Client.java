@@ -95,11 +95,11 @@ public class Client implements LocalServiceDiscoveryManager.Listener, TorrentHan
         torrentRepository.removeTorrent(torrent);
     }
 
-    public BencodedTorrent loadTorrent(File file) throws IOException {
+    public TorrentMetadata loadTorrent(File file) throws IOException {
         return torrentRepository.loadTorrent(file);
     }
 
-    public BencodedTorrent loadTorrent(URL url) throws IOException {
+    public TorrentMetadata loadTorrent(URL url) throws IOException {
         return torrentRepository.loadTorrent(url);
     }
 

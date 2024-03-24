@@ -1,8 +1,8 @@
 package jtorrent.presentation.addnewtorrent.viewmodel;
 
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -14,8 +14,8 @@ import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.scene.control.TreeItem;
-import jtorrent.data.torrent.model.BencodedFile;
-import jtorrent.data.torrent.model.BencodedTorrent;
+import jtorrent.domain.torrent.model.FileMetadata;
+import jtorrent.domain.torrent.model.TorrentMetadata;
 import jtorrent.presentation.addnewtorrent.model.UiFileInfo;
 import jtorrent.presentation.common.util.DataSize;
 import jtorrent.presentation.common.util.DateFormatter;
@@ -29,46 +29,46 @@ public class AddNewTorrentViewModel {
     private final ReadOnlyStringWrapper date = new ReadOnlyStringWrapper();
     private final ReadOnlyObjectWrapper<TreeItem<UiFileInfo>> files = new ReadOnlyObjectWrapper<>();
 
-    public AddNewTorrentViewModel(BencodedTorrent torrent) {
+    public AddNewTorrentViewModel(TorrentMetadata torrent) {
         saveDirectory.set(Paths.get("download").toAbsolutePath().toString());
-        name.set(torrent.getName());
-        comment.set(torrent.getComment());
-        size.set(DataSize.bestFitBytes(torrent.getTotalSize()).toString());
-        LocalDateTime creationDateTime = LocalDateTime.ofEpochSecond(torrent.getCreationDate(), 0,
-                OffsetDateTime.now().getOffset());
+        name.set(torrent.fileInfo().getName());
+        comment.set(torrent.comment());
+        size.set(DataSize.bestFitBytes(torrent.fileInfo().getTotalFileSize()).toString());
+        LocalDateTime creationDateTime = torrent.creationDate();
         date.set(DateFormatter.format(creationDateTime));
-        files.set(buildFileTree(torrent.getFiles()));
+        files.set(buildFileTree(torrent.fileInfo().getFileMetaData()));
     }
 
-    private static TreeItem<UiFileInfo> buildFileTree(Collection<BencodedFile> files) {
-        Map<String, Long> pathToTotalSize = new HashMap<>();
+    private static TreeItem<UiFileInfo> buildFileTree(Collection<FileMetadata> files) {
+        Map<Path, Long> pathToTotalSize = new HashMap<>();
 
-        for (BencodedFile file : files) {
-            String fullPath = "";
-            for (String component : file.getPath()) {
-                fullPath += "/" + component;
-                pathToTotalSize.merge(fullPath, file.getLength(), Long::sum);
+        for (FileMetadata file : files) {
+            Path fullPath = Path.of("");
+
+            for (Path component : file.path()) {
+                fullPath = fullPath.resolve(component);
+                pathToTotalSize.merge(fullPath, file.size(), Long::sum);
             }
         }
 
         TreeItem<UiFileInfo> root = new TreeItem<>();
 
-        for (BencodedFile file : files) {
+        for (FileMetadata file : files) {
             TreeItem<UiFileInfo> current = root;
-            String fullPath = "";
+            Path fullPath = Path.of("");
 
-            for (String component : file.getPath()) {
-                fullPath += "/" + component;
+            for (Path component : file.path()) {
+                fullPath = fullPath.resolve(component);
                 String size = DataSize.bestFitBytes(pathToTotalSize.get(fullPath)).toString();
-
                 TreeItem<UiFileInfo> currentTemp = current;
-                boolean isDirectory = !file.getPath().get(file.getPath().size() - 1).equals(component);
+                boolean isDirectory = !file.path().equals(component);
+                String componentName = component.toString();
 
                 current = current.getChildren().stream()
-                        .filter(item -> item.getValue().getName().equals(component))
+                        .filter(item -> item.getValue().getName().equals(componentName))
                         .findFirst()
                         .orElseGet(() -> {
-                            UiFileInfo fileInfo = new UiFileInfo(component, size, isDirectory);
+                            UiFileInfo fileInfo = new UiFileInfo(componentName, size, isDirectory);
                             TreeItem<UiFileInfo> item = new TreeItem<>(fileInfo);
                             currentTemp.getChildren().add(item);
                             return item;

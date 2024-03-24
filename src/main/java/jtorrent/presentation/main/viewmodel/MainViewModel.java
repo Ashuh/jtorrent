@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Path;
 
-import jtorrent.data.torrent.model.BencodedTorrent;
 import jtorrent.domain.Client;
 import jtorrent.domain.torrent.model.Torrent;
 import jtorrent.domain.torrent.model.TorrentMetadata;
@@ -64,17 +63,16 @@ public class MainViewModel {
         return chartViewModel;
     }
 
-    public BencodedTorrent loadTorrent(File file) throws IOException {
+    public TorrentMetadata loadTorrent(File file) throws IOException {
         return client.loadTorrent(file);
     }
 
-    public BencodedTorrent loadTorrent(String urlString) throws IOException {
+    public TorrentMetadata loadTorrent(String urlString) throws IOException {
         URL url = new URL(urlString);
         return client.loadTorrent(url);
     }
 
-    public void addTorrent(BencodedTorrent bencodedTorrent, AddNewTorrentDialog.Result result) {
-        TorrentMetadata torrentMetaData = bencodedTorrent.toDomain();
-        client.addTorrent(torrentMetaData, result.name(), Path.of(result.saveDirectory()));
+    public void addTorrent(TorrentMetadata torrentMetadata, AddNewTorrentDialog.Result result) {
+        client.addTorrent(torrentMetadata, result.name(), Path.of(result.saveDirectory()));
     }
 }

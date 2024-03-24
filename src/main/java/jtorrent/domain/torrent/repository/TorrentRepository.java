@@ -9,14 +9,15 @@ import jtorrent.data.torrent.model.BencodedTorrent;
 import jtorrent.domain.common.util.Sha1Hash;
 import jtorrent.domain.common.util.rx.RxObservableList;
 import jtorrent.domain.torrent.model.Torrent;
+import jtorrent.domain.torrent.model.TorrentMetadata;
 
 public interface TorrentRepository {
 
     void addTorrent(Torrent torrent);
 
-    BencodedTorrent loadTorrent(File file) throws IOException;
+    TorrentMetadata loadTorrent(File file) throws IOException;
 
-    BencodedTorrent loadTorrent(URL url) throws IOException;
+    TorrentMetadata loadTorrent(URL url) throws IOException;
 
     void saveTorrent(BencodedTorrent bencodedTorrent, Path savePath) throws IOException;
 
