@@ -54,7 +54,7 @@ public class BencodedMultiFileInfo extends BencodedInfo {
         List<BencodedFile> files = new ArrayList<>();
         for (Path filePath : filePaths) {
             long length = Files.size(filePath);
-            files.add(BencodedFile.fromPath(filePath, length));
+            files.add(BencodedFile.fromPath(source.relativize(filePath), length));
             inputStreams.add(Files.newInputStream(filePath));
         }
 
