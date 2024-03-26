@@ -12,6 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import jtorrent.data.torrent.model.BencodedTorrent;
@@ -91,7 +92,8 @@ public class FileTorrentRepository implements TorrentRepository {
     }
 
     @Override
-    public void saveTorrent(BencodedTorrent bencodedTorrent, Path savePath) throws IOException {
+    public void saveTorrent(TorrentMetadata torrentMetadata, Path savePath) throws IOException {
+        BencodedTorrent bencodedTorrent = BencodedTorrent.fromDomain(torrentMetadata);
         try (var outputStream = Files.newOutputStream(savePath)) {
             outputStream.write(bencodedTorrent.bencode());
         }
@@ -105,6 +107,12 @@ public class FileTorrentRepository implements TorrentRepository {
     @Override
     public Torrent getTorrent(Sha1Hash infoHash) {
         return infoHashToTorrent.get(infoHash);
+    }
+
+    @Override
+    public TorrentMetadata createNewTorrent(Path source, List<List<String>> trackerUrls, String comment,
+            String createdBy, int pieceSize) throws IOException {
+        return BencodedTorrent.createNew(source, trackerUrls, comment, "JTorrent", pieceSize).toDomain();
     }
 
     private boolean isExistingTorrent(Torrent torrent) {

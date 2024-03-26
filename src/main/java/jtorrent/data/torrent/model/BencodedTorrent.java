@@ -108,6 +108,20 @@ public class BencodedTorrent extends BencodedObject {
         return new BencodedTorrent(creationDate, announce, announceList, comment, createdBy, info);
     }
 
+    public static BencodedTorrent fromDomain(TorrentMetadata torrentMetadata) {
+        Long creationDate = torrentMetadata.creationDate().toEpochSecond(OffsetDateTime.now().getOffset());
+        // TODO: proper handling of tracker groups
+        String announce = torrentMetadata.trackers().iterator().next().toString();
+        List<List<String>> announceList =
+                List.of(torrentMetadata.trackers().stream()
+                        .map(URI::toString)
+                        .toList()
+                );
+        BencodedInfo info = BencodedInfoFactory.fromDomain(torrentMetadata.fileInfo());
+        return new BencodedTorrent(creationDate, announce, announceList, torrentMetadata.comment(),
+                torrentMetadata.createdBy(), info);
+    }
+
     public String getAnnounce() {
         return announce;
     }

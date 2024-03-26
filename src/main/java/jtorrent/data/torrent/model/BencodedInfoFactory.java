@@ -8,6 +8,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 
+import jtorrent.domain.torrent.model.FileInfo;
+import jtorrent.domain.torrent.model.MultiFileInfo;
+import jtorrent.domain.torrent.model.SingleFileInfo;
+
 public class BencodedInfoFactory {
 
     private BencodedInfoFactory() {
@@ -28,6 +32,14 @@ public class BencodedInfoFactory {
             return BencodedMultiFileInfo.fromPath(source, pieceSize);
         } else {
             return BencodedSingleFileInfo.fromPath(source, pieceSize);
+        }
+    }
+
+    public static BencodedInfo fromDomain(FileInfo fileInfo) {
+        if (fileInfo instanceof SingleFileInfo singleFileInfo) {
+            return BencodedSingleFileInfo.fromDomain(singleFileInfo);
+        } else {
+            return BencodedMultiFileInfo.fromDomain((MultiFileInfo) fileInfo);
         }
     }
 }

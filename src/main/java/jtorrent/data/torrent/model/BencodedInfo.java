@@ -55,7 +55,7 @@ public abstract class BencodedInfo extends BencodedObject {
         return concatHashes(hashes);
     }
 
-    private static byte[] concatHashes(List<Sha1Hash> hashes) {
+    protected static byte[] concatHashes(List<Sha1Hash> hashes) {
         byte[] hashesConcat = new byte[hashes.size() * Sha1Hash.HASH_SIZE];
         for (int i = 0; i < hashes.size(); i++) {
             System.arraycopy(hashes.get(i).getBytes(), 0, hashesConcat, i * Sha1Hash.HASH_SIZE, Sha1Hash.HASH_SIZE);
@@ -79,9 +79,13 @@ public abstract class BencodedInfo extends BencodedObject {
         return name;
     }
 
-    public byte[] getInfoHash() throws NoSuchAlgorithmException, IOException {
-        MessageDigest md = MessageDigest.getInstance("SHA-1");
-        return md.digest(bencode());
+    public byte[] getInfoHash() {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-1");
+            return md.digest(bencode());
+        } catch (NoSuchAlgorithmException e) {
+            throw new AssertionError(e);
+        }
     }
 
     public abstract List<BencodedFile> getFiles();

@@ -44,6 +44,13 @@ public class BencodedSingleFileInfo extends BencodedInfo {
         return new BencodedSingleFileInfo(pieceSize, hashes, fileName, length);
     }
 
+    public static BencodedSingleFileInfo fromDomain(SingleFileInfo fileInfo) {
+        byte[] pieces = concatHashes(fileInfo.getPieceHashes());
+        String name = fileInfo.getFileMetaData().get(0).path().getFileName().toString();
+        long length = fileInfo.getFileMetaData().get(0).size();
+        return new BencodedSingleFileInfo(fileInfo.getPieceSize(), pieces, name, length);
+    }
+
     @Override
     public List<BencodedFile> getFiles() {
         return List.of(new BencodedFile(length, List.of(name)));

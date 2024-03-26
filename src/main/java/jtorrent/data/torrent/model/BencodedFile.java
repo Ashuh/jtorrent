@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
 
 import jtorrent.data.torrent.model.util.MapUtil;
 import jtorrent.domain.common.util.bencode.BencodedObject;
-import jtorrent.domain.torrent.model.File;
+import jtorrent.domain.torrent.model.FileMetadata;
 
 public class BencodedFile extends BencodedObject {
 
@@ -39,6 +39,10 @@ public class BencodedFile extends BencodedObject {
         return new BencodedFile(length, pathComponents);
     }
 
+    public static BencodedFile fromDomain(FileMetadata fileMetadata) {
+        return new BencodedFile(fileMetadata.size(), getPathComponents(fileMetadata.path()));
+    }
+
     private static List<String> getPathComponents(Path path) {
         List<String> pathComponents = new LinkedList<>();
         Path current = path;
@@ -55,13 +59,6 @@ public class BencodedFile extends BencodedObject {
 
     public List<String> getPath() {
         return path;
-    }
-
-    public File toDomain() {
-        List<String> sanitizedPath = path.stream()
-                .map(part -> part.replaceAll("[\\\\/:*?\"<>|]", "_"))
-                .collect(Collectors.toList());
-        return new File(length, Path.of(String.join("/", sanitizedPath)));
     }
 
     @Override

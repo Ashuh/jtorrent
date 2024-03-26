@@ -115,6 +115,10 @@ public abstract class FileInfo {
         return fileMetaData;
     }
 
+    public List<Sha1Hash> getPieceHashes() {
+        return pieceHashes;
+    }
+
     public Sha1Hash getPieceHash(int index) {
         return pieceHashes.get(index);
     }

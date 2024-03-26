@@ -13,7 +13,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import jtorrent.data.torrent.model.BencodedTorrent;
 import jtorrent.domain.common.util.BackgroundTask;
 import jtorrent.domain.common.util.Sha1Hash;
 import jtorrent.domain.common.util.rx.RxObservableList;
@@ -178,8 +177,9 @@ public class Client implements LocalServiceDiscoveryManager.Listener, TorrentHan
 
     public void createNewTorrent(Path savePath, Path source, List<List<String>> trackerUrls, String comment,
             int pieceSize) throws IOException {
-        BencodedTorrent torrent = BencodedTorrent.createNew(source, trackerUrls, comment, "JTorrent", pieceSize);
-        torrentRepository.saveTorrent(torrent, savePath);
+        TorrentMetadata torrentMetadata = torrentRepository.createNewTorrent(source, trackerUrls, comment,
+                "JTorrent", pieceSize);
+        torrentRepository.saveTorrent(torrentMetadata, savePath);
     }
 
     public Torrent getTorrent(Sha1Hash infoHash) {

@@ -63,6 +63,16 @@ public class BencodedMultiFileInfo extends BencodedInfo {
         return new BencodedMultiFileInfo(pieceSize, hashes, dirName, files);
     }
 
+    public static BencodedMultiFileInfo fromDomain(MultiFileInfo fileInfo) {
+        byte[] pieces = concatHashes(fileInfo.getPieceHashes());
+        int pieceLength = fileInfo.getPieceSize();
+        String name = fileInfo.getName();
+        List<BencodedFile> files = fileInfo.getFileMetaData().stream()
+                .map(BencodedFile::fromDomain)
+                .toList();
+        return new BencodedMultiFileInfo(pieceLength, pieces, name, files);
+    }
+
     @Override
     public List<BencodedFile> getFiles() {
         return files;
