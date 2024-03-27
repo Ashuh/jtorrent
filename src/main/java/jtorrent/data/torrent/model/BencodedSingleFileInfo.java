@@ -1,8 +1,6 @@
 package jtorrent.data.torrent.model;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
@@ -10,6 +8,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import jtorrent.data.torrent.model.util.MapUtil;
+import jtorrent.domain.common.util.Sha1Hash;
 import jtorrent.domain.torrent.model.FileInfo;
 import jtorrent.domain.torrent.model.FileMetadata;
 import jtorrent.domain.torrent.model.SingleFileInfo;
@@ -32,20 +31,8 @@ public class BencodedSingleFileInfo extends BencodedInfo {
         return new BencodedSingleFileInfo(pieceLength, pieces, name, length);
     }
 
-    public static BencodedSingleFileInfo fromPath(Path source, int pieceSize)
-            throws IOException {
-        if (Files.isDirectory(source)) {
-            throw new IllegalArgumentException("Source must be a file");
-        }
-
-        byte[] hashes = computeHashes(Files.newInputStream(source), pieceSize);
-        String fileName = source.getFileName().toString();
-        long length = Files.size(source);
-        return new BencodedSingleFileInfo(pieceSize, hashes, fileName, length);
-    }
-
     public static BencodedSingleFileInfo fromDomain(SingleFileInfo fileInfo) {
-        byte[] pieces = concatHashes(fileInfo.getPieceHashes());
+        byte[] pieces = Sha1Hash.concatHashes(fileInfo.getPieceHashes());
         String name = fileInfo.getFileMetaData().get(0).path().getFileName().toString();
         long length = fileInfo.getFileMetaData().get(0).size();
         return new BencodedSingleFileInfo(fileInfo.getPieceSize(), pieces, name, length);

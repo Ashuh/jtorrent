@@ -3,9 +3,6 @@ package jtorrent.data.torrent.model;
 import static jtorrent.data.torrent.model.BencodedInfo.KEY_FILES;
 import static jtorrent.data.torrent.model.BencodedInfo.KEY_LENGTH;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Map;
 
 import jtorrent.domain.torrent.model.FileInfo;
@@ -25,14 +22,6 @@ public class BencodedInfoFactory {
         }
 
         throw new IllegalArgumentException("Invalid info dictionary");
-    }
-
-    public static BencodedInfo fromPath(Path source, int pieceSize) throws IOException {
-        if (Files.isDirectory(source)) {
-            return BencodedMultiFileInfo.fromPath(source, pieceSize);
-        } else {
-            return BencodedSingleFileInfo.fromPath(source, pieceSize);
-        }
     }
 
     public static BencodedInfo fromDomain(FileInfo fileInfo) {

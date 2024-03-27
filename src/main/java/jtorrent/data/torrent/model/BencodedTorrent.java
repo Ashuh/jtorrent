@@ -10,7 +10,6 @@ import java.io.InputStream;
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.Collection;
@@ -62,30 +61,24 @@ public class BencodedTorrent extends BencodedObject {
         this.info = info;
     }
 
+    public static BencodedTorrent withAnnounceList(Long creationDate, List<List<String>> announceList, String comment,
+            String createdBy, BencodedInfo info) {
+        if (announceList.isEmpty() || announceList.get(0).isEmpty()) {
+            throw new IllegalArgumentException("At least one tracker is required");
+        }
+        String announce = announceList.get(0).get(0);
+        return new BencodedTorrent(creationDate, announce, announceList, comment, createdBy, info);
+    }
+
+    public static BencodedTorrent withAnnounce(Long creationDate, String announce, String comment, String createdBy,
+            BencodedInfo info) {
+        return new BencodedTorrent(creationDate, announce, null, comment, createdBy, info);
+    }
+
     public static BencodedTorrent decode(InputStream inputStream) throws IOException {
         BencodeInputStream bis = new BencodeInputStream(inputStream, StandardCharsets.UTF_8, true);
         Map<String, Object> topLevelDict = bis.readDictionary();
         return fromMap(topLevelDict);
-    }
-
-    /**
-     * Create a new {@link BencodedTorrent} instance with the current time as the creation date.
-     *
-     * @param trackerUrls list of tiers, each containing a list of tracker URLs
-     * @param comment     comment about the torrent
-     * @param createdBy   name and version of the program used to create the .torrent
-     * @param pieceSize   size of each piece in bytes
-     * @return a new {@link BencodedTorrent} instance
-     */
-    public static BencodedTorrent createNew(Path source, List<List<String>> trackerUrls, String comment,
-            String createdBy, int pieceSize) throws IOException {
-        if (trackerUrls.isEmpty() || trackerUrls.get(0).isEmpty()) {
-            throw new IllegalArgumentException("At least one tracker URL is required");
-        }
-        Long creationDate = LocalDateTime.now().toEpochSecond(OffsetDateTime.now().getOffset());
-        String announce = trackerUrls.get(0).get(0);
-        BencodedInfo info = BencodedInfoFactory.fromPath(source, pieceSize);
-        return new BencodedTorrent(creationDate, announce, trackerUrls, comment, createdBy, info);
     }
 
     public static BencodedTorrent fromMap(Map<String, Object> map) {
@@ -162,10 +155,13 @@ public class BencodedTorrent extends BencodedObject {
         try {
             Set<URI> trackers = new HashSet<>();
             trackers.add(URI.create(announce));
-            announceList.stream()
-                    .flatMap(List::stream)
-                    .map(URI::create)
-                    .collect(Collectors.toCollection(() -> trackers));
+
+            if (announceList != null) {
+                announceList.stream()
+                        .flatMap(List::stream)
+                        .map(URI::create)
+                        .collect(Collectors.toCollection(() -> trackers));
+            }
 
             LocalDateTime creationDateTime = LocalDateTime.ofEpochSecond(creationDate, 0,
                     OffsetDateTime.now().getOffset());
