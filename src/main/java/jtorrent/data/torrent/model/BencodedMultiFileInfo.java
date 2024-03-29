@@ -61,7 +61,7 @@ public class BencodedMultiFileInfo extends BencodedInfo {
     @Override
     public FileInfo toDomain() {
         List<FileMetadata> fileMetaData = buildFileMetaData();
-        return new MultiFileInfo(name, fileMetaData, pieceLength, getDomainPieceHashes());
+        return new MultiFileInfo(name, fileMetaData, pieceLength, getDomainPieceHashes(), new Sha1Hash(getInfoHash()));
     }
 
     protected List<FileMetadata> buildFileMetaData() {

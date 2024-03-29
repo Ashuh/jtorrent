@@ -141,7 +141,7 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
 
     @Override
     public Sha1Hash getInfoHash() {
-        return torrentMetaData.infoHash();
+        return torrentMetaData.fileInfo().getInfoHash();
     }
 
     @Override

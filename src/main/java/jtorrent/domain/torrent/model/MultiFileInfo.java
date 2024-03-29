@@ -13,8 +13,8 @@ public class MultiFileInfo extends FileInfo {
     private final String directory;
 
     public MultiFileInfo(String directory, List<FileMetadata> fileMetaData, int pieceSize,
-            List<Sha1Hash> pieceHashes) {
-        super(fileMetaData, pieceSize, pieceHashes);
+            List<Sha1Hash> pieceHashes, Sha1Hash infoHash) {
+        super(fileMetaData, pieceSize, pieceHashes, infoHash);
         this.directory = requireNonNull(directory);
     }
 

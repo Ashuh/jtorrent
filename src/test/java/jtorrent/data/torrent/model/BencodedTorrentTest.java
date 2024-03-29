@@ -526,11 +526,11 @@ class BencodedTorrentTest {
                     throw new IllegalArgumentException("Number of files must be 1 if directory is null");
                 }
                 FileMetadata fileMetadata = this.fileMetadata.get(0);
-                fileInfo = new SingleFileInfo(fileMetadata, pieceSize, pieceHashes);
+                fileInfo = new SingleFileInfo(fileMetadata, pieceSize, pieceHashes, infoHash);
             } else {
-                fileInfo = new MultiFileInfo(directory, fileMetadata, pieceSize, pieceHashes);
+                fileInfo = new MultiFileInfo(directory, fileMetadata, pieceSize, pieceHashes, infoHash);
             }
-            return new TorrentMetadata(trackers, creationDate, comment, createdBy, fileInfo, infoHash);
+            return new TorrentMetadata(trackers, creationDate, comment, createdBy, fileInfo);
         }
     }
 

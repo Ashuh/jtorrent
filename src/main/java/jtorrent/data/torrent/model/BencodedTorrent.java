@@ -23,7 +23,6 @@ import java.util.stream.Collectors;
 import com.dampcake.bencode.BencodeInputStream;
 
 import jtorrent.data.torrent.model.exception.MappingException;
-import jtorrent.domain.common.util.Sha1Hash;
 import jtorrent.domain.common.util.bencode.BencodedObject;
 import jtorrent.domain.torrent.model.FileInfo;
 import jtorrent.domain.torrent.model.TorrentMetadata;
@@ -166,8 +165,7 @@ public class BencodedTorrent extends BencodedObject {
             LocalDateTime creationDateTime = LocalDateTime.ofEpochSecond(creationDate, 0,
                     OffsetDateTime.now().getOffset());
             FileInfo fileInfo = info.toDomain();
-            Sha1Hash infoHash = new Sha1Hash(info.getInfoHash());
-            return new TorrentMetadata(trackers, creationDateTime, comment, createdBy, fileInfo, infoHash);
+            return new TorrentMetadata(trackers, creationDateTime, comment, createdBy, fileInfo);
         } catch (Exception e) {
             throw new MappingException("Failed to map BencodedTorrent to Torrent", e);
         }

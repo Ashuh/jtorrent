@@ -18,11 +18,13 @@ public abstract class FileInfo {
     protected final List<FileMetadata> fileMetaData;
     protected final List<Sha1Hash> pieceHashes;
     protected final int pieceSize;
+    private final Sha1Hash infoHash;
 
-    protected FileInfo(List<FileMetadata> fileMetaData, int pieceSize, List<Sha1Hash> pieceHashes) {
-        this.fileMetaData = fileMetaData;
+    protected FileInfo(List<FileMetadata> fileMetaData, int pieceSize, List<Sha1Hash> pieceHashes, Sha1Hash infoHash) {
+        this.fileMetaData = requireNonNull(fileMetaData);
         this.pieceSize = pieceSize;
         this.pieceHashes = requireNonNull(pieceHashes);
+        this.infoHash = requireNonNull(infoHash);
     }
 
     /**
@@ -125,6 +127,10 @@ public abstract class FileInfo {
 
     public int getNumPieces() {
         return pieceHashes.size();
+    }
+
+    public Sha1Hash getInfoHash() {
+        return infoHash;
     }
 
     /**

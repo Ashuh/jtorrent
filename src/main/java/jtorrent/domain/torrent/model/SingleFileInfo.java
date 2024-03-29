@@ -7,8 +7,8 @@ import jtorrent.domain.common.util.Sha1Hash;
 
 public class SingleFileInfo extends FileInfo {
 
-    public SingleFileInfo(FileMetadata fileMetaData, int pieceSize, List<Sha1Hash> pieceHashes) {
-        super(List.of(fileMetaData), pieceSize, pieceHashes);
+    public SingleFileInfo(FileMetadata fileMetaData, int pieceSize, List<Sha1Hash> pieceHashes, Sha1Hash infoHash) {
+        super(List.of(fileMetaData), pieceSize, pieceHashes, infoHash);
     }
 
     @Override

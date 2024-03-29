@@ -51,7 +51,7 @@ public class BencodedSingleFileInfo extends BencodedInfo {
     @Override
     public FileInfo toDomain() {
         FileMetadata fileMetaData = buildFileMetaData();
-        return new SingleFileInfo(fileMetaData, pieceLength, getDomainPieceHashes());
+        return new SingleFileInfo(fileMetaData, pieceLength, getDomainPieceHashes(), new Sha1Hash(getInfoHash()));
     }
 
     private FileMetadata buildFileMetaData() {
