@@ -38,19 +38,6 @@ public class FileTorrentRepository implements TorrentRepository {
     private final MutableRxObservableList<Torrent> torrents = new MutableRxObservableList<>(new ArrayList<>());
     private final Map<Sha1Hash, Torrent> infoHashToTorrent = new HashMap<>();
 
-    public FileTorrentRepository() {
-        // TODO: temporary
-        try {
-            Torrent torrent = new Torrent(
-                    loadTorrent(Path.of("ubuntu-23.04-desktop-amd64.iso.torrent")),
-                    "ubuntu-23.04-desktop-amd64.iso",
-                    Path.of("ubuntu-23.04-desktop-amd64.iso"));
-            addTorrent(torrent);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     @Override
     public void addTorrent(Torrent torrent) {
         if (isExistingTorrent(torrent)) {
@@ -59,11 +46,6 @@ public class FileTorrentRepository implements TorrentRepository {
         }
         infoHashToTorrent.put(torrent.getInfoHash(), torrent);
         torrents.add(torrent);
-    }
-
-    public TorrentMetadata loadTorrent(Path path) throws IOException {
-        File file = path.toFile();
-        return loadTorrent(file);
     }
 
     @Override
