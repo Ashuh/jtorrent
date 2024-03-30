@@ -3,7 +3,7 @@ package jtorrent.presentation.peerinput.view;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Dialog;
 
-public class PeerInputDialog extends Dialog<String> {
+public class PeerInputDialog extends Dialog<PeerInputDialog.Result> {
 
     private final PeerInputView peerInputView;
 
@@ -14,11 +14,14 @@ public class PeerInputDialog extends Dialog<String> {
         setResultConverter(this::convertResult);
     }
 
-    private String convertResult(ButtonType buttonType) {
+    private Result convertResult(ButtonType buttonType) {
         if (buttonType == ButtonType.OK) {
-            return peerInputView.getSocketAddress();
+            return new Result(peerInputView.getIp(), peerInputView.getPort());
         } else {
             return null;
         }
+    }
+
+    public record Result(String ip, String port) {
     }
 }

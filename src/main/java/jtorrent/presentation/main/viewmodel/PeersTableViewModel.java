@@ -2,6 +2,7 @@ package jtorrent.presentation.main.viewmodel;
 
 import static jtorrent.domain.common.util.ValidationUtil.requireNonNull;
 
+import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -84,9 +85,11 @@ public class PeersTableViewModel {
         return FXCollections.unmodifiableObservableList(uiPeers);
     }
 
-    public void addPeerForSelectedTorrent(String ipPort) throws UnknownHostException {
+    public void addPeerForSelectedTorrent(String ip, String port) throws UnknownHostException {
         if (selectedTorrent != null) {
-            PeerContactInfo peerContactInfo = PeerContactInfo.fromString(ipPort);
+            InetAddress address = InetAddress.getByName(ip);
+            int portInt = Integer.parseInt(port);
+            PeerContactInfo peerContactInfo = new PeerContactInfo(address, portInt);
             client.addPeer(selectedTorrent, peerContactInfo);
         }
     }

@@ -4,7 +4,6 @@ import static jtorrent.domain.common.util.ValidationUtil.requireNonNull;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
-import java.util.Optional;
 
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -95,12 +94,11 @@ public class PeersTableView extends TableView<UiPeer> {
                     return;
                 }
 
-                Dialog<String> dialog = new PeerInputDialog();
+                Dialog<PeerInputDialog.Result> dialog = new PeerInputDialog();
                 dialog.initOwner(getScene().getWindow());
-                Optional<String> input = dialog.showAndWait();
-                input.ifPresent(ipPort -> {
+                dialog.showAndWait().ifPresent(result -> {
                     try {
-                        viewModel.addPeerForSelectedTorrent(ipPort);
+                        viewModel.addPeerForSelectedTorrent(result.ip(), result.port());
                     } catch (UnknownHostException | IllegalArgumentException e) {
                         showExceptionDialog(e);
                     }
