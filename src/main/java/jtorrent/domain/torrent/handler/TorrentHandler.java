@@ -274,6 +274,7 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
         }
         try {
             peerHandler.sendPiece(pieceIndex, offset, data);
+            torrent.incrementUploaded(data.length);
         } catch (IOException e) {
             log(Level.ERROR, String.format("[%s] Failed to send block [%d - %d] for piece %d",
                     peerHandler.getPeerContactInfo(), offset, offset + length, pieceIndex), e);
