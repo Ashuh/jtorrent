@@ -1,19 +1,19 @@
 package jtorrent.domain.torrent.model;
 
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.subjects.BehaviorSubject;
 
 public class TorrentStatistics {
 
-    private final AtomicInteger downloaded = new AtomicInteger(0);
-    private final BehaviorSubject<Integer> downloadedSubject = BehaviorSubject.createDefault(0);
+    private final AtomicLong downloaded = new AtomicLong(0);
+    private final BehaviorSubject<Long> downloadedSubject = BehaviorSubject.createDefault(0L);
 
-    private final AtomicInteger uploaded = new AtomicInteger(0);
-    private final BehaviorSubject<Integer> uploadedSubject = BehaviorSubject.createDefault(0);
+    private final AtomicLong uploaded = new AtomicLong(0);
+    private final BehaviorSubject<Long> uploadedSubject = BehaviorSubject.createDefault(0L);
 
-    public void incrementDownloaded(int bytes) {
+    public void incrementDownloaded(long bytes) {
         downloadedSubject.onNext(downloaded.addAndGet(bytes));
     }
 
@@ -25,7 +25,7 @@ public class TorrentStatistics {
         return downloaded.get();
     }
 
-    public Observable<Integer> getDownloadedObservable() {
+    public Observable<Long> getDownloadedObservable() {
         return downloadedSubject;
     }
 
@@ -33,7 +33,7 @@ public class TorrentStatistics {
         return uploaded.get();
     }
 
-    public Observable<Integer> getUploadedObservable() {
+    public Observable<Long> getUploadedObservable() {
         return uploadedSubject;
     }
 }

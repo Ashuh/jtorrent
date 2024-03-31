@@ -253,7 +253,7 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
         return downloadRateObservable;
     }
 
-    public Observable<Integer> getDownloadedObservable() {
+    public Observable<Long> getDownloadedObservable() {
         return torrentStatistics.getDownloadedObservable();
     }
 
@@ -267,7 +267,7 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
         return uploadRateObservable;
     }
 
-    public Observable<Integer> getUploadedObservable() {
+    public Observable<Long> getUploadedObservable() {
         return torrentStatistics.getUploadedObservable();
     }
 
