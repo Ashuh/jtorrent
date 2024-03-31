@@ -138,7 +138,7 @@ public class PeerHandler {
     }
 
     public CompletableFuture<byte[]> sendRequest(int index, int begin, int length) throws IOException {
-        CompletableFuture<byte[]> future = new CompletableFuture<byte[]>().orTimeout(5, TimeUnit.SECONDS);
+        CompletableFuture<byte[]> future = new CompletableFuture<byte[]>().orTimeout(10, TimeUnit.SECONDS);
         RequestKey requestKey = new RequestKey(index, begin, length);
         future.whenComplete((result, throwable) -> outRequestKeyToFuture.remove(requestKey));
         outRequestKeyToFuture.put(requestKey, future);
