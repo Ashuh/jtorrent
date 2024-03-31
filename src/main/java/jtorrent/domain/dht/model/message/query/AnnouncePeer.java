@@ -9,7 +9,6 @@ import java.util.Objects;
 
 import jtorrent.domain.common.util.Sha1Hash;
 import jtorrent.domain.common.util.bencode.BencodedMap;
-import jtorrent.domain.dht.model.message.DhtMessage;
 import jtorrent.domain.dht.model.message.TransactionId;
 import jtorrent.domain.dht.model.node.NodeId;
 
