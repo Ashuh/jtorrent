@@ -4,9 +4,9 @@ import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import jtorrent.domain.dht.handler.node.Node;
 import jtorrent.domain.dht.model.message.response.FindNodeResponse;
 import jtorrent.domain.dht.model.node.NodeId;
-import jtorrent.domain.dht.handler.node.Node;
 
 public class FindNodeLookup extends IterativeLookup<FindNodeResponse, NodeId, Collection<Node>> {
 
