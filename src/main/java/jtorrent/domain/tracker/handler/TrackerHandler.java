@@ -115,7 +115,7 @@ public abstract class TrackerHandler {
                     scheduleAnnounce(Event.NONE, announceResponse.getInterval());
                 }
             } catch (ExecutionException e) {
-                LOGGER.log(Level.ERROR, "Announce failed: {0}", e.getMessage());
+                LOGGER.log(Level.ERROR, "Announce failed", e);
                 TrackerHandler.this.stop();
             } catch (CancellationException e) {
                 LOGGER.log(Level.DEBUG, "Announce cancelled");
