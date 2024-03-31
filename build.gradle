@@ -9,12 +9,12 @@ plugins {
 group 'jtorrent'
 version '1.0-SNAPSHOT'
 
-sourceCompatibility = '11'
-targetCompatibility = '11'
+sourceCompatibility = '17'
+targetCompatibility = '17'
 
 application {
     mainModule = 'jtorrent'
-    mainClass = 'jtorrent.application.presentation.Main'
+    mainClass = 'jtorrent.Main'
 }
 
 repositories {
@@ -33,6 +33,9 @@ javafx {
 dependencies {
     implementation 'com.dampcake:bencode:1.4'
     implementation 'io.reactivex.rxjava3:rxjava:3.1.6'
+    implementation 'io.github.mkpaz:atlantafx-base:2.0.1'
+    implementation 'org.kordamp.ikonli:ikonli-javafx:12.3.1'
+    implementation 'org.kordamp.ikonli:ikonli-materialdesign2-pack:12.3.1'
 
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.2'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.2'

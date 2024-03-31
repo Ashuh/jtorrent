@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import atlantafx.base.layout.InputGroup?>
+<?import javafx.scene.control.ButtonType?>
+<?import javafx.scene.control.DialogPane?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<fx:root xmlns:fx="http://javafx.com/fxml/1" type="DialogPane" xmlns="http://javafx.com/javafx/17.0.2-ea">
+    <content>
+        <VBox spacing="16.0">
+            <InputGroup>
+                <Label prefWidth="70.0" text="IP"/>
+                <TextField fx:id="ip" promptText="127.0.0.1"/>
+            </InputGroup>
+            <InputGroup>
+                <Label prefWidth="70.0" text="Port"/>
+                <TextField HBox.hgrow="ALWAYS" fx:id="port" promptText="6881"/>
+            </InputGroup>
+        </VBox>
+    </content>
+    <ButtonType fx:constant="OK"/>
+    <ButtonType fx:constant="CANCEL"/>
+</fx:root>

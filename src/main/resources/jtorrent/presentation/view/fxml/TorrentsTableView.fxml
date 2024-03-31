@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<fx:root xmlns:fx="http://javafx.com/fxml/1" maxHeight="1.7976931348623157E308" type="TableView"
+         xmlns="http://javafx.com/javafx/17.0.2-ea">
+    <columns>
+        <TableColumn fx:id="name" minWidth="0.0" prefWidth="250.0" text="Name"/>
+        <TableColumn fx:id="size" minWidth="0.0" prefWidth="80.0" text="Size"/>
+        <TableColumn fx:id="status" minWidth="0.0" prefWidth="250.0" text="Status"/>
+        <TableColumn fx:id="downSpeed" minWidth="0.0" prefWidth="120.0" text="Down Speed"/>
+        <TableColumn fx:id="upSpeed" minWidth="0.0" prefWidth="120.0" text="Up Speed"/>
+        <TableColumn fx:id="eta" minWidth="0.0" prefWidth="120.0" text="ETA"/>
+        <TableColumn fx:id="saveDirectory" minWidth="0.0" prefWidth="400.0" text="Save Directory"/>
+    </columns>
+</fx:root>
