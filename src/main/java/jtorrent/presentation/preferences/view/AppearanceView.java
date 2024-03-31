@@ -56,12 +56,12 @@ public class AppearanceView extends GridPane {
         @Override
         public Theme fromString(String string) {
             return switch (string) {
-                case "Primer Dark" -> new PrimerDark();
-                case "Primer Light" -> new PrimerLight();
-                case "Nord Dark" -> new NordDark();
-                case "Nord Light" -> new NordLight();
-                case "Dracula" -> new Dracula();
-                default -> null;
+            case "Primer Dark" -> new PrimerDark();
+            case "Primer Light" -> new PrimerLight();
+            case "Nord Dark" -> new NordDark();
+            case "Nord Light" -> new NordLight();
+            case "Dracula" -> new Dracula();
+            default -> null;
             };
         }
     }
