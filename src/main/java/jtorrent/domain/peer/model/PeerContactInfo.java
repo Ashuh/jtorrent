@@ -1,5 +1,8 @@
 package jtorrent.domain.peer.model;
 
+import static jtorrent.domain.common.util.ValidationUtil.requireInRange;
+import static jtorrent.domain.common.util.ValidationUtil.requireNonNull;
+
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
@@ -14,8 +17,8 @@ public class PeerContactInfo {
     private final int port;
 
     public PeerContactInfo(InetAddress address, int port) {
-        this.address = address;
-        this.port = port;
+        this.address = requireNonNull(address);
+        this.port = requireInRange(port, 0, 65535);
     }
 
     public static PeerContactInfo fromCompactPeerInfo(byte[] bytes) {
