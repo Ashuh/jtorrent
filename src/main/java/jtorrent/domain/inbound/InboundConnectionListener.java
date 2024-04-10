@@ -3,8 +3,6 @@ package jtorrent.domain.inbound;
 import static jtorrent.domain.common.util.ValidationUtil.requireNonNull;
 
 import java.io.IOException;
-import java.lang.System.Logger;
-import java.lang.System.Logger.Level;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
@@ -12,15 +10,20 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import jtorrent.domain.common.util.BackgroundTask;
 import jtorrent.domain.common.util.Sha1Hash;
+import jtorrent.domain.common.util.logging.Markers;
+import jtorrent.domain.common.util.logging.MdcUtil;
 import jtorrent.domain.peer.communication.PeerSocket;
 import jtorrent.domain.peer.model.PeerContactInfo;
 import jtorrent.domain.peer.model.message.Handshake;
 
 public class InboundConnectionListener {
 
-    private static final Logger LOGGER = System.getLogger(InboundConnectionListener.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(InboundConnectionListener.class);
 
     private final ListenForInboundConnectionsTask listenForInboundConnectionsTask;
     private final LinkedBlockingQueue<InboundConnection> inboundConnections = new LinkedBlockingQueue<>();
@@ -34,11 +37,15 @@ public class InboundConnectionListener {
     }
 
     public void start() {
+        LOGGER.debug(Markers.INBOUND, "Starting inbound connection listener");
         listenForInboundConnectionsTask.start();
+        LOGGER.info(Markers.INBOUND, "Inbound connection listener started");
     }
 
     public void stop() {
+        LOGGER.debug(Markers.INBOUND, "Stopping inbound connection listener");
         listenForInboundConnectionsTask.stop();
+        LOGGER.info(Markers.INBOUND, "Inbound connection listener stopped");
     }
 
     public static class InboundConnection {
@@ -83,13 +90,16 @@ public class InboundConnectionListener {
         protected void execute() {
             try {
                 Socket socket = serverSocket.accept();
-                LOGGER.log(Level.INFO, "Incoming connection from " + socket.getRemoteSocketAddress());
+                MdcUtil.putPeerContactInfo(socket.getInetAddress(), socket.getPort());
+                LOGGER.info(Markers.INBOUND, "Inbound connection");
                 handleAcceptedSocket(socket);
             } catch (IOException e) {
                 if (!isStopping()) {
-                    LOGGER.log(Level.ERROR, "Error accepting incoming connection", e);
+                    LOGGER.error(Markers.INBOUND, "Failed to accept inbound socket connection", e);
                     ListenForInboundConnectionsTask.this.stop();
                 }
+            } finally {
+                MdcUtil.removePeerContactInfo();
             }
         }
 
@@ -103,11 +113,9 @@ public class InboundConnectionListener {
                     inboundConnections.add(inboundConnection);
                 } catch (IOException e) {
                     if (e instanceof SocketTimeoutException) {
-                        LOGGER.log(Level.ERROR,
-                                String.format("[%s] Handshake timed out", socket.getRemoteSocketAddress()), e);
+                        LOGGER.error(Markers.INBOUND, "Failed to receive handshake: Time out");
                     } else {
-                        LOGGER.log(Level.ERROR, String.format("[%s] Error accepting incoming connection",
-                                socket.getRemoteSocketAddress()), e);
+                        LOGGER.error(Markers.INBOUND, "Failed to receive handshake", e);
                     }
                     tryCloseSocket(peerSocket);
                 }
@@ -126,7 +134,7 @@ public class InboundConnectionListener {
             try {
                 peerSocket.close();
             } catch (IOException e) {
-                LOGGER.log(Level.ERROR, "Error closing socket", e);
+                LOGGER.error(Markers.INBOUND, "Failed to close socket", e);
             }
         }
 
@@ -136,7 +144,7 @@ public class InboundConnectionListener {
             try {
                 serverSocket.close();
             } catch (IOException e) {
-                LOGGER.log(Level.ERROR, "Error closing server socket", e);
+                LOGGER.error(Markers.INBOUND, "Failed to close server socket", e);
             }
         }
     }
