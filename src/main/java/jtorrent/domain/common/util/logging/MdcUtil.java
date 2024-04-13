@@ -5,12 +5,27 @@ import java.net.InetAddress;
 import org.slf4j.MDC;
 
 import jtorrent.domain.peer.model.PeerContactInfo;
+import jtorrent.domain.torrent.handler.TorrentHandler;
+import jtorrent.domain.torrent.model.Torrent;
 
 public class MdcUtil {
 
+    private static final String KEY_TORRENT = "torrent";
     private static final String KEY_PEER = "peer";
 
     private MdcUtil() {
+    }
+
+    public static void putTorrent(Torrent torrent) {
+        MDC.put(KEY_TORRENT, torrent.getInfoHash().toString());
+    }
+
+    public static void putTorrent(TorrentHandler torrentHandler) {
+        putTorrent(torrentHandler.getTorrent());
+    }
+
+    public static void removeTorrent() {
+        MDC.remove(KEY_TORRENT);
     }
 
     public static void putPeerContactInfo(InetAddress address, int port) {

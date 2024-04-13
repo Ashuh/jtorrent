@@ -2,8 +2,6 @@ package jtorrent.domain;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.System.Logger;
-import java.lang.System.Logger.Level;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URL;
@@ -13,8 +11,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import jtorrent.domain.common.util.BackgroundTask;
 import jtorrent.domain.common.util.Sha1Hash;
+import jtorrent.domain.common.util.logging.Markers;
+import jtorrent.domain.common.util.logging.MdcUtil;
 import jtorrent.domain.common.util.rx.RxObservableList;
 import jtorrent.domain.dht.DhtClient;
 import jtorrent.domain.dht.handler.DhtManager;
@@ -32,7 +35,7 @@ import jtorrent.domain.torrent.repository.TorrentRepository;
 public class Client implements LocalServiceDiscoveryManager.Listener, TorrentHandler.Listener,
         DhtManager.PeerDiscoveryListener {
 
-    private static final Logger LOGGER = System.getLogger(Client.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(Client.class);
 
     private final InboundConnectionListener inboundConnectionListener;
     private final LocalServiceDiscoveryManager localServiceDiscoveryManager;
@@ -103,23 +106,27 @@ public class Client implements LocalServiceDiscoveryManager.Listener, TorrentHan
     }
 
     public void startTorrent(Torrent torrent) {
-        LOGGER.log(Level.INFO, "Starting torrent " + torrent.getName());
+        MdcUtil.putTorrent(torrent);
         TorrentHandler torrentHandler = new TorrentHandler(torrent, pieceRepository);
         infoHashToTorrentHandler.put(torrent.getInfoHash(), torrentHandler);
         torrentHandler.addListener(this);
         torrentHandler.start();
         localServiceDiscoveryManager.addInfoHash(torrent.getInfoHash());
         dhtManager.registerInfoHash(torrent.getInfoHash());
+        LOGGER.info(Markers.TORRENT, "Torrent started");
+        MdcUtil.removeTorrent();
     }
 
     public void stopTorrent(Torrent torrent) {
-        LOGGER.log(Level.INFO, "Stopping torrent " + torrent.getName());
+        MdcUtil.putTorrent(torrent);
         TorrentHandler torrentHandler = infoHashToTorrentHandler.remove(torrent.getInfoHash());
         if (torrentHandler != null) {
             torrentHandler.stop();
         }
         dhtManager.deregisterInfoHash(torrent.getInfoHash());
         // TODO: remove from local service discovery
+        LOGGER.info(Markers.TORRENT, "Torrent stopped");
+        MdcUtil.removeTorrent();
     }
 
     public RxObservableList<Torrent> getTorrents() {
@@ -132,34 +139,40 @@ public class Client implements LocalServiceDiscoveryManager.Listener, TorrentHan
                 .filter(infoHashToTorrentHandler::containsKey)
                 .map(infoHashToTorrentHandler::get)
                 .forEach(torrentHandler -> {
+                    MdcUtil.putTorrent(torrentHandler);
                     PeerContactInfo peerContactInfo = new PeerContactInfo(sourceAddress, announce.getPort());
                     torrentHandler.handleDiscoveredPeerContact(peerContactInfo);
+                    MdcUtil.removeTorrent();
                 });
     }
 
     @Override
     public void onDhtNodeDiscovered(InetSocketAddress address) {
-        LOGGER.log(Level.DEBUG, "DHT node discovered: " + address);
+        LOGGER.debug(Markers.DHT, "DHT node discovered: {}", address);
         dhtManager.addBootstrapNodeAddress(address);
     }
 
     @Override
     public void onPeersDiscovered(Sha1Hash infoHash, Collection<PeerContactInfo> peers) {
-        LOGGER.log(Level.INFO, "Discovered " + peers.size() + " peers for info hash " + infoHash);
         if (!infoHashToTorrentHandler.containsKey(infoHash)) {
-            LOGGER.log(Level.ERROR, "No torrent found for infohash " + infoHash);
+            LOGGER.warn(Markers.DHT, "No torrent found with info hash {}", infoHash);
             return;
         }
 
+        LOGGER.info(Markers.DHT, "Discovered {} peers for info hash {}", peers.size(), infoHash);
         TorrentHandler torrentHandler = infoHashToTorrentHandler.get(infoHash);
+        MdcUtil.putTorrent(torrentHandler);
         peers.forEach(torrentHandler::handleDiscoveredPeerContact);
+        MdcUtil.removeTorrent();
     }
 
     public void addPeer(Torrent torrent, PeerContactInfo peerContactInfo) {
         // TODO: only works if the torrent is active. If it is not active, should we store it somewhere else first?
         TorrentHandler torrentHandler = infoHashToTorrentHandler.get(torrent.getInfoHash());
         if (torrentHandler != null) {
+            MdcUtil.putTorrent(torrentHandler);
             torrentHandler.handleDiscoveredPeerContact(peerContactInfo);
+            MdcUtil.removeTorrent();
         }
     }
 
@@ -195,18 +208,20 @@ public class Client implements LocalServiceDiscoveryManager.Listener, TorrentHan
 
             Sha1Hash infoHash = inboundConnection.getInfoHash();
             if (!infoHashToTorrentHandler.containsKey(infoHash)) {
-                LOGGER.log(Level.ERROR, "No torrent found for infohash " + infoHash);
+                LOGGER.warn(Markers.INBOUND, "No torrent found for info hash {}", infoHash);
                 try {
                     inboundConnection.reject();
                 } catch (IOException e) {
-                    LOGGER.log(Level.ERROR, "Error rejecting incoming connection", e);
+                    LOGGER.error(Markers.INBOUND, "Failed to reject incoming connection", e);
                 }
                 return;
             }
 
             PeerSocket peerSocket = inboundConnection.accept();
             TorrentHandler torrentHandler = infoHashToTorrentHandler.get(infoHash);
+            MdcUtil.putTorrent(torrentHandler);
             torrentHandler.handleInboundPeerConnection(peerSocket);
+            MdcUtil.removeTorrent();
         }
     }
 }
