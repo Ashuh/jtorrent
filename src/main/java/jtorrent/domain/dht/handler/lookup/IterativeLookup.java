@@ -2,8 +2,6 @@ package jtorrent.domain.dht.handler.lookup;
 
 import static jtorrent.domain.common.util.ValidationUtil.requireNonNull;
 
-import java.lang.System.Logger;
-import java.lang.System.Logger.Level;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -18,7 +16,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import jtorrent.domain.common.util.Bit160Value;
+import jtorrent.domain.common.util.logging.Markers;
 import jtorrent.domain.dht.handler.DhtManager;
 import jtorrent.domain.dht.handler.node.Node;
 import jtorrent.domain.dht.handler.util.DistanceToTargetComparator;
@@ -27,7 +29,7 @@ import jtorrent.domain.dht.model.node.NodeContactInfo;
 
 public abstract class IterativeLookup<T extends Response, U extends Bit160Value, R> {
 
-    private static final Logger LOGGER = System.getLogger(IterativeLookup.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(IterativeLookup.class);
 
     private U target;
     private NodeStore nodeStore;
@@ -37,7 +39,7 @@ public abstract class IterativeLookup<T extends Response, U extends Bit160Value,
         this.nodeStore = new NodeStore(target);
         requireNonNull(initialNodes).forEach(nodeStore::addNewNode);
 
-        onLookupStart();
+        LOGGER.info(Markers.DHT, "Starting {} lookup for {}", getName(), getTarget());
         BigInteger prevMinDist = Bit160Value.MAX.toBigInteger();
 
         while (!nodeStore.isAllClosestNodesResponded()) {
@@ -46,12 +48,8 @@ public abstract class IterativeLookup<T extends Response, U extends Bit160Value,
             getNodesFromResponses(responses).forEach(nodeStore::addNewNode);
         }
 
-        onLookupComplete();
+        LOGGER.info(Markers.DHT, "Completed {} lookup for {}", getName(), getTarget());
         return getResult();
-    }
-
-    private void onLookupStart() {
-        LOGGER.log(Level.DEBUG, "[DHT] Starting {0} lookup for {1}", getName(), getTarget());
     }
 
     private Collection<Node> getNodesToQuery(BigInteger prevMinDist, BigInteger curMinDist) {
@@ -79,10 +77,6 @@ public abstract class IterativeLookup<T extends Response, U extends Bit160Value,
                 .map(this::getNodesFromResponse)
                 .flatMap(Collection::stream)
                 .collect(Collectors.toList());
-    }
-
-    private void onLookupComplete() {
-        LOGGER.log(Level.DEBUG, "[DHT] Completed {0} for {1}", getName(), getTarget());
     }
 
     protected abstract R getResult();

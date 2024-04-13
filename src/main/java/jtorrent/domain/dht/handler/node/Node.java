@@ -3,8 +3,6 @@ package jtorrent.domain.dht.handler.node;
 import static jtorrent.domain.common.util.ValidationUtil.requireNonNull;
 
 import java.io.IOException;
-import java.lang.System.Logger;
-import java.lang.System.Logger.Level;
 import java.lang.ref.WeakReference;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -17,7 +15,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import jtorrent.domain.common.util.Sha1Hash;
+import jtorrent.domain.common.util.logging.Markers;
 import jtorrent.domain.dht.communication.DhtSocket;
 import jtorrent.domain.dht.model.message.query.AnnouncePeer;
 import jtorrent.domain.dht.model.message.query.FindNode;
@@ -35,7 +37,7 @@ import jtorrent.domain.peer.model.PeerContactInfo;
 
 public class Node {
 
-    private static final Logger LOGGER = System.getLogger(Node.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(Node.class);
     private static final Map<NodeContactInfo, WeakReference<Node>> NODE_CONTACT_INFO_TO_NODE =
             new ConcurrentHashMap<>();
     private static DhtSocket dhtSocket;
@@ -257,10 +259,10 @@ public class Node {
         @Override
         public void accept(R response, Throwable throwable) {
             if (throwable != null) {
-                LOGGER.log(Level.ERROR, "[DHT] {0} query to {1} failed: {2}", queryMethod, this, throwable);
+                LOGGER.error(Markers.DHT, "{} query to {} failed", queryMethod, this, throwable);
                 incrementNumFailedQueries();
             } else {
-                LOGGER.log(Level.DEBUG, "[DHT] {0} query to {1} succeeded: {2}", queryMethod, this, response);
+                LOGGER.debug(Markers.DHT, "{} query to {} succeeded", queryMethod, this);
                 resetNumFailedQueries();
                 setLastSeenNow();
             }

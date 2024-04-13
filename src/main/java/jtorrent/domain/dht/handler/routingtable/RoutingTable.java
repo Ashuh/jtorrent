@@ -1,20 +1,22 @@
 package jtorrent.domain.dht.handler.routingtable;
 
-import java.lang.System.Logger;
-import java.lang.System.Logger.Level;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import jtorrent.domain.common.util.Bit160Value;
+import jtorrent.domain.common.util.logging.Markers;
 import jtorrent.domain.dht.handler.node.Node;
 import jtorrent.domain.dht.handler.util.DistanceToTargetComparator;
 import jtorrent.domain.dht.model.node.NodeId;
 
 public class RoutingTable {
 
-    private static final Logger LOGGER = System.getLogger(RoutingTable.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(RoutingTable.class);
     private static final int NUM_BUCKETS = 160;
 
     private final Bucket[] buckets = new Bucket[160];
@@ -59,9 +61,9 @@ public class RoutingTable {
         boolean isAdded = getBucketForNode(node).addNode(node);
 
         if (isAdded) {
-            LOGGER.log(Level.DEBUG, "[DHT] Added Node {0} to routing table", node);
+            LOGGER.debug(Markers.DHT, "Added Node {} to routing table", node);
         } else {
-            LOGGER.log(Level.DEBUG, "[DHT] Failed to add Node {0} to routing table", node);
+            LOGGER.debug(Markers.DHT, "Failed to add Node {} to routing table", node);
         }
 
         return isAdded;

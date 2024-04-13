@@ -3,10 +3,12 @@ package jtorrent.domain.dht.handler.task;
 
 import static jtorrent.domain.common.util.ValidationUtil.requireNonNull;
 
-import java.lang.System.Logger;
-import java.lang.System.Logger.Level;
 import java.util.Collection;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import jtorrent.domain.common.util.logging.Markers;
 import jtorrent.domain.dht.handler.DhtManager;
 import jtorrent.domain.dht.handler.lookup.FindNodeLookup;
 import jtorrent.domain.dht.handler.node.Node;
@@ -16,7 +18,7 @@ import jtorrent.domain.dht.model.node.NodeId;
 
 public class RefreshBucketTask implements Runnable {
 
-    private static final Logger LOGGER = System.getLogger(RefreshBucketTask.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(RefreshBucketTask.class);
 
     /**
      * The routing table that the bucket belongs to.
@@ -34,10 +36,10 @@ public class RefreshBucketTask implements Runnable {
 
     @Override
     public void run() {
-        LOGGER.log(Level.DEBUG, "[DHT] Refreshing bucket {0}", bucket);
+        LOGGER.info(Markers.DHT, "Refreshing bucket {}", bucket);
         NodeId randomNodeId = NodeId.randomWithPrefix(bucket.getPrefix());
         Collection<Node> closestNodes = routingTable.getClosestNodes(randomNodeId, DhtManager.ALPHA);
         new FindNodeLookup().lookup(randomNodeId, closestNodes).forEach(routingTable::addNode);
-        LOGGER.log(Level.DEBUG, "[DHT] Refreshed bucket {0}", bucket);
+        LOGGER.info(Markers.DHT, "Refreshed bucket {}", bucket);
     }
 }

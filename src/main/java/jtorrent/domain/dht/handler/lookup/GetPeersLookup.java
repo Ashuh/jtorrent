@@ -1,6 +1,5 @@
 package jtorrent.domain.dht.handler.lookup;
 
-import java.lang.System.Logger;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -18,7 +17,6 @@ import jtorrent.domain.peer.model.PeerContactInfo;
 
 public class GetPeersLookup extends IterativeLookup<GetPeersResponse, Sha1Hash, GetPeersLookup.Result> {
 
-    private static final Logger LOGGER = System.getLogger(GetPeersLookup.class.getName());
     private static final String NAME = "get peers";
 
     private final Set<PeerContactInfo> peers = new HashSet<>();

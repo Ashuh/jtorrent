@@ -2,8 +2,6 @@ package jtorrent.domain.dht.handler;
 
 import static jtorrent.domain.common.util.ValidationUtil.requireNonNull;
 
-import java.lang.System.Logger;
-import java.lang.System.Logger.Level;
 import java.net.InetSocketAddress;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -19,9 +17,13 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import jtorrent.domain.common.Constants;
 import jtorrent.domain.common.util.PeriodicTask;
 import jtorrent.domain.common.util.Sha1Hash;
+import jtorrent.domain.common.util.logging.Markers;
 import jtorrent.domain.dht.handler.lookup.GetPeersLookup;
 import jtorrent.domain.dht.handler.node.Node;
 import jtorrent.domain.dht.handler.routingtable.Bucket;
@@ -35,7 +37,7 @@ public class DhtManager {
     public static final int K = 8;
     public static final int ALPHA = 3;
     private static final Duration REFRESH_INTERVAL = Duration.ofMinutes(15);
-    private static final Logger LOGGER = System.getLogger(DhtManager.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(DhtManager.class);
 
     private final RoutingTable routingTable;
     private final ExecutorService cachedThreadPool = Executors.newCachedThreadPool();
@@ -66,12 +68,12 @@ public class DhtManager {
         requireNonNull(address);
 
         if (!routingTable.isEmpty()) {
-            LOGGER.log(Level.DEBUG, "[DHT] Routing table is already bootstrapped");
+            LOGGER.debug(Markers.DHT, "Routing table is already bootstrapped");
             return;
         }
 
         if (!bootstrapSemaphore.tryAcquire()) {
-            LOGGER.log(Level.DEBUG, "[DHT] Routing table is already bootstrapping");
+            LOGGER.debug(Markers.DHT, "Routing table is already bootstrapping");
             return;
         }
 
@@ -79,16 +81,14 @@ public class DhtManager {
                 .thenApplyAsync(node -> new BootstrapTask(routingTable, node, cachedThreadPool), cachedThreadPool)
                 .thenApply(BootstrapTask::getAsBoolean).whenComplete((isSuccess, throwable) -> {
                     if (throwable != null) {
-                        LOGGER.log(Level.ERROR, "[DHT] Error occurred while bootstrapping)", throwable);
+                        LOGGER.error(Markers.DHT, "Error occurred while bootstrapping", throwable);
                     } else if (Boolean.FALSE.equals(isSuccess)) {
-                        LOGGER.log(Level.ERROR,
-                                "[DHT] Bootstrap node at {0} failed to provide new nodes. Routing table is empty",
+                        LOGGER.error(Markers.DHT,
+                                "Failed to bootstrap routing table: Bootstrap node {} failed to provide any new nodes",
                                 address);
                     } else {
-                        LOGGER.log(Level.DEBUG,
-                                "[DHT] Bootstrapped routing table with node at {0}."
-                                        + " Routing table contains {1} nodes",
-                                address, routingTable.size());
+                        LOGGER.info(Markers.DHT, "Routing table bootstrapped with {}: {} nodes found", address,
+                                routingTable.size());
                     }
                     bootstrapSemaphore.release();
                     routingTable.getBuckets().forEach(this::startPeriodicallyRefreshingBucket);
@@ -107,23 +107,23 @@ public class DhtManager {
      */
     public void registerInfoHash(Sha1Hash infoHash) {
         if (infoHashToFindPeersTask.containsKey(infoHash)) {
-            LOGGER.log(Level.DEBUG, "[DHT] Already registered info hash {0}", infoHash);
+            LOGGER.debug(Markers.DHT, "Info hash already registered: {}", infoHash);
             return;
         }
 
         PeriodicFindPeersTask periodicFindPeersTask = new PeriodicFindPeersTask(infoHash);
         infoHashToFindPeersTask.put(infoHash, periodicFindPeersTask);
         periodicFindPeersTask.scheduleWithFixedDelay(1, TimeUnit.MINUTES);
-        LOGGER.log(Level.DEBUG, "[DHT] Registered info hash {0}", infoHash);
+        LOGGER.info(Markers.DHT, "Registered info hash: {}", infoHash);
     }
 
     public void deregisterInfoHash(Sha1Hash infoHash) {
         PeriodicFindPeersTask periodicFindPeersTask = infoHashToFindPeersTask.remove(infoHash);
         if (periodicFindPeersTask != null) {
-            LOGGER.log(Level.DEBUG, "[DHT] Stopping periodic find peers task for info hash {0}", infoHash);
+            LOGGER.debug(Markers.DHT, "Stopping periodic find peers task for info hash: {}", infoHash);
             periodicFindPeersTask.stop();
         }
-        LOGGER.log(Level.DEBUG, "[DHT] Deregistered info hash {0}", infoHash);
+        LOGGER.info(Markers.DHT, "Deregistered info hash: {}", infoHash);
     }
 
     public interface PeerDiscoveryListener {
@@ -141,22 +141,21 @@ public class DhtManager {
 
         @Override
         public void run() {
-            LOGGER.log(Level.DEBUG, "[DHT] Starting periodic refresh for bucket {0}", bucket);
+            LOGGER.debug(Markers.DHT, "Starting periodic refresh check for bucket {}", bucket);
             Duration durationSinceLastUpdated = Duration.between(bucket.getLastUpdated(), LocalDateTime.now());
             Duration durationUntilNextUpdate = REFRESH_INTERVAL.minus(durationSinceLastUpdated);
-            LOGGER.log(Level.DEBUG, "[DHT] Bucket {0} was last updated {1} ago", bucket, durationSinceLastUpdated);
+            LOGGER.debug(Markers.DHT, "Bucket {} was last updated {} ago", bucket, durationSinceLastUpdated);
 
             if (durationUntilNextUpdate.isZero() || durationUntilNextUpdate.isNegative()) {
-                LOGGER.log(Level.DEBUG, "[DHT] Refreshing bucket {0} now", bucket);
                 refresh().whenComplete((unused, throwable) -> {
                     if (throwable != null) {
-                        LOGGER.log(Level.ERROR, "[DHT] Error occurred while refreshing bucket", throwable);
+                        LOGGER.error(Markers.DHT, "Failed to refresh bucket {}", bucket, throwable);
                     }
                     reschedule(REFRESH_INTERVAL);
                 });
             } else {
                 reschedule(durationUntilNextUpdate);
-                LOGGER.log(Level.DEBUG, "[DHT] Checking bucket {0} again in {1}", bucket, durationUntilNextUpdate);
+                LOGGER.debug(Markers.DHT, "Checking bucket {} again in {}", bucket, durationUntilNextUpdate);
             }
         }
 
