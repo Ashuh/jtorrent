@@ -5,7 +5,6 @@ import java.net.InetAddress;
 import org.slf4j.MDC;
 
 import jtorrent.domain.peer.model.PeerContactInfo;
-import jtorrent.domain.torrent.handler.TorrentHandler;
 import jtorrent.domain.torrent.model.Torrent;
 
 public class MdcUtil {
@@ -18,10 +17,6 @@ public class MdcUtil {
 
     public static void putTorrent(Torrent torrent) {
         MDC.put(KEY_TORRENT, torrent.getInfoHash().toString());
-    }
-
-    public static void putTorrent(TorrentHandler torrentHandler) {
-        putTorrent(torrentHandler.getTorrent());
     }
 
     public static void removeTorrent() {

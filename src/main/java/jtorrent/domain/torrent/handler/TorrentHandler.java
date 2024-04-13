@@ -1,8 +1,5 @@
 package jtorrent.domain.torrent.handler;
 
-import static java.lang.System.Logger;
-import static java.lang.System.Logger.Level;
-import static java.lang.System.getLogger;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static jtorrent.domain.common.util.ValidationUtil.requireNonNull;
 
@@ -27,10 +24,16 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
+
 import jtorrent.domain.common.Constants;
 import jtorrent.domain.common.util.BackgroundTask;
 import jtorrent.domain.common.util.PeriodicTask;
 import jtorrent.domain.common.util.Sha1Hash;
+import jtorrent.domain.common.util.logging.Markers;
+import jtorrent.domain.common.util.logging.MdcUtil;
 import jtorrent.domain.peer.communication.PeerSocket;
 import jtorrent.domain.peer.handler.PeerHandler;
 import jtorrent.domain.peer.model.Peer;
@@ -44,7 +47,7 @@ import jtorrent.domain.tracker.model.PeerResponse;
 
 public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.EventHandler {
 
-    private static final Logger LOGGER = getLogger(TorrentHandler.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(TorrentHandler.class);
 
     private final Torrent torrent;
     private final Set<TrackerHandler> trackerHandlers;
@@ -83,21 +86,30 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
     }
 
     public void start() {
-        CompletableFuture.runAsync(this::verifyFiles)
-                .thenAccept(ignored -> {
-                    boolean isCompleted = torrent.isAllPiecesVerified();
-                    Torrent.State state = isCompleted ? Torrent.State.SEEDING : Torrent.State.DOWNLOADING;
-                    torrent.setState(state);
-                    workDispatcher.start();
-                    trackerHandlers.forEach(TrackerHandler::start);
-                    unchokeTask.scheduleAtFixedRate(0, 10, SECONDS);
-                }).exceptionally(throwable -> {
-                    log(Level.ERROR, "Failed to start", throwable);
-                    return null;
-                });
+        MdcUtil.putTorrent(torrent);
+        Map<String, String> context = MDC.getCopyOfContextMap();
+        CompletableFuture.runAsync(() -> {
+            MDC.setContextMap(context);
+            verifyFiles();
+        }).whenComplete((ignored, throwable) -> {
+            if (throwable != null) {
+                LOGGER.error(Markers.TORRENT, "Failed to start", throwable);
+            } else {
+                boolean isCompleted = torrent.isAllPiecesVerified();
+                Torrent.State state = isCompleted ? Torrent.State.SEEDING : Torrent.State.DOWNLOADING;
+                torrent.setState(state);
+                workDispatcher.start();
+                trackerHandlers.forEach(TrackerHandler::start);
+                unchokeTask.scheduleAtFixedRate(0, 10, SECONDS);
+                LOGGER.info(Markers.TORRENT, "Torrent started");
+            }
+            MDC.clear();
+        });
+        MdcUtil.removeTorrent();
     }
 
     public void stop() {
+        MdcUtil.putTorrent(torrent);
         synchronized (stateLock) {
             torrent.setState(Torrent.State.STOPPED);
         }
@@ -107,6 +119,7 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
         executorService.shutdownNow();
         peerHandlers.forEach(PeerHandler::stop);
         torrent.clearPeers();
+        MdcUtil.removeTorrent();
     }
 
     private void verifyFiles() {
@@ -126,21 +139,24 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
     }
 
     public void handleInboundPeerConnection(PeerSocket peerSocket) {
+        MdcUtil.putTorrent(torrent);
         PeerContactInfo peerContactInfo = peerSocket.getPeerContactInfo();
 
         if (isAlreadyConnectedOrPending(peerContactInfo)) {
-            LOGGER.log(Level.DEBUG, "[{0}] Already connected or pending connection {0}", peerContactInfo);
+            LOGGER.debug(Markers.TORRENT, "Already connected or pending connection {}", peerContactInfo);
             return;
         }
 
         Peer peer = new Peer(peerSocket.getPeerContactInfo());
         PeerHandler peerHandler = new PeerHandler(peer, peerSocket, this);
         connectPeerHandler(peerHandler);
+        MdcUtil.removeTorrent();
     }
 
     public void handleDiscoveredPeerContact(PeerContactInfo peerContactInfo) {
+        MdcUtil.putTorrent(torrent);
         if (isAlreadyConnectedOrPending(peerContactInfo)) {
-            LOGGER.log(Level.DEBUG, "[{0}] Already connected or pending connection {0}", peerContactInfo);
+            LOGGER.debug(Markers.TORRENT, "Already connected or pending connection {}", peerContactInfo);
             return;
         }
 
@@ -148,14 +164,14 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
         Peer peer = new Peer(peerContactInfo);
         PeerHandler peerHandler = new PeerHandler(peer, peerSocket, this);
         connectPeerHandler(peerHandler);
+        MdcUtil.removeTorrent();
     }
 
     private void connectPeerHandler(PeerHandler peerHandler) {
         peerHandler.connect(torrent.getInfoHash(), true)
                 .whenComplete((isDhtSupportedByRemote, throwable) -> {
                     if (throwable != null) {
-                        log(Level.ERROR, String.format("[%s] Failed to connect", peerHandler.getPeerContactInfo()),
-                                throwable);
+                        LOGGER.error(Markers.TORRENT, "Failed to connect to {}", peerHandler.getPeerContactInfo());
                     } else {
                         handleConnectionSuccess(peerHandler, isDhtSupportedByRemote);
                     }
@@ -164,7 +180,6 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
     }
 
     private void handleConnectionSuccess(PeerHandler peerHandler, boolean isDhtSupportedByRemote) {
-        log(Level.INFO, String.format("[%s] Connected", peerHandler.getPeerContactInfo()));
         try {
             synchronized (verificationLock) {
                 BitSet verifiedPieces = torrent.getVerifiedPieces();
@@ -183,9 +198,9 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
             workDispatcher.addPeerHandler(peerHandler);
             peerHandler.start();
         } catch (IOException e) {
-            log(Level.ERROR, String.format("Error handling connection success: %s", peerHandler.getPeerContactInfo()),
-                    e);
+            LOGGER.error(Markers.TORRENT, "Failed to connect to {}", peerHandler.getPeerContactInfo(), e);
         }
+        LOGGER.info(Markers.TORRENT, "Connected to {}", peerHandler.getPeerContactInfo());
     }
 
     /**
@@ -209,92 +224,102 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
             Sha1Hash expected = torrent.getPieceHash(pieceIndex);
             return Sha1Hash.of(pieceBytes).equals(expected);
         } catch (IOException e) {
-            log(Level.ERROR, String.format("Failed to retrieve piece %d", pieceIndex), e);
+            LOGGER.error(Markers.TORRENT, "Failed to retrieve piece {}", pieceIndex, e);
             return false;
         }
     }
 
     @Override
     public void onAnnounceResponse(List<PeerResponse> peerResponses) {
+        MdcUtil.putTorrent(torrent);
         peerResponses.stream()
                 .map(PeerResponse::toPeerContactInfo)
                 .forEach(this::handleDiscoveredPeerContact);
+        MdcUtil.removeTorrent();
     }
 
     @Override
     public void handlePeerDisconnected(PeerHandler peerHandler) {
-        log(Level.DEBUG, String.format("Handling peer disconnected: %s", peerHandler.getPeerContactInfo()));
+        MdcUtil.putTorrent(torrent);
+        LOGGER.info(Markers.TORRENT, "Peer disconnected: {}", peerHandler.getPeerContactInfo());
         workDispatcher.removePeerHandler(peerHandler);
         torrent.removePeer(peerHandler.getPeer());
         peerHandlers.remove(peerHandler);
+        MdcUtil.removeTorrent();
     }
 
     @Override
     public void handlePeerChoked(PeerHandler peerHandler) {
-        log(Level.DEBUG, String.format("Handling choked by remote: %s", peerHandler.getPeerContactInfo()));
+        MdcUtil.putTorrent(torrent);
+        LOGGER.info(Markers.TORRENT, "Choked by peer {}", peerHandler.getPeerContactInfo());
 
         peerHandler.getAvailablePieces().stream()
                 .map(pieceIndexToAvailablePeerHandlers::get)
                 .forEach(availablePeerHandlers -> availablePeerHandlers.remove(peerHandler));
 
         workDispatcher.handlePeerChoked(peerHandler);
+        MdcUtil.removeTorrent();
     }
 
     @Override
     public void handlePeerUnchoked(PeerHandler peerHandler) {
-        log(Level.DEBUG, String.format("Handling unchoked by remote: %s", peerHandler.getPeerContactInfo()));
+        MdcUtil.putTorrent(torrent);
+        LOGGER.info(Markers.TORRENT, "Unchoked by peer {}", peerHandler.getPeerContactInfo());
 
         peerHandler.getAvailablePieces().stream()
                 .map(pieceIndexToAvailablePeerHandlers::get)
                 .forEach(availablePeerHandlers -> availablePeerHandlers.add(peerHandler));
 
         workDispatcher.handlePeerUnchoked(peerHandler);
+        MdcUtil.removeTorrent();
     }
 
     @Override
     public void handlePiecesAvailable(PeerHandler peerHandler, Set<Integer> pieceIndices) {
-        log(Level.DEBUG, String.format("Handling %d pieces available", pieceIndices.size()));
+        MdcUtil.putTorrent(torrent);
+        LOGGER.info(Markers.TORRENT, "Peer {} has {} pieces available", peerHandler.getPeerContactInfo(),
+                pieceIndices.size());
         pieceIndices.forEach(pieceIndex -> pieceIndexToAvailablePeerHandlers
                 .computeIfAbsent(pieceIndex, key -> new HashSet<>())
                 .add(peerHandler));
         workDispatcher.handlePieceAvailable(peerHandler);
+        MdcUtil.removeTorrent();
     }
 
     @Override
     public void handleBlockRequested(PeerHandler peerHandler, int pieceIndex, int offset, int length) {
-        log(Level.DEBUG, String.format("Handling block requested (%d - %d) for piece %d", offset, offset + length,
-                pieceIndex));
+        MdcUtil.putTorrent(torrent);
+        LOGGER.info(Markers.TORRENT, "Peer requested block ({}, {}) for piece {}", offset, offset + length, pieceIndex);
         byte[] data;
         try {
             data = repository.getBlock(torrent, pieceIndex, offset, length);
         } catch (IOException e) {
-            log(Level.ERROR, String.format("Failed to retrieve block [%d - %d] for piece %d",
-                    offset, offset + length, pieceIndex), e);
+            LOGGER.error(Markers.TORRENT, "Failed to retrieve block ({}, {}) for piece {}", offset, offset + length,
+                    pieceIndex, e);
             return;
         }
         try {
             peerHandler.sendPiece(pieceIndex, offset, data);
+            LOGGER.info(Markers.TORRENT, "Sent block ({}, {}) for piece {}", offset, offset + length, pieceIndex);
             torrent.incrementUploaded(data.length);
         } catch (IOException e) {
-            log(Level.ERROR, String.format("[%s] Failed to send block [%d - %d] for piece %d",
-                    peerHandler.getPeerContactInfo(), offset, offset + length, pieceIndex), e);
+            LOGGER.error(Markers.TORRENT, "Failed to send block ({}, {}) for piece {}", offset, offset + length,
+                    pieceIndex, e);
         }
+        MdcUtil.removeTorrent();
     }
 
     @Override
     public void handleDhtPortReceived(PeerHandler peerHandler, int port) {
-        log(Level.DEBUG, String.format("Handling DHT port received from %s: %d", peerHandler.getPeerContactInfo(),
-                port));
+        MdcUtil.putTorrent(torrent);
+        LOGGER.info(Markers.TORRENT, "Peer {} supports DHT on port {}", peerHandler.getPeerContactInfo(), port);
         InetSocketAddress address = new InetSocketAddress(peerHandler.getAddress(), port);
         listeners.forEach(listener -> listener.onDhtNodeDiscovered(address));
+        MdcUtil.removeTorrent();
     }
 
-    private void log(Level level, String message) {
-        LOGGER.log(level, String.format("[%s] %s", torrent.getName(), message));
-    }
-
-    private void log(Level level, String message, Throwable throwable) {
-        LOGGER.log(level, String.format("[%s] %s", torrent.getName(), message), throwable);
+    public Torrent getTorrent() {
+        return torrent;
     }
 
     public interface Listener {
@@ -316,6 +341,7 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
 
         @Override
         public void run() {
+            MdcUtil.putTorrent(torrent);
             if (isThirdIteration()) {
                 selectPeerToOptimisticUnchoke().ifPresent(this::processPeerToOptimisticUnchoke);
             }
@@ -323,6 +349,7 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
             processPeersToUnchoke(peersToUnchoke);
             unchokedPeerHandlers = peersToUnchoke;
             iteration = (iteration + 1) % 3;
+            MdcUtil.removeTorrent();
         }
 
         private boolean isThirdIteration() {
@@ -368,8 +395,8 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
                         try {
                             peerHandler.sendChoke();
                         } catch (IOException e) {
-                            log(Level.ERROR, String.format("[%s] Failed to send choke",
-                                    peerHandler.getPeerContactInfo()), e);
+                            LOGGER.error(Markers.TORRENT, "Failed to send choke to {}",
+                                    peerHandler.getPeerContactInfo(), e);
                         }
                     });
             peersToUnchoke.stream()
@@ -378,8 +405,8 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
                         try {
                             peerHandler.sendUnchoke();
                         } catch (IOException e) {
-                            log(Level.ERROR, String.format("[%s] Failed to send unchoke",
-                                    peerHandler.getPeerContactInfo()), e);
+                            LOGGER.error(Markers.TORRENT, "Failed to send unchoke to {}",
+                                    peerHandler.getPeerContactInfo(), e);
                         }
                     });
         }
@@ -400,8 +427,8 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
                 try {
                     optimisticUnchokedPeerHandler.sendChoke();
                 } catch (IOException e) {
-                    log(Level.ERROR, String.format("[%s] Failed to send choke", optimisticUnchokedPeerHandler
-                            .getPeerContactInfo()), e);
+                    LOGGER.error(Markers.TORRENT, "Failed to send choke to {}",
+                            optimisticUnchokedPeerHandler.getPeerContactInfo(), e);
                 }
             }
 
@@ -410,7 +437,7 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
                 peerHandler.sendUnchoke();
                 optimisticUnchokedPeerHandler = peerHandler;
             } catch (IOException e) {
-                log(Level.ERROR, String.format("[%s] Failed to send unchoke", peerHandler.getPeerContactInfo()), e);
+                LOGGER.error(Markers.TORRENT, "Failed to send unchoke to {}", peerHandler.getPeerContactInfo(), e);
             }
         }
     }
@@ -426,6 +453,18 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
         protected void execute() throws InterruptedException {
             PeerHandler peerHandler = peerHandlersQueue.take();
             assignWork(peerHandler);
+        }
+
+        @Override
+        protected void doOnStarted() {
+            MdcUtil.putTorrent(torrent);
+            LOGGER.debug(Markers.TORRENT, "Work dispatcher started");
+        }
+
+        @Override
+        protected void doOnStopped() {
+            LOGGER.debug(Markers.TORRENT, "Work dispatcher stopped");
+            MdcUtil.removeTorrent();
         }
 
         public synchronized void addPeerHandler(PeerHandler peerHandler) {
@@ -487,7 +526,7 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
         private void assignWork(PeerHandler peerHandler) {
             Optional<Block> blockToAssignOpt = getBlockToAssign(peerHandler);
             if (blockToAssignOpt.isEmpty()) {
-                LOGGER.log(Level.DEBUG, "No block to assign to {0}", peerHandler.getPeerContactInfo());
+                LOGGER.debug("No block to assign to {}", peerHandler.getPeerContactInfo());
                 noPieceToAssignPeerHandlers.add(peerHandler);
                 return;
             }
@@ -502,24 +541,25 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
                     peerHandlerToShouldEnqueueOnCompletion.put(peerHandler, true);
                 }
             } catch (IOException e) {
-                log(Level.ERROR, String.format("Failed to assign work to %s", peerHandler.getPeerContactInfo()), e);
+                LOGGER.error(Markers.TORRENT, "Failed to assign work to {}", peerHandler.getPeerContactInfo(), e);
                 peerHandler.stop();
             }
         }
 
         private void assignWork(PeerHandler peerHandler, Block block) throws IOException {
-            log(Level.DEBUG, String.format("Assigning %s to %s", block, peerHandler.getPeerContactInfo()));
+            LOGGER.debug("Assigned {} to {}", block, peerHandler.getPeerContactInfo());
             int pieceIndex = block.getPieceIndex();
             int blockIndex = block.getBlockIndex();
             int offset = block.getBlockIndex() * torrent.getBlockSize();
             int length = torrent.getBlockSize(block.getPieceIndex(), block.getBlockIndex());
             peerHandler.sendRequest(block.getPieceIndex(), offset, length)
                     .handle((data, throwable) -> {
+                        MdcUtil.putTorrent(torrent);
                         if (throwable == null) {
                             handleBlockReceived(pieceIndex, offset, data);
                         } else {
-                            log(Level.ERROR, String.format("Failed to receive block %d of piece %d from %s", blockIndex,
-                                    pieceIndex, peerHandler.getPeerContactInfo()), throwable);
+                            LOGGER.error(Markers.TORRENT, "Failed to receive block {} of piece {} from {}",
+                                    blockIndex, pieceIndex, peerHandler.getPeerContactInfo(), throwable);
                             synchronized (pieceStateLock) {
                                 torrent.setBlockNotRequested(pieceIndex, blockIndex);
                             }
@@ -530,6 +570,7 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
                             enqueuePeerHandler(peerHandler);
                         }
 
+                        MdcUtil.removeTorrent();
                         return Void.TYPE;
                     });
             torrent.setBlockRequested(pieceIndex, blockIndex);
@@ -579,15 +620,14 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
         }
 
         public void handleBlockReceived(int pieceIndex, int offset, byte[] data) {
-            log(Level.DEBUG, String.format("Handling %d bytes received for piece %d, offset %d", data.length,
-                    pieceIndex, offset));
+            LOGGER.info(Markers.TORRENT, "Received {} bytes for piece {}, offset {}", data.length, pieceIndex, offset);
 
             int blockIndex = offset / torrent.getBlockSize();
 
             try {
                 repository.storeBlock(torrent, pieceIndex, offset, data);
             } catch (IOException e) {
-                log(Level.ERROR, String.format("Failed to store block %d of piece %d", blockIndex, pieceIndex), e);
+                LOGGER.error(Markers.TORRENT, "Failed to store block {} of piece {}", blockIndex, pieceIndex, e);
                 synchronized (pieceStateLock) {
                     torrent.setBlockNotRequested(pieceIndex, blockIndex);
                 }
@@ -600,23 +640,24 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
                 torrent.incrementDownloaded(data.length);
 
                 if (torrent.isPieceComplete(pieceIndex)) {
-                    LOGGER.log(Level.DEBUG, "Piece {0} complete", pieceIndex);
+                    LOGGER.info(Markers.TORRENT, "Piece {} complete", pieceIndex);
 
                     if (isPieceChecksumValid(pieceIndex)) {
                         synchronized (verificationLock) {
-                            LOGGER.log(Level.INFO, "Piece {0} verified", pieceIndex);
+                            LOGGER.info(Markers.TORRENT, "Piece {} verified", pieceIndex);
                             torrent.setPieceVerified(pieceIndex);
                             peerHandlers.forEach(handler -> {
                                 try {
                                     handler.sendHave(pieceIndex);
                                 } catch (IOException e) {
-                                    log(Level.ERROR, String.format("[%s] Failed to notify remote of piece availability",
-                                            handler.getPeerContactInfo()), e);
+                                    LOGGER.error(Markers.TORRENT, "Failed to send have to {}",
+                                            handler.getPeerContactInfo(), e);
+
                                 }
                             });
                         }
                     } else {
-                        LOGGER.log(Level.WARNING, "Piece {0} verification failed", pieceIndex);
+                        LOGGER.error(Markers.TORRENT, "Piece {} verification failed", pieceIndex);
                         torrent.setPieceMissing(pieceIndex);
                         enqueueIdlePeerHandlersWithPiece(pieceIndex);
                     }
@@ -624,14 +665,14 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
             }
 
             if (torrent.isAllPiecesVerified()) {
-                LOGGER.log(Level.DEBUG, "All pieces received");
+                LOGGER.info(Markers.TORRENT, "All pieces verified");
                 trackerHandlers.forEach(TrackerHandler::announceCompleted);
                 peerHandlers.forEach(peerHandler -> {
                     try {
                         peerHandler.sendNotInterested();
                     } catch (IOException e) {
-                        log(Level.ERROR, String.format("[%s] Failed to send not interested",
-                                peerHandler.getPeerContactInfo()), e);
+                        LOGGER.error(Markers.TORRENT, "Failed to send not interested to {}",
+                                peerHandler.getPeerContactInfo(), e);
                     }
                 });
                 trackerHandlers.forEach(TrackerHandler::stop);
