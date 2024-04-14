@@ -2,7 +2,6 @@ package jtorrent.domain.peer.model;
 
 import static jtorrent.domain.common.util.ValidationUtil.requireNonNull;
 
-import java.lang.System.Logger;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.time.Duration;
@@ -15,7 +14,6 @@ import jtorrent.domain.common.util.RateTracker;
 
 public class Peer {
 
-    private static final Logger LOGGER = System.getLogger(Peer.class.getName());
     private static final Duration WINDOW_DURATION = Duration.ofSeconds(20);
 
     private final PeerContactInfo peerContactInfo;

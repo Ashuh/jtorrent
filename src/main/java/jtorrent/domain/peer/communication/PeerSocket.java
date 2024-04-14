@@ -4,15 +4,17 @@ import static jtorrent.domain.common.Constants.PEER_ID;
 import static jtorrent.domain.common.util.ValidationUtil.requireNonNull;
 
 import java.io.IOException;
-import java.lang.System.Logger;
-import java.lang.System.Logger.Level;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import jtorrent.domain.common.util.Sha1Hash;
+import jtorrent.domain.common.util.logging.Markers;
 import jtorrent.domain.peer.model.PeerContactInfo;
 import jtorrent.domain.peer.model.exception.InfoHashMismatchException;
 import jtorrent.domain.peer.model.exception.UnexpectedEndOfStreamException;
@@ -22,7 +24,7 @@ import jtorrent.domain.peer.model.message.factory.PeerMessageUnpacker;
 
 public class PeerSocket {
 
-    private static final Logger LOGGER = System.getLogger(PeerSocket.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(PeerSocket.class);
 
     private final Socket socket;
     private boolean isConnected;
@@ -47,10 +49,8 @@ public class PeerSocket {
     }
 
     public void connect(SocketAddress address, Sha1Hash infoHash, boolean isDhtSupported) throws IOException {
-        LOGGER.log(Level.INFO, "[{0}] Connecting", address);
-
         if (isConnected) {
-            LOGGER.log(Level.WARNING, "[{0}] Already connected", socket.getRemoteSocketAddress());
+            LOGGER.debug(Markers.PEER, "Already connected");
             return;
         }
 
@@ -75,10 +75,8 @@ public class PeerSocket {
     }
 
     public void acceptInboundConnection(boolean isDhtSupported) throws IOException {
-        LOGGER.log(Level.INFO, "[{0}] Accepting inbound connection", socket.getRemoteSocketAddress());
-
         if (isConnected) {
-            LOGGER.log(Level.WARNING, "[{0}] Already connected", socket.getRemoteSocketAddress());
+            LOGGER.debug(Markers.PEER, "Already connected");
             return;
         }
 
@@ -115,7 +113,7 @@ public class PeerSocket {
 
     public void sendMessage(PeerMessage message) throws IOException {
         socket.getOutputStream().write(message.pack());
-        LOGGER.log(Level.INFO, "[{0}] Sent: {1}", getPeerContactInfo(), message);
+        LOGGER.debug(Markers.PEER, "Sent: {}", message);
     }
 
     public PeerContactInfo getPeerContactInfo() {
@@ -153,7 +151,7 @@ public class PeerSocket {
     }
 
     public Handshake waitForHandshake() throws IOException {
-        LOGGER.log(Level.DEBUG, "[{0}] Waiting for handshake", getPeerContactInfo());
+        LOGGER.debug(Markers.PEER, "Waiting for handshake");
 
         byte[] buffer = socket.getInputStream().readNBytes(Handshake.MESSAGE_SIZE_BYTES);
         if (buffer.length != Handshake.MESSAGE_SIZE_BYTES) {
@@ -161,18 +159,18 @@ public class PeerSocket {
         }
         Handshake handshake = Handshake.unpack(buffer);
         receivedHandshake = handshake;
-        LOGGER.log(Level.INFO, "[{0}] Received: {1}", getPeerContactInfo(), handshake);
+        LOGGER.debug(Markers.PEER, "Received handshake: {}", handshake);
 
         return handshake;
     }
 
     public void close() throws IOException {
-        LOGGER.log(Level.DEBUG, "[{0}] Closing PeerSocket", getPeerContactInfo());
+        LOGGER.debug(Markers.PEER, "Closing PeerSocket");
         socket.close();
     }
 
     public PeerMessage receiveMessage() throws IOException {
-        LOGGER.log(Level.DEBUG, "Waiting for message");
+        LOGGER.debug(Markers.PEER, "Waiting for message");
 
         int lengthPrefix = readLengthPrefix();
 
@@ -182,7 +180,7 @@ public class PeerSocket {
 
         byte[] messageBytes = readMessageBytes(lengthPrefix);
         PeerMessage peerMessage = PeerMessageUnpacker.unpack(messageBytes);
-        LOGGER.log(Level.INFO, "[{0}] Received: {1}", getPeerContactInfo(), peerMessage);
+        LOGGER.debug(Markers.PEER, "Received: {}", peerMessage);
         return peerMessage;
     }
 

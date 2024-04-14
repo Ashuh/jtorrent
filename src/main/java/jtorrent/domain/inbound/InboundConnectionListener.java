@@ -6,12 +6,14 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 import jtorrent.domain.common.util.BackgroundTask;
 import jtorrent.domain.common.util.Sha1Hash;
@@ -90,7 +92,7 @@ public class InboundConnectionListener {
         protected void execute() {
             try {
                 Socket socket = serverSocket.accept();
-                MdcUtil.putPeerContactInfo(socket.getInetAddress(), socket.getPort());
+                MdcUtil.putPeer(socket.getInetAddress(), socket.getPort());
                 LOGGER.info(Markers.INBOUND, "Inbound connection");
                 handleAcceptedSocket(socket);
             } catch (IOException e) {
@@ -99,12 +101,14 @@ public class InboundConnectionListener {
                     ListenForInboundConnectionsTask.this.stop();
                 }
             } finally {
-                MdcUtil.removePeerContactInfo();
+                MdcUtil.removePeer();
             }
         }
 
         private void handleAcceptedSocket(Socket socket) {
+            Map<String, String> context = MDC.getCopyOfContextMap();
             executorService.submit(() -> {
+                MDC.setContextMap(context);
                 PeerSocket peerSocket = new PeerSocket(socket);
                 try {
                     Handshake handshake = waitForHandshake(peerSocket);
@@ -118,6 +122,8 @@ public class InboundConnectionListener {
                         LOGGER.error(Markers.INBOUND, "Failed to receive handshake", e);
                     }
                     tryCloseSocket(peerSocket);
+                } finally {
+                    MDC.clear();
                 }
             });
         }

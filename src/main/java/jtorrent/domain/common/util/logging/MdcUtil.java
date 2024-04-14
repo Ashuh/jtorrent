@@ -4,6 +4,7 @@ import java.net.InetAddress;
 
 import org.slf4j.MDC;
 
+import jtorrent.domain.peer.model.Peer;
 import jtorrent.domain.peer.model.PeerContactInfo;
 import jtorrent.domain.torrent.model.Torrent;
 
@@ -23,15 +24,19 @@ public class MdcUtil {
         MDC.remove(KEY_TORRENT);
     }
 
-    public static void putPeerContactInfo(InetAddress address, int port) {
-        putPeerContactInfo(new PeerContactInfo(address, port));
+    public static void putPeer(Peer peer) {
+        putPeer(peer.getPeerContactInfo());
     }
 
-    public static void putPeerContactInfo(PeerContactInfo peerContactInfo) {
-        MDC.put(KEY_PEER, peerContactInfo.toString());
+    public static void putPeer(InetAddress address, int port) {
+        putPeer(new PeerContactInfo(address, port));
     }
 
-    public static void removePeerContactInfo() {
+    public static void putPeer(PeerContactInfo peerContactInfo) {
+        MDC.put(KEY_PEER, peerContactInfo.getAddress().getHostAddress() + "-" + peerContactInfo.getPort());
+    }
+
+    public static void removePeer() {
         MDC.remove(KEY_PEER);
     }
 }

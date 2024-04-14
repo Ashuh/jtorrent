@@ -1,8 +1,6 @@
 package jtorrent.domain.peer.handler;
 
 import java.io.IOException;
-import java.lang.System.Logger;
-import java.lang.System.Logger.Level;
 import java.net.InetAddress;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
@@ -22,9 +20,14 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import jtorrent.domain.common.util.BackgroundTask;
 import jtorrent.domain.common.util.PeriodicTask;
 import jtorrent.domain.common.util.Sha1Hash;
+import jtorrent.domain.common.util.logging.Markers;
+import jtorrent.domain.common.util.logging.MdcUtil;
 import jtorrent.domain.peer.communication.PeerSocket;
 import jtorrent.domain.peer.model.Peer;
 import jtorrent.domain.peer.model.PeerContactInfo;
@@ -44,7 +47,7 @@ import jtorrent.domain.peer.model.message.typed.Unchoke;
 
 public class PeerHandler {
 
-    private static final Logger LOGGER = System.getLogger(PeerHandler.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(PeerHandler.class);
     private static final int MAX_REQUESTS = 5;
     private static final ExecutorService MESSAGE_HANDLER_THREAD_POOL = new ConnectionThreadPool();
 
@@ -77,25 +80,33 @@ public class PeerHandler {
     }
 
     public void stop() {
+        MdcUtil.putPeer(peer);
         eventHandler.handlePeerDisconnected(this);
         try {
             peerSocket.close();
         } catch (IOException e) {
-            LOGGER.log(Level.ERROR, "[{0}] Error while closing socket", peer.getPeerContactInfo());
+            LOGGER.error(Markers.PEER, "Failed to close socket", e);
         }
         handlePeerTask.stop();
         periodicKeepAliveTask.stop();
         periodicCheckAliveTask.stop();
         scheduledExecutorService.shutdownNow();
+        MdcUtil.removePeer();
     }
 
     public CompletableFuture<Boolean> connect(Sha1Hash infoHash, boolean isDhtSupported) {
         return CompletableFuture.supplyAsync(() -> {
             try {
+                MdcUtil.putPeer(peer);
+                LOGGER.info(Markers.PEER, "Connecting");
                 peerSocket.connect(peer.getPeerContactInfo().toInetSocketAddress(), infoHash, isDhtSupported);
+                LOGGER.info(Markers.PEER, "Connected");
                 return peerSocket.isDhtSupportedByRemote();
             } catch (IOException e) {
+                LOGGER.error(Markers.PEER, "Failed to connect", e);
                 throw new CompletionException(e);
+            } finally {
+                MdcUtil.removePeer();
             }
         });
     }
@@ -284,15 +295,24 @@ public class PeerHandler {
                 handleMessage(message);
             } catch (IOException e) {
                 if (!isStopping()) {
-                    LOGGER.log(Level.ERROR, String.format("[%s] Error while communicating with peer",
-                            peer.getPeerContactInfo()), e);
+                    LOGGER.error(Markers.PEER, "Failed to receive message", e);
                     PeerHandler.this.stop();
                 }
             }
         }
 
+        @Override
+        protected void doOnStarted() {
+            MdcUtil.putPeer(peer);
+        }
+
+        @Override
+        protected void doOnStopped() {
+            MdcUtil.removePeer();
+        }
+
         private void handleMessage(PeerMessage message) {
-            LOGGER.log(Level.DEBUG, "[{0}] Handling {1}", peer.getPeerContactInfo(), message);
+            LOGGER.debug(Markers.PEER, "Received {}", message);
 
             peer.addDownloadedBytes(message.getMessageSize());
             peer.setLastSeenNow();
@@ -386,7 +406,7 @@ public class PeerHandler {
             CompletableFuture<byte[]> future = outRequestKeyToFuture.remove(requestKey);
 
             if (future == null) {
-                LOGGER.log(Level.ERROR, "[{0}] Received block that was not requested", peer.getPeerContactInfo());
+                LOGGER.error(Markers.PEER, "Received non-requested Piece: {}", piece);
                 return;
             }
 
@@ -397,11 +417,10 @@ public class PeerHandler {
             RequestKey requestKey = new RequestKey(cancel.getIndex(), cancel.getBegin(), cancel.getLength());
             Future<?> future = inRequestKeyToFuture.remove(requestKey);
             if (future != null) {
-                LOGGER.log(Level.DEBUG, "[{0}] Cancelling request for {1}", peer.getPeerContactInfo(), requestKey);
                 future.cancel(true);
+                LOGGER.info(Markers.PEER, "Cancelled request for {}", requestKey);
             } else {
-                LOGGER.log(Level.DEBUG, "[{0}] Failed to cancel request for {1} ", peer.getPeerContactInfo(),
-                        requestKey);
+                LOGGER.error(Markers.PEER, "Failed to cancel request for {}", requestKey);
             }
         }
 
@@ -421,7 +440,7 @@ public class PeerHandler {
             try {
                 sendKeepAlive();
             } catch (IOException e) {
-                LOGGER.log(Level.ERROR, "[{0}] Error sending KeepAlive", peer.getPeerContactInfo());
+                LOGGER.error(Markers.PEER, "Failed to send KeepAlive", e);
                 PeerHandler.this.stop();
             }
         }
@@ -439,7 +458,7 @@ public class PeerHandler {
                 return;
             }
 
-            LOGGER.log(Level.INFO, "[{0}] Peer is dead, stopping", peer.getPeerContactInfo());
+            LOGGER.info(Markers.PEER, "Peer is dead");
             PeerHandler.this.stop();
         }
 
