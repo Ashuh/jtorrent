@@ -1,8 +1,6 @@
 package jtorrent.domain.tracker.model.http;
 
 import java.io.IOException;
-import java.lang.System.Logger;
-import java.lang.System.Logger.Level;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
@@ -11,11 +9,14 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.dampcake.bencode.BencodeInputStream;
 
 import jtorrent.domain.common.Constants;
 import jtorrent.domain.common.util.Sha1Hash;
-import jtorrent.domain.tracker.model.AnnounceResponse;
+import jtorrent.domain.common.util.logging.Markers;
 import jtorrent.domain.tracker.model.Event;
 import jtorrent.domain.tracker.model.Tracker;
 import jtorrent.domain.tracker.model.http.request.HttpAnnounceRequest;
@@ -23,7 +24,7 @@ import jtorrent.domain.tracker.model.http.response.HttpAnnounceResponse;
 
 public class HttpTracker implements Tracker {
 
-    private static final Logger LOGGER = System.getLogger(HttpTracker.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(HttpTracker.class);
     private static final String KEY_FAILURE_REASON = "failure reason";
 
     private final URI uri;
@@ -33,7 +34,7 @@ public class HttpTracker implements Tracker {
     }
 
     @Override
-    public AnnounceResponse announce(Sha1Hash infoHash, long downloaded, long left, long uploaded, Event event)
+    public HttpAnnounceResponse announce(Sha1Hash infoHash, long downloaded, long left, long uploaded, Event event)
             throws IOException {
         HttpAnnounceRequest request = new HttpAnnounceRequest.Builder()
                 .setInfohash(infoHash)
@@ -51,7 +52,7 @@ public class HttpTracker implements Tracker {
                 .map(e -> e.getKey() + "=" + encodeValue(e.getValue()))
                 .collect(Collectors.joining("&", uri.toString() + "?", ""));
 
-        LOGGER.log(Level.TRACE, "Encoded URL: {0}", encodedUrl);
+        LOGGER.trace(Markers.TRACKER, "Encoded URL: {}", encodedUrl);
 
         URL url = new URL(encodedUrl);
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -77,6 +78,11 @@ public class HttpTracker implements Tracker {
         }
 
         return HttpAnnounceResponse.fromMap(map);
+    }
+
+    @Override
+    public URI getUri() {
+        return uri;
     }
 
     private String encodeValue(String value) {

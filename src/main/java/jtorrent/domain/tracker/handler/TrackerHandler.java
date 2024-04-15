@@ -3,10 +3,9 @@ package jtorrent.domain.tracker.handler;
 import static jtorrent.domain.common.util.ValidationUtil.requireNonNull;
 
 import java.io.IOException;
-import java.lang.System.Logger;
-import java.lang.System.Logger.Level;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
@@ -15,22 +14,31 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
+
 import jtorrent.domain.common.util.BackgroundTask;
 import jtorrent.domain.common.util.Sha1Hash;
+import jtorrent.domain.common.util.logging.Markers;
+import jtorrent.domain.common.util.logging.MdcUtil;
 import jtorrent.domain.tracker.model.AnnounceResponse;
 import jtorrent.domain.tracker.model.Event;
 import jtorrent.domain.tracker.model.PeerResponse;
+import jtorrent.domain.tracker.model.Tracker;
 
 public abstract class TrackerHandler {
 
-    private static final Logger LOGGER = System.getLogger(TrackerHandler.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(TrackerHandler.class);
 
     protected final TorrentProgressProvider torrentProgressProvider;
+    private final Tracker tracker;
     private final List<Listener> listeners = new ArrayList<>();
     private final PeriodicAnnounceTask periodicAnnounceTask = new PeriodicAnnounceTask();
     private final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1);
 
-    protected TrackerHandler(TorrentProgressProvider torrentProgressProvider) {
+    protected TrackerHandler(Tracker tracker, TorrentProgressProvider torrentProgressProvider) {
+        this.tracker = requireNonNull(tracker);
         this.torrentProgressProvider = requireNonNull(torrentProgressProvider);
     }
 
@@ -39,12 +47,16 @@ public abstract class TrackerHandler {
     }
 
     public void start() {
-        LOGGER.log(Level.DEBUG, "Starting tracker handler");
+        MdcUtil.putTracker(tracker);
+        LOGGER.debug(Markers.TRACKER, "Starting tracker handler");
         periodicAnnounceTask.start();
+        LOGGER.info(Markers.TRACKER, "Tracker handler started");
+        MdcUtil.removeTracker();
     }
 
     public void stop() {
-        LOGGER.log(Level.DEBUG, "Stopping tracker handler");
+        MdcUtil.putTracker(tracker);
+        LOGGER.debug(Markers.TRACKER, "Stopping tracker handler");
         periodicAnnounceTask.stop();
         executorService.shutdown();
         try {
@@ -52,11 +64,25 @@ public abstract class TrackerHandler {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
+        LOGGER.info(Markers.TRACKER, "Tracker handler stopped");
+        MdcUtil.removeTracker();
     }
 
     public void announceCompleted() {
+        MdcUtil.putTracker(tracker);
         AnnounceTask announceTask = createAnnounceTask(Event.COMPLETED);
-        executorService.submit(announceTask);
+        Map<String, String> context = MDC.getCopyOfContextMap();
+        executorService.submit(() -> {
+            MDC.setContextMap(context);
+            AnnounceResponse response = announceTask.call();
+            MDC.clear();
+            return response;
+        });
+        MdcUtil.removeTracker();
+    }
+
+    public Tracker getTracker() {
+        return tracker;
     }
 
     protected abstract AnnounceTask createAnnounceTask(Event event);
@@ -103,7 +129,6 @@ public abstract class TrackerHandler {
 
     private class PeriodicAnnounceTask extends BackgroundTask {
 
-
         private ScheduledFuture<AnnounceResponse> scheduledFuture;
 
         @Override
@@ -115,15 +140,16 @@ public abstract class TrackerHandler {
                     scheduleAnnounce(Event.NONE, announceResponse.getInterval());
                 }
             } catch (ExecutionException e) {
-                LOGGER.log(Level.ERROR, "Announce failed", e);
+                LOGGER.error(Markers.TRACKER, "Announce failed", e);
                 TrackerHandler.this.stop();
             } catch (CancellationException e) {
-                LOGGER.log(Level.DEBUG, "Announce cancelled");
+                LOGGER.debug(Markers.TRACKER, "Announce cancelled");
             }
         }
 
         @Override
         protected void doOnStarted() {
+            MdcUtil.putTracker(tracker);
             scheduleAnnounce(Event.STARTED, 0);
         }
 
@@ -131,6 +157,7 @@ public abstract class TrackerHandler {
         protected void doOnStop() {
             cancelAnnounce();
             scheduleAnnounce(Event.STOPPED, 0);
+            MdcUtil.removeTracker();
         }
 
         /**
@@ -140,22 +167,28 @@ public abstract class TrackerHandler {
          * Otherwise, the thread will continuously try to get the result of the cancelled task.
          */
         private void cancelAnnounce() {
-            LOGGER.log(Level.DEBUG, "Cancelling announce");
+            LOGGER.debug(Markers.TRACKER, "Cancelling announce");
             scheduledFuture.cancel(true);
         }
 
         private void scheduleAnnounce(Event event, long delaySecs) {
-            scheduledFuture = executorService.schedule(createAnnounceTask(event), delaySecs, TimeUnit.SECONDS);
-            LOGGER.log(Level.DEBUG, "Scheduled next announce ({0}) in {1} seconds", event, delaySecs);
+            Map<String, String> context = MDC.getCopyOfContextMap();
+            scheduledFuture = executorService.schedule(() -> {
+                MDC.setContextMap(context);
+                AnnounceResponse response = createAnnounceTask(event).call();
+                MDC.clear();
+                return response;
+            }, delaySecs, TimeUnit.SECONDS);
+            LOGGER.debug(Markers.TRACKER, "Scheduled next {} announce in {} seconds", event, delaySecs);
         }
 
         private AnnounceResponse waitForAnnounceResponse() throws InterruptedException, ExecutionException {
-            LOGGER.log(Level.DEBUG, "Waiting for announce response");
+            LOGGER.debug(Markers.TRACKER, "Waiting for announce response");
             return scheduledFuture.get();
         }
 
         private void handleAnnounceResponse(AnnounceResponse announceResponse) {
-            LOGGER.log(Level.DEBUG, "Handling announce response {0}", announceResponse);
+            LOGGER.debug(Markers.TRACKER, "Received announce response: {}", announceResponse);
             List<PeerResponse> peerResponses = announceResponse.getPeers();
             listeners.forEach(listener -> listener.onAnnounceResponse(peerResponses));
         }
