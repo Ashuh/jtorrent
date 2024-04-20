@@ -15,6 +15,11 @@ targetCompatibility = '17'
 application {
     mainModule = 'jtorrent'
     mainClass = 'jtorrent.Main'
+    // Workaround for the following error:
+    // java.lang.IllegalAccessError: class ch.qos.logback.core.boolex.JaninoEventEvaluatorBase
+    // (in module ch.qos.logback.core) cannot access class org.codehaus.janino.ScriptEvaluator
+    // (in module org.codehaus.janino) because module ch.qos.logback.core does not read module org.codehaus.janino
+    applicationDefaultJvmArgs = ['--add-reads', 'ch.qos.logback.core=org.codehaus.janino']
 }
 
 repositories {
@@ -36,7 +41,7 @@ dependencies {
     implementation 'io.github.mkpaz:atlantafx-base:2.0.1'
     implementation 'org.kordamp.ikonli:ikonli-javafx:12.3.1'
     implementation 'org.kordamp.ikonli:ikonli-materialdesign2-pack:12.3.1'
-    implementation 'ch.qos.logback:logback-classic:1.5.3'
+    implementation 'ch.qos.logback:logback-classic:1.5.6'
     implementation 'org.codehaus.janino:janino:3.1.12'
 
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.2'
