@@ -162,7 +162,8 @@ public class DhtSocket {
                     LOGGER.debug(Markers.DHT, "Interrupted while waiting for message");
                 } else {
                     LOGGER.error(Markers.DHT, "Failed to receive message", e);
-                    // TODO: Perhaps we should throw AssertionError since SocketException should only be thrown when the socket is closed due to task stopping
+                    // TODO: Perhaps we should throw AssertionError since SocketException
+                    //  should only be thrown when the socket is closed due to task stopping
                 }
             } catch (IOException e) {
                 LOGGER.error(Markers.DHT, "Failed to receive message", e);
