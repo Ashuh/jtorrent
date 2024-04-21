@@ -1,0 +1,183 @@
+<configuration>
+    <property scope="context" name="LOG_FOLDER" value="log"/>
+    <property scope="context" name="TIME_PATTERN" value="%d{dd-MM-yyyy HH:mm:ss.SSS}"/>
+    <property scope="context" name="LEVEL_PATTERN" value="%-5level"/>
+    <property scope="context" name="THREAD_PATTERN" value="%-36([%thread])"/>
+    <property scope="context" name="LOGGER_PATTERN" value="%-28logger{28}"/>
+    <property scope="context" name="MSG_PATTERN"
+              value="%replace([%marker] ){'\[\] $', ''}%replace([%mdc] ){'\[\] $', ''}%msg"/>
+
+    <property scope="context" name="CONSOLE_PATTERN"
+              value="${TIME_PATTERN} %highlight(${LEVEL_PATTERN}) %magenta(${THREAD_PATTERN}) %cyan(${LOGGER_PATTERN}) ${MSG_PATTERN}%n"/>
+
+    <property scope="context" name="FILE_PATTERN"
+              value="${TIME_PATTERN} ${LEVEL_PATTERN} ${THREAD_PATTERN} ${LOGGER_PATTERN} ${MSG_PATTERN}%n"/>
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
+
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <Pattern>${CONSOLE_PATTERN}</Pattern>
+        </encoder>
+    </appender>
+
+    <appender name="CONSOLE_ASYNC" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="CONSOLE" />
+    </appender>
+
+    <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+        <file>${LOG_FOLDER}/log.log</file>
+        <append>false</append>
+        <immediateFlush>false</immediateFlush>
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <Pattern>${FILE_PATTERN}</Pattern>
+        </encoder>
+    </appender>
+
+    <appender name="FILE_DHT" class="ch.qos.logback.core.FileAppender">
+        <file>${LOG_FOLDER}/dht.log</file>
+        <append>false</append>
+        <immediateFlush>false</immediateFlush>
+        <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
+            <evaluator class="ch.qos.logback.classic.boolex.OnMarkerEvaluator">
+                <Marker>DHT</Marker>
+            </evaluator>
+            <OnMismatch>DENY</OnMismatch>
+            <OnMatch>NEUTRAL</OnMatch>
+        </filter>
+
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <Pattern>${FILE_PATTERN}</Pattern>
+        </encoder>
+    </appender>
+
+    <appender name="FILE_LSD" class="ch.qos.logback.core.FileAppender">
+        <file>${LOG_FOLDER}/lsd.log</file>
+        <append>false</append>
+        <immediateFlush>true</immediateFlush>
+        <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
+            <evaluator class="ch.qos.logback.classic.boolex.OnMarkerEvaluator">
+                <Marker>LSD</Marker>
+            </evaluator>
+            <OnMismatch>DENY</OnMismatch>
+            <OnMatch>NEUTRAL</OnMatch>
+        </filter>
+
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <Pattern>${FILE_PATTERN}</Pattern>
+        </encoder>
+    </appender>
+
+    <appender name="FILE_INBOUND" class="ch.qos.logback.core.FileAppender">
+        <file>${LOG_FOLDER}/inbound.log</file>
+        <append>false</append>
+        <immediateFlush>true</immediateFlush>
+        <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
+            <evaluator class="ch.qos.logback.classic.boolex.OnMarkerEvaluator">
+                <Marker>INBOUND</Marker>
+            </evaluator>
+            <OnMismatch>DENY</OnMismatch>
+            <OnMatch>NEUTRAL</OnMatch>
+        </filter>
+
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <Pattern>${FILE_PATTERN}</Pattern>
+        </encoder>
+    </appender>
+
+    <appender name="SIFT_PEER" class="ch.qos.logback.classic.sift.SiftingAppender">
+        <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
+            <evaluator class="ch.qos.logback.classic.boolex.JaninoEventEvaluator">
+                <expression>
+                    mdc.get("peer") != null
+                </expression>
+            </evaluator>
+            <OnMismatch>DENY</OnMismatch>
+            <OnMatch>NEUTRAL</OnMatch>
+        </filter>
+
+        <discriminator>
+            <key>peer</key>
+            <defaultValue>unknown</defaultValue>
+        </discriminator>
+        <sift>
+            <appender name="FILE-${peer}" class="ch.qos.logback.core.FileAppender">
+                <file>${LOG_FOLDER}/peer/${peer}.log</file>
+                <append>false</append>
+                <immediateFlush>false</immediateFlush>
+                <layout class="ch.qos.logback.classic.PatternLayout">
+                    <pattern>${FILE_PATTERN}</pattern>
+                </layout>
+            </appender>
+        </sift>
+    </appender>
+
+    <appender name="SIFT_TORRENT" class="ch.qos.logback.classic.sift.SiftingAppender">
+        <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
+            <evaluator class="ch.qos.logback.classic.boolex.JaninoEventEvaluator">
+                <expression>
+                    mdc.get("torrent") != null
+                </expression>
+            </evaluator>
+            <OnMismatch>DENY</OnMismatch>
+            <OnMatch>NEUTRAL</OnMatch>
+        </filter>
+
+        <discriminator>
+            <key>torrent</key>
+            <defaultValue>unknown</defaultValue>
+        </discriminator>
+        <sift>
+            <appender name="FILE-${torrent}" class="ch.qos.logback.core.FileAppender">
+                <file>${LOG_FOLDER}/torrent/${torrent}.log</file>
+                <append>false</append>
+                <immediateFlush>false</immediateFlush>
+                <layout class="ch.qos.logback.classic.PatternLayout">
+                    <pattern>${FILE_PATTERN}</pattern>
+                </layout>
+            </appender>
+        </sift>
+    </appender>
+
+    <appender name="SIFT_TRACKER" class="ch.qos.logback.classic.sift.SiftingAppender">
+        <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
+            <evaluator class="ch.qos.logback.classic.boolex.JaninoEventEvaluator">
+                <expression>
+                    mdc.get("tracker") != null
+                </expression>
+            </evaluator>
+            <OnMismatch>DENY</OnMismatch>
+            <OnMatch>NEUTRAL</OnMatch>
+        </filter>
+
+        <discriminator>
+            <key>tracker</key>
+            <defaultValue>unknown</defaultValue>
+        </discriminator>
+        <sift>
+            <appender name="FILE-${tracker}" class="ch.qos.logback.core.FileAppender">
+                <file>${LOG_FOLDER}/tracker/${tracker}.log</file>
+                <append>false</append>
+                <immediateFlush>true</immediateFlush>
+                <layout class="ch.qos.logback.classic.PatternLayout">
+                    <pattern>${FILE_PATTERN}</pattern>
+                </layout>
+            </appender>
+        </sift>
+    </appender>
+
+    <root level="DEBUG">
+        <appender-ref ref="CONSOLE_ASYNC"/>
+        <appender-ref ref="FILE"/>
+        <appender-ref ref="FILE_DHT"/>
+        <appender-ref ref="FILE_LSD"/>
+        <appender-ref ref="FILE_INBOUND"/>
+        <appender-ref ref="SIFT_PEER"/>
+        <appender-ref ref="SIFT_TORRENT"/>
+        <appender-ref ref="SIFT_TRACKER"/>
+    </root>
+
+    <shutdownHook class="ch.qos.logback.core.hook.DelayingShutdownHook"/>
+</configuration>
