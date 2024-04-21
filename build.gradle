@@ -56,4 +56,5 @@ extraJavaModuleInfo {
 
 test {
     useJUnitPlatform()
+    jvmArgs = ['--add-reads', 'ch.qos.logback.core=org.codehaus.janino']
 }
