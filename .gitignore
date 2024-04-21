@@ -146,3 +146,5 @@ gradle-app.setting
 .idea/checkstyle-idea.xml
 .idea/misc.xml
 .idea/vcs.xml
+
+log

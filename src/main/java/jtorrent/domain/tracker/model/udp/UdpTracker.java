@@ -4,16 +4,20 @@ import static jtorrent.domain.common.Constants.PEER_ID;
 import static jtorrent.domain.common.Constants.PORT;
 
 import java.io.IOException;
-import java.lang.System.Logger.Level;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
+import java.net.URI;
 import java.nio.ByteBuffer;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import jtorrent.domain.common.util.Sha1Hash;
+import jtorrent.domain.common.util.logging.Markers;
 import jtorrent.domain.tracker.model.Event;
 import jtorrent.domain.tracker.model.Tracker;
 import jtorrent.domain.tracker.model.udp.message.Action;
@@ -26,7 +30,7 @@ import jtorrent.domain.tracker.model.udp.message.response.UdpErrorResponse;
 
 public class UdpTracker implements Tracker {
 
-    private static final System.Logger LOGGER = System.getLogger(UdpTracker.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(UdpTracker.class);
     private static final int UDP_MAX_PACKET_SIZE = 65536;
     private static final int CONNECTION_ID_EXPIRATION_MINS = 1;
 
@@ -68,12 +72,17 @@ public class UdpTracker implements Tracker {
             throw new IOException("Transaction ID mismatch");
         }
 
-        LOGGER.log(Level.DEBUG, "Received announce response: {0}", udpAnnounceResponse);
+        LOGGER.debug(Markers.TRACKER, "Received announce response: {}", udpAnnounceResponse);
         return udpAnnounceResponse;
     }
 
+    @Override
+    public URI getUri() {
+        return URI.create("udp://" + address.getHostString() + ":" + address.getPort());
+    }
+
     public void connect() throws IOException {
-        LOGGER.log(Level.TRACE, "Getting connection ID");
+        LOGGER.debug(Markers.TRACKER, "Connecting to tracker");
         UdpConnectionRequest connectionRequest = new UdpConnectionRequest();
         sendRequest(connectionRequest);
         UdpConnectionResponse connectionResponse = receiveConnectionResponse();
@@ -82,7 +91,7 @@ public class UdpTracker implements Tracker {
         }
         connectionId = connectionResponse.getConnectionId();
         connectionIdExpiration = LocalDateTime.now().plusMinutes(CONNECTION_ID_EXPIRATION_MINS);
-        LOGGER.log(Level.DEBUG, "Received connection ID: " + connectionId);
+        LOGGER.info(Markers.TRACKER, "Connected to tracker");
     }
 
     public void setTimeout(int timeout) throws SocketException {
@@ -98,14 +107,13 @@ public class UdpTracker implements Tracker {
     }
 
     public void sendRequest(UdpRequest request) throws IOException {
-        LOGGER.log(Level.DEBUG, "Sending request: {}", request);
         byte[] requestBytes = request.pack();
         DatagramPacket requestPacket = new DatagramPacket(requestBytes, requestBytes.length);
         socket.send(requestPacket);
+        LOGGER.debug(Markers.TRACKER, "Sent request: {}", request);
     }
 
     public UdpConnectionResponse receiveConnectionResponse() throws IOException {
-        LOGGER.log(Level.TRACE, "Waiting for connection response");
         DatagramPacket packet = new DatagramPacket(new byte[UDP_MAX_PACKET_SIZE], UDP_MAX_PACKET_SIZE);
         socket.receive(packet);
 
@@ -126,12 +134,12 @@ public class UdpTracker implements Tracker {
             throw new IOException("Invalid action");
         }
 
-        LOGGER.log(Level.TRACE, "Received connection response");
-        return UdpConnectionResponse.unpack(payload);
+        UdpConnectionResponse response = UdpConnectionResponse.unpack(payload);
+        LOGGER.debug(Markers.TRACKER, "Received connection response: {}", response);
+        return response;
     }
 
     public UdpAnnounceResponse receiveAnnounceResponse() throws IOException {
-        LOGGER.log(Level.TRACE, "Waiting for announce response");
         DatagramPacket packet = new DatagramPacket(new byte[UDP_MAX_PACKET_SIZE], UDP_MAX_PACKET_SIZE);
         socket.receive(packet);
 
@@ -152,8 +160,9 @@ public class UdpTracker implements Tracker {
             throw new IOException("Invalid action");
         }
 
-        LOGGER.log(Level.TRACE, "Received announce response");
-        return UdpAnnounceResponse.unpack(payload);
+        UdpAnnounceResponse response = UdpAnnounceResponse.unpack(payload);
+        LOGGER.debug(Markers.TRACKER, "Received announce response: {}", response);
+        return response;
     }
 
     @Override

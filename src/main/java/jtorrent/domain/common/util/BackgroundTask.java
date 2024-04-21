@@ -1,11 +1,11 @@
 package jtorrent.domain.common.util;
 
-import java.lang.System.Logger;
-import java.lang.System.Logger.Level;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class BackgroundTask implements Runnable {
 
-    private static final Logger LOGGER = System.getLogger(BackgroundTask.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(BackgroundTask.class);
 
     private final Thread thread;
     private volatile State state = State.IDLE;
@@ -33,14 +33,13 @@ public abstract class BackgroundTask implements Runnable {
             try {
                 execute();
             } catch (InterruptedException e) {
-                LOGGER.log(Level.DEBUG, "Task interrupted: {0}", getClass().getName());
+                LOGGER.debug("Task {} interrupted", getClass().getName(), e);
                 Thread.currentThread().interrupt();
             }
         }
 
         state = State.STOPPED;
         doOnStopped();
-        LOGGER.log(Level.DEBUG, "Task finished: {0}", getClass().getName());
     }
 
     protected abstract void execute() throws InterruptedException;
@@ -55,14 +54,14 @@ public abstract class BackgroundTask implements Runnable {
         if (state != State.IDLE) {
             boolean isStopRequested = state == State.STOPPING || state == State.STOPPED;
             if (isStopRequested) {
-                LOGGER.log(Level.ERROR, "Unable to start task: {0}, stop already requested", getClass().getName());
+                LOGGER.error("Unable to start task {}, stop already requested", getClass().getName());
             } else {
-                LOGGER.log(Level.DEBUG, "Task: {0} is already starting or started", getClass().getName());
+                LOGGER.debug("Task {} is already starting or started", getClass().getName());
             }
             return;
         }
 
-        LOGGER.log(Level.DEBUG, "Starting task: {0}", getClass().getName());
+        LOGGER.debug("Starting task: {}", getClass().getName());
         state = State.STARTING;
         doOnStart();
         thread.start();
@@ -73,11 +72,11 @@ public abstract class BackgroundTask implements Runnable {
 
     public final synchronized void stop() {
         if (state != State.STARTING && state != State.STARTED) {
-            LOGGER.log(Level.DEBUG, "Task: {0} is not running or is already stopping", getClass().getName());
+            LOGGER.debug("Task {} is not running or is already stopping", getClass().getName());
             return;
         }
 
-        LOGGER.log(Level.DEBUG, "Stopping task: {0}", getClass().getName());
+        LOGGER.debug("Stopping task {}", getClass().getName());
         state = State.STOPPING;
         doOnStop();
         thread.interrupt();

@@ -2,8 +2,6 @@ package jtorrent.domain.dht.handler.routingtable;
 
 import static jtorrent.domain.common.util.ValidationUtil.requireNonNull;
 
-import java.lang.System.Logger;
-import java.lang.System.Logger.Level;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -13,13 +11,17 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import jtorrent.domain.common.util.logging.Markers;
 import jtorrent.domain.dht.handler.DhtManager;
 import jtorrent.domain.dht.handler.node.Node;
 import jtorrent.domain.dht.model.node.NodeIdPrefix;
 
 public class Bucket {
 
-    public static final Logger LOGGER = System.getLogger(Bucket.class.getName());
+    public static final Logger LOGGER = LoggerFactory.getLogger(Bucket.class);
 
     private final NodeIdPrefix prefix;
     private final Set<Node> nodes;
@@ -39,9 +41,10 @@ public class Bucket {
 
     public boolean addNode(Node node) {
         if (isFull()) {
-            LOGGER.log(Level.DEBUG, "[DHT] Bucket {0} is full", getPrefixBitLength());
+            LOGGER.debug(Markers.DHT, "Bucket {} is full", getPrefixBitLength());
             Optional<Node> removedNode = evictBadOrQuestionableNode();
             if (removedNode.isPresent()) {
+                LOGGER.debug(Markers.DHT, "Removed node {} from bucket {}", removedNode.get(), getPrefixBitLength());
                 return nodes.add(node);
             }
             return false;

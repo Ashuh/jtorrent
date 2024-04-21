@@ -2,9 +2,6 @@ package jtorrent.domain.peer.model.message.factory;
 
 import static jtorrent.domain.common.util.ValidationUtil.requireNonNull;
 
-import java.lang.System.Logger;
-import java.lang.System.Logger.Level;
-
 import jtorrent.domain.peer.model.message.KeepAlive;
 import jtorrent.domain.peer.model.message.PeerMessage;
 import jtorrent.domain.peer.model.message.typed.Bitfield;
@@ -21,8 +18,6 @@ import jtorrent.domain.peer.model.message.typed.TypedPeerMessage;
 import jtorrent.domain.peer.model.message.typed.Unchoke;
 
 public class PeerMessageUnpacker {
-
-    private static final Logger LOGGER = System.getLogger(PeerMessageUnpacker.class.getName());
 
     private PeerMessageUnpacker() {
     }
@@ -53,8 +48,6 @@ public class PeerMessageUnpacker {
     }
 
     private static TypedPeerMessage unpackTypedMessage(MessageType messageType, byte[] payload) {
-        LOGGER.log(Level.DEBUG, "Unpacking {0} message", messageType);
-
         switch (messageType) {
         case CHOKE:
             return new Choke();

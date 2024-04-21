@@ -1,12 +1,14 @@
 package jtorrent.domain.dht;
 
-import java.lang.System.Logger;
-import java.lang.System.Logger.Level;
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import jtorrent.domain.common.util.Sha1Hash;
+import jtorrent.domain.common.util.logging.Markers;
 import jtorrent.domain.dht.communication.DhtSocket;
 import jtorrent.domain.dht.handler.DhtManager;
 import jtorrent.domain.dht.handler.DhtQueryHandler;
@@ -16,7 +18,7 @@ import jtorrent.domain.dht.handler.routingtable.RoutingTable;
 
 public class DhtClient {
 
-    private static final Logger LOGGER = System.getLogger(DhtClient.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(DhtClient.class);
 
     private final DhtSocket dhtSocket;
     private final DhtManager dhtManager;
@@ -31,13 +33,13 @@ public class DhtClient {
     }
 
     public void start() {
-        LOGGER.log(Level.INFO, "[DHT] Starting DHT");
+        LOGGER.info(Markers.DHT, "Starting DHT");
         dhtSocket.start();
         dhtManager.start();
     }
 
     public void stop() {
-        LOGGER.log(Level.INFO, "[DHT] Stopping DHT");
+        LOGGER.info(Markers.DHT, "Stopping DHT");
         dhtSocket.stop();
         dhtManager.stop();
     }

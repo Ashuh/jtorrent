@@ -1,28 +1,26 @@
 package jtorrent.domain.tracker.handler;
 
-import static jtorrent.domain.common.util.ValidationUtil.requireNonNull;
-
 import java.io.IOException;
 
 import jtorrent.domain.common.util.Sha1Hash;
-import jtorrent.domain.tracker.model.AnnounceResponse;
 import jtorrent.domain.tracker.model.Event;
 import jtorrent.domain.tracker.model.http.HttpTracker;
+import jtorrent.domain.tracker.model.http.response.HttpAnnounceResponse;
 
 public class HttpTrackerHandler extends TrackerHandler {
 
-    private static final System.Logger LOGGER = System.getLogger(HttpTrackerHandler.class.getName());
-
-    private final HttpTracker tracker;
-
     public HttpTrackerHandler(TorrentProgressProvider torrentProgressProvider, HttpTracker tracker) {
-        super(torrentProgressProvider);
-        this.tracker = requireNonNull(tracker);
+        super(tracker, torrentProgressProvider);
     }
 
     @Override
     protected AnnounceTask createAnnounceTask(Event event) {
         return new HttpAnnounceTask(event);
+    }
+
+    @Override
+    public HttpTracker getTracker() {
+        return (HttpTracker) super.getTracker();
     }
 
     private class HttpAnnounceTask extends AnnounceTask {
@@ -32,12 +30,12 @@ public class HttpTrackerHandler extends TrackerHandler {
         }
 
         @Override
-        public AnnounceResponse call() throws IOException {
+        public HttpAnnounceResponse call() throws IOException {
             Sha1Hash infoHash = torrentProgressProvider.getInfoHash();
             long downloaded = torrentProgressProvider.getDownloaded();
             long left = torrentProgressProvider.getLeft();
             long uploaded = torrentProgressProvider.getUploaded();
-            return tracker.announce(infoHash, downloaded, left, uploaded, event);
+            return getTracker().announce(infoHash, downloaded, left, uploaded, event);
         }
     }
 }

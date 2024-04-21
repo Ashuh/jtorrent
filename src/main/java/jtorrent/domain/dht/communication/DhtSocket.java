@@ -3,8 +3,6 @@ package jtorrent.domain.dht.communication;
 import static jtorrent.domain.common.util.ValidationUtil.requireNonNull;
 
 import java.io.IOException;
-import java.lang.System.Logger;
-import java.lang.System.Logger.Level;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
@@ -15,7 +13,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import jtorrent.domain.common.util.BackgroundTask;
+import jtorrent.domain.common.util.logging.Markers;
 import jtorrent.domain.dht.model.message.DhtMessage;
 import jtorrent.domain.dht.model.message.TransactionId;
 import jtorrent.domain.dht.model.message.decoder.DhtDecodingException;
@@ -36,7 +38,7 @@ import jtorrent.domain.dht.model.node.NodeContactInfo;
 
 public class DhtSocket {
 
-    private static final Logger LOGGER = System.getLogger(DhtSocket.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(DhtSocket.class);
     private static final int TIMEOUT_SECS = 3;
 
     private final DatagramSocket socket;
@@ -118,11 +120,10 @@ public class DhtSocket {
      * @throws IOException if an I/O error occurs
      */
     private void sendMessage(DhtMessage message, InetSocketAddress address) throws IOException {
-        LOGGER.log(Level.DEBUG, "[DHT] Sending message: {0} to {1}", message, address);
         byte[] data = message.bencode();
         DatagramPacket packet = new DatagramPacket(data, data.length, address);
         socket.send(packet);
-        LOGGER.log(Level.DEBUG, "[DHT] Sent message: {0} to {1}", message, address);
+        LOGGER.debug(Markers.DHT, "Sent message to {}: {}", address, message);
     }
 
     private Optional<Method> getTransactionId(TransactionId transactionId) {
@@ -153,20 +154,22 @@ public class DhtSocket {
         @Override
         protected void execute() {
             try {
-                LOGGER.log(Level.DEBUG, "[DHT] Waiting for message");
+                LOGGER.debug(Markers.DHT, "Waiting for message");
                 IncomingMessage incomingMessage = receiveMessage();
                 handleMessage(incomingMessage.getMessage(), incomingMessage.getAddress());
             } catch (SocketException e) {
                 if (isStopping()) {
-                    LOGGER.log(Level.DEBUG, "[DHT] Interrupted while waiting for message");
+                    LOGGER.debug(Markers.DHT, "Interrupted while waiting for message");
                 } else {
-                    LOGGER.log(Level.ERROR, "[DHT] Error receiving message: " + e.getMessage(), e);
+                    LOGGER.error(Markers.DHT, "Failed to receive message", e);
+                    // TODO: Perhaps we should throw AssertionError since SocketException
+                    //  should only be thrown when the socket is closed due to task stopping
                 }
             } catch (IOException e) {
-                LOGGER.log(Level.ERROR, "[DHT] Error receiving message: " + e.getMessage(), e);
+                LOGGER.error(Markers.DHT, "Failed to receive message", e);
                 HandleIncomingMessagesTask.this.stop();
             } catch (DhtDecodingException e) {
-                LOGGER.log(Level.ERROR, "[DHT] Error decoding message: " + e.getMessage(), e);
+                LOGGER.error(Markers.DHT, "Failed to decode message", e);
             }
         }
 
@@ -207,7 +210,7 @@ public class DhtSocket {
         }
 
         private void handleQuery(Query query, InetSocketAddress address) {
-            LOGGER.log(Level.DEBUG, "[DHT] Received {0} query: {1}", query.getMethod(), query);
+            LOGGER.debug(Markers.DHT, "Received {} query: {}", query.getMethod(), query);
             NodeContactInfo nodeContactInfo = new NodeContactInfo(query.getId(), address);
             switch (query.getMethod()) {
             case PING:
@@ -229,8 +232,7 @@ public class DhtSocket {
 
         @SuppressWarnings("unchecked")
         private <T extends Response> void handleResponse(T response) {
-            LOGGER.log(Level.DEBUG, "[DHT] Received {0} response: {1}", response.getMethod(), response);
-
+            LOGGER.debug(Markers.DHT, "Received {} response: {}", response.getMethod(), response);
             TransactionId transactionId = response.getTransactionId();
             txIdToMethod.remove(transactionId);
             CompletableFuture<T> completableFuture = (CompletableFuture<T>) txIdToFuture.get(transactionId);
@@ -244,8 +246,7 @@ public class DhtSocket {
         }
 
         private void handleError(Error error) {
-            LOGGER.log(Level.DEBUG, "[DHT] Received error: {0}", error);
-
+            LOGGER.debug(Markers.DHT, "Received error: {}", error);
             TransactionId transactionId = error.getTransactionId();
             txIdToMethod.remove(transactionId);
             CompletableFuture<? extends Response> future = txIdToFuture.get(transactionId);
@@ -259,7 +260,7 @@ public class DhtSocket {
         }
 
         private void logNoOutstandingQueryFound(TransactionId transactionId) {
-            LOGGER.log(Level.ERROR, "[DHT] No outstanding query found for transaction id: {0}", transactionId);
+            LOGGER.warn(Markers.DHT, "No outstanding query found for transaction id: {}", transactionId);
         }
     }
 

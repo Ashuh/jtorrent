@@ -1,7 +1,9 @@
 package jtorrent.presentation;
 
-import java.lang.System.Logger.Level;
 import java.net.ServerSocket;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javafx.application.Application;
 import javafx.stage.Stage;
@@ -18,7 +20,7 @@ import jtorrent.presentation.main.viewmodel.MainViewModel;
 
 public class JTorrent extends Application {
 
-    private static final System.Logger LOGGER = System.getLogger(JTorrent.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(JTorrent.class);
 
     private UiManager uiManager;
     private Client client;
@@ -44,7 +46,7 @@ public class JTorrent extends Application {
 
     @Override
     public void stop() {
-        LOGGER.log(Level.INFO, "Stopping JTorrent");
+        LOGGER.info("Stopping JTorrent");
         client.shutdown();
     }
 }

@@ -8,6 +8,7 @@ module jtorrent {
     requires atlantafx.base;
     requires org.kordamp.ikonli.javafx;
     requires org.kordamp.ikonli.materialdesign2;
+    requires org.slf4j;
 
     opens jtorrent.presentation to javafx.graphics;
     opens jtorrent.presentation.common.component to javafx.fxml;
