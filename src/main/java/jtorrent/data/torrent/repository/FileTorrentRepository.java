@@ -25,6 +25,8 @@ import jtorrent.data.torrent.model.BencodedInfo;
 import jtorrent.data.torrent.model.BencodedMultiFileInfo;
 import jtorrent.data.torrent.model.BencodedSingleFileInfo;
 import jtorrent.data.torrent.model.BencodedTorrent;
+import jtorrent.data.torrent.source.db.dao.TorrentDao;
+import jtorrent.data.torrent.source.db.model.TorrentEntity;
 import jtorrent.domain.common.util.ContinuousMergedInputStream;
 import jtorrent.domain.common.util.Sha1Hash;
 import jtorrent.domain.common.util.rx.MutableRxObservableList;
@@ -35,8 +37,29 @@ import jtorrent.domain.torrent.repository.TorrentRepository;
 
 public class FileTorrentRepository implements TorrentRepository {
 
-    private final MutableRxObservableList<Torrent> torrents = new MutableRxObservableList<>(new ArrayList<>());
-    private final Map<Sha1Hash, Torrent> infoHashToTorrent = new HashMap<>();
+    private final MutableRxObservableList<Torrent> torrentsObservable;
+    private final Map<Sha1Hash, Torrent> infoHashToTorrent;
+    private final TorrentDao torrentDao = new TorrentDao();
+
+    public FileTorrentRepository() {
+        List<Torrent> torrents = new ArrayList<>();
+        torrentDao.readAll().stream()
+                .map(TorrentEntity::toDomain)
+                .forEach(torrents::add);
+        infoHashToTorrent = torrents.stream()
+                .collect(HashMap::new, (map, torrent) -> map.put(torrent.getInfoHash(), torrent), Map::putAll);
+        this.torrentsObservable = new MutableRxObservableList<>(torrents);
+    }
+
+    @Override
+    public RxObservableList<Torrent> getTorrents() {
+        return torrentsObservable;
+    }
+
+    @Override
+    public Torrent getTorrent(Sha1Hash infoHash) {
+        return infoHashToTorrent.get(infoHash);
+    }
 
     @Override
     public void addTorrent(Torrent torrent) {
@@ -44,14 +67,33 @@ public class FileTorrentRepository implements TorrentRepository {
             // TODO: maybe throw exception if torrent already exists?
             return;
         }
+        torrentDao.create(TorrentEntity.fromDomain(torrent));
         infoHashToTorrent.put(torrent.getInfoHash(), torrent);
-        torrents.add(torrent);
+        torrentsObservable.add(torrent);
+    }
+
+    @Override
+    public void persistTorrents() {
+        infoHashToTorrent.values().stream()
+                .map(TorrentEntity::fromDomain)
+                .forEach(torrentDao::update);
+    }
+
+    @Override
+    public void removeTorrent(Torrent torrent) {
+        torrentDao.delete(torrent.getInfoHash().getBytes());
+        infoHashToTorrent.remove(torrent.getInfoHash());
+        torrentsObservable.remove(torrent);
     }
 
     @Override
     public TorrentMetadata loadTorrent(File file) throws IOException {
         InputStream inputStream = new FileInputStream(file);
         return loadTorrent(inputStream);
+    }
+
+    private TorrentMetadata loadTorrent(InputStream inputStream) throws IOException {
+        return BencodedTorrent.decode(inputStream).toDomain();
     }
 
     @Override
@@ -73,32 +115,12 @@ public class FileTorrentRepository implements TorrentRepository {
         }
     }
 
-    private TorrentMetadata loadTorrent(InputStream inputStream) throws IOException {
-        return BencodedTorrent.decode(inputStream).toDomain();
-    }
-
     @Override
     public void saveTorrent(TorrentMetadata torrentMetadata, Path savePath) throws IOException {
         BencodedTorrent bencodedTorrent = BencodedTorrent.fromDomain(torrentMetadata);
         try (OutputStream outputStream = Files.newOutputStream(savePath)) {
             outputStream.write(bencodedTorrent.bencode());
         }
-    }
-
-    @Override
-    public void removeTorrent(Torrent torrent) {
-        infoHashToTorrent.remove(torrent.getInfoHash());
-        torrents.remove(torrent);
-    }
-
-    @Override
-    public RxObservableList<Torrent> getTorrents() {
-        return torrents;
-    }
-
-    @Override
-    public Torrent getTorrent(Sha1Hash infoHash) {
-        return infoHashToTorrent.get(infoHash);
     }
 
     /**

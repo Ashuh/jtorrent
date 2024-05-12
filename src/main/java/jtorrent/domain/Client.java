@@ -85,6 +85,7 @@ public class Client implements LocalServiceDiscoveryManager.Listener, TorrentHan
         localServiceDiscoveryManager.stop();
         dhtManager.stop();
         infoHashToTorrentHandler.values().forEach(TorrentHandler::stop);
+        torrentRepository.persistTorrents();
     }
 
     public void addTorrent(TorrentMetadata torrentMetaData, String name, Path saveDirectory) {

@@ -13,19 +13,21 @@ import jtorrent.domain.torrent.model.TorrentMetadata;
 
 public interface TorrentRepository {
 
+    RxObservableList<Torrent> getTorrents();
+
+    Torrent getTorrent(Sha1Hash infoHash);
+
     void addTorrent(Torrent torrent);
+
+    void persistTorrents();
+
+    void removeTorrent(Torrent torrent);
 
     TorrentMetadata loadTorrent(File file) throws IOException;
 
     TorrentMetadata loadTorrent(URL url) throws IOException;
 
     void saveTorrent(TorrentMetadata torrentMetadata, Path savePath) throws IOException;
-
-    void removeTorrent(Torrent torrent);
-
-    RxObservableList<Torrent> getTorrents();
-
-    Torrent getTorrent(Sha1Hash infoHash);
 
     TorrentMetadata createNewTorrent(Path source, List<List<String>> trackerUrls, String comment, String createdBy,
             int pieceSize) throws IOException;
