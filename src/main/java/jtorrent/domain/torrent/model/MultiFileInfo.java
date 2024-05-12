@@ -25,6 +25,10 @@ public class MultiFileInfo extends FileInfo {
 
     @Override
     public String getName() {
+        return getDirectory();
+    }
+
+    public String getDirectory() {
         return directory;
     }
 
@@ -52,9 +56,10 @@ public class MultiFileInfo extends FileInfo {
     public String toString() {
         return "MultiFileInfo{"
                 + "directory='" + directory + '\''
-                + ", fileWithPieceInfos=" + fileMetaData
+                + ", fileMetaData=" + fileMetaData
                 + ", pieceHashes=" + pieceHashes
                 + ", pieceSize=" + pieceSize
+                + ", infoHash=" + infoHash
                 + '}';
     }
 }

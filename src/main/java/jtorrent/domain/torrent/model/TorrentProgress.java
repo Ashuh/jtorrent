@@ -8,7 +8,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.IntStream;
 
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.subjects.BehaviorSubject;
@@ -16,41 +15,99 @@ import io.reactivex.rxjava3.subjects.BehaviorSubject;
 public class TorrentProgress {
 
     private final FileInfo fileInfo;
-    private final Map<Path, FileProgress> pathToFileState = new HashMap<>();
+    private final Map<Path, FileProgress> pathToFileProgress;
 
-    private final AtomicLong verifiedBytes = new AtomicLong(0);
-    private final BehaviorSubject<Long> verifiedBytesSubject = BehaviorSubject.createDefault(0L);
-    private final BehaviorSubject<Long> checkedBytesSubject = BehaviorSubject.createDefault(0L);
-    private final BitSet completePieces = new BitSet();
-    private final BitSet verifiedPieces = new BitSet();
-    private final BehaviorSubject<BitSet> verifiedPiecesSubject = BehaviorSubject.createDefault(new BitSet());
+    private final AtomicLong verifiedBytes;
+    private final BehaviorSubject<Long> verifiedBytesSubject;
+    private final BehaviorSubject<Long> checkedBytesSubject;
+    private final BitSet completePieces;
+    private final BitSet verifiedPieces;
+    private final BehaviorSubject<BitSet> verifiedPiecesSubject;
     private final BehaviorSubject<BitSet> availablePiecesSubject = BehaviorSubject.createDefault(new BitSet());
     private final Map<Integer, BitSet> pieceIndexToRequestedBlocks = new HashMap<>();
-    private final Map<Integer, BitSet> pieceIndexToAvailableBlocks = new HashMap<>();
-    private final BitSet partiallyMissingPieces = new BitSet();
-    private final BitSet partiallyMissingPiecesWithUnrequestedBlocks = new BitSet();
-    private final BitSet completelyMissingPieces = new BitSet();
-    private final BitSet completelyMissingPiecesWithUnrequestedBlocks = new BitSet();
-    private long checkedBytes = 0;
+    private final Map<Integer, BitSet> pieceIndexToAvailableBlocks;
+    private final BitSet partiallyMissingPieces;
+    private final BitSet partiallyMissingPiecesWithUnrequestedBlocks;
+    private final BitSet completelyMissingPieces;
+    private final BitSet completelyMissingPiecesWithUnrequestedBlocks;
+    private long checkedBytes;
 
-    public TorrentProgress(FileInfo fileInfo) {
+    public TorrentProgress(FileInfo fileInfo, Map<Path, FileProgress> pathToFileProgress, long verifiedBytes,
+            BitSet completePieces, BitSet verifiedPieces, Map<Integer, BitSet> pieceIndexToAvailableBlocks,
+            BitSet partiallyMissingPieces, BitSet partiallyMissingPiecesWithUnrequestedBlocks,
+            BitSet completelyMissingPieces, BitSet completelyMissingPiecesWithUnrequestedBlocks, long checkedBytes) {
         this.fileInfo = requireNonNull(fileInfo);
-
-        IntStream.range(0, fileInfo.getNumPieces())
-                .forEach(i -> {
-                    pieceIndexToRequestedBlocks.put(i, new BitSet());
-                    pieceIndexToAvailableBlocks.put(i, new BitSet());
-                    completelyMissingPieces.set(i);
-                    completelyMissingPiecesWithUnrequestedBlocks.set(i);
-                });
-
-        fileInfo.getFileMetaData()
-                .forEach(fileMetaData -> pathToFileState.put(fileMetaData.path(),
-                        new FileProgress(fileInfo, fileMetaData)));
+        this.pathToFileProgress = pathToFileProgress;
+        this.verifiedBytes = new AtomicLong(verifiedBytes);
+        this.verifiedBytesSubject = BehaviorSubject.createDefault(verifiedBytes);
+        this.checkedBytesSubject = BehaviorSubject.createDefault(checkedBytes);
+        this.completePieces = completePieces;
+        this.verifiedPieces = verifiedPieces;
+        this.verifiedPiecesSubject = BehaviorSubject.createDefault(verifiedPieces);
+        this.pieceIndexToAvailableBlocks = pieceIndexToAvailableBlocks;
+        this.partiallyMissingPieces = partiallyMissingPieces;
+        this.partiallyMissingPiecesWithUnrequestedBlocks = partiallyMissingPiecesWithUnrequestedBlocks;
+        this.completelyMissingPieces = completelyMissingPieces;
+        this.completelyMissingPiecesWithUnrequestedBlocks = completelyMissingPiecesWithUnrequestedBlocks;
+        this.checkedBytes = checkedBytes;
     }
 
-    public FileProgress getFileState(Path path) {
-        return pathToFileState.get(path);
+    public static TorrentProgress createNew(FileInfo fileInfo) {
+        Map<Path, FileProgress> pathToFileProgress = new HashMap<>();
+        fileInfo.getFileMetaData()
+                .forEach(fileMetaData -> pathToFileProgress.put(fileMetaData.path(),
+                        FileProgress.createNew(fileInfo, fileMetaData)));
+        BitSet completePieces = new BitSet();
+        BitSet verifiedPieces = new BitSet();
+        Map<Integer, BitSet> pieceIndexToAvailableBlocks = new HashMap<>();
+        BitSet partiallyMissingPieces = new BitSet();
+        BitSet partiallyMissingPiecesWithUnrequestedBlocks = new BitSet();
+        BitSet completelyMissingPieces = new BitSet();
+        completelyMissingPieces.set(0, fileInfo.getNumPieces());
+        BitSet completelyMissingPiecesWithUnrequestedBlocks = new BitSet();
+        completelyMissingPiecesWithUnrequestedBlocks.set(0, fileInfo.getNumPieces());
+        return new TorrentProgress(fileInfo, pathToFileProgress, 0, completePieces, verifiedPieces,
+                pieceIndexToAvailableBlocks, partiallyMissingPieces,
+                partiallyMissingPiecesWithUnrequestedBlocks, completelyMissingPieces,
+                completelyMissingPiecesWithUnrequestedBlocks, 0);
+    }
+
+    public static TorrentProgress createExisting(FileInfo fileInfo, Map<Path, FileProgress> pathToFileProgress,
+            BitSet verifiedPieces, Map<Integer, BitSet> pieceIndexToAvailableBlocks) {
+
+        long verifiedBytes = verifiedPieces.stream()
+                .mapToLong(fileInfo::getPieceSize)
+                .sum();
+
+        BitSet completePieces = new BitSet();
+        BitSet partiallyMissingPieces = new BitSet();
+        BitSet completelyMissingPieces = new BitSet();
+
+        pieceIndexToAvailableBlocks.forEach((piece, availableBlocks) -> {
+            if (availableBlocks.cardinality() == fileInfo.getNumBlocks(piece)) {
+                completePieces.set(piece);
+            } else if (availableBlocks.cardinality() > 0) {
+                partiallyMissingPieces.set(piece);
+            } else {
+                completelyMissingPieces.set(piece);
+            }
+        });
+
+        BitSet partiallyMissingPiecesWithUnrequestedBlocks = (BitSet) partiallyMissingPieces.clone();
+        BitSet completelyMissingPiecesWithUnrequestedBlocks = (BitSet) completelyMissingPieces.clone();
+
+        return new TorrentProgress(fileInfo, pathToFileProgress, verifiedBytes, completePieces, verifiedPieces,
+                pieceIndexToAvailableBlocks, partiallyMissingPieces,
+                partiallyMissingPiecesWithUnrequestedBlocks, completelyMissingPieces,
+                completelyMissingPiecesWithUnrequestedBlocks, 0);
+    }
+
+    public Map<Path, FileProgress> getFileProgress() {
+        return pathToFileProgress;
+    }
+
+    public FileProgress getFileProgress(Path path) {
+        return pathToFileProgress.get(path);
     }
 
     public Observable<Long> getVerifiedBytesObservable() {
@@ -95,7 +152,7 @@ public class TorrentProgress {
 
         filesInRange.stream()
                 .map(FileMetadata::path)
-                .map(pathToFileState::get)
+                .map(pathToFileProgress::get)
                 .forEach(fileProgress -> fileProgress.setPieceVerified(piece));
     }
 
@@ -117,14 +174,14 @@ public class TorrentProgress {
 
             filesInRange.stream()
                     .map(FileMetadata::path)
-                    .map(pathToFileState::get)
+                    .map(pathToFileProgress::get)
                     .forEach(fileProgress -> fileProgress.setPieceNotVerified(piece));
         }
 
         verifiedPieces.clear(piece);
         verifiedPiecesSubject.onNext((BitSet) verifiedPieces.clone());
         completePieces.clear(piece);
-        pieceIndexToAvailableBlocks.get(piece).clear();
+        getAvailableBlocks(piece).clear();
         partiallyMissingPieces.clear(piece);
         partiallyMissingPiecesWithUnrequestedBlocks.clear(piece);
         completelyMissingPieces.set(piece);
@@ -155,8 +212,12 @@ public class TorrentProgress {
         return unavailableBlocks;
     }
 
+    public Map<Integer, BitSet> getReceivedBlocks() {
+        return pieceIndexToAvailableBlocks;
+    }
+
     private BitSet getAvailableBlocks(int piece) {
-        return pieceIndexToAvailableBlocks.get(piece);
+        return pieceIndexToAvailableBlocks.computeIfAbsent(piece, k -> new BitSet());
     }
 
     private BitSet getUnrequestedBlocks(int piece) {
@@ -167,11 +228,11 @@ public class TorrentProgress {
     }
 
     private BitSet getRequestedBlocks(int piece) {
-        return pieceIndexToRequestedBlocks.get(piece);
+        return pieceIndexToRequestedBlocks.computeIfAbsent(piece, k -> new BitSet());
     }
 
     public synchronized void setBlockRequested(int pieceIndex, int blockIndex) {
-        BitSet requestedBlocks = pieceIndexToRequestedBlocks.get(pieceIndex);
+        BitSet requestedBlocks = getRequestedBlocks(pieceIndex);
         requestedBlocks.set(blockIndex);
 
         if (hasUnavailableAndUnrequestedBlocks(pieceIndex)) {
@@ -194,7 +255,7 @@ public class TorrentProgress {
     }
 
     public synchronized void setBlockNotRequested(int pieceIndex, int blockIndex) {
-        BitSet requestedBlocks = pieceIndexToRequestedBlocks.get(pieceIndex);
+        BitSet requestedBlocks = getRequestedBlocks(pieceIndex);
         requestedBlocks.clear(blockIndex);
 
         if (isPieceCompletelyMissing(pieceIndex) && hasUnavailableAndUnrequestedBlocks(pieceIndex)) {
@@ -219,7 +280,7 @@ public class TorrentProgress {
     }
 
     private boolean isBlockAvailable(int piece, int blockIndex) {
-        return pieceIndexToAvailableBlocks.get(piece).get(blockIndex);
+        return getAvailableBlocks(piece).get(blockIndex);
     }
 
     private void setPieceComplete(int piece) {
@@ -294,10 +355,70 @@ public class TorrentProgress {
     }
 
     private boolean hasUnrequestedBlocks(int piece) {
-        return pieceIndexToRequestedBlocks.get(piece).cardinality() < fileInfo.getNumBlocks(piece);
+        return getRequestedBlocks(piece).cardinality() < fileInfo.getNumBlocks(piece);
     }
 
     private boolean hasUnavailableBlocks(int piece) {
-        return pieceIndexToAvailableBlocks.get(piece).cardinality() < fileInfo.getNumBlocks(piece);
+        return getAvailableBlocks(piece).cardinality() < fileInfo.getNumBlocks(piece);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        TorrentProgress that = (TorrentProgress) o;
+        return checkedBytes == that.checkedBytes
+                && fileInfo.equals(that.fileInfo)
+                && pathToFileProgress.equals(that.pathToFileProgress)
+                && (verifiedBytes.get() == that.verifiedBytes.get())
+                && completePieces.equals(that.completePieces)
+                && verifiedPieces.equals(that.verifiedPieces)
+                && pieceIndexToRequestedBlocks.equals(that.pieceIndexToRequestedBlocks)
+                && pieceIndexToAvailableBlocks.equals(that.pieceIndexToAvailableBlocks)
+                && partiallyMissingPieces.equals(that.partiallyMissingPieces)
+                && partiallyMissingPiecesWithUnrequestedBlocks.equals(that.partiallyMissingPiecesWithUnrequestedBlocks)
+                && completelyMissingPieces.equals(that.completelyMissingPieces)
+                && completelyMissingPiecesWithUnrequestedBlocks.equals(
+                that.completelyMissingPiecesWithUnrequestedBlocks);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = fileInfo.hashCode();
+        result = 31 * result + pathToFileProgress.hashCode();
+        result = 31 * result + verifiedBytes.hashCode();
+        result = 31 * result + completePieces.hashCode();
+        result = 31 * result + verifiedPieces.hashCode();
+        result = 31 * result + pieceIndexToRequestedBlocks.hashCode();
+        result = 31 * result + pieceIndexToAvailableBlocks.hashCode();
+        result = 31 * result + partiallyMissingPieces.hashCode();
+        result = 31 * result + partiallyMissingPiecesWithUnrequestedBlocks.hashCode();
+        result = 31 * result + completelyMissingPieces.hashCode();
+        result = 31 * result + completelyMissingPiecesWithUnrequestedBlocks.hashCode();
+        result = 31 * result + Long.hashCode(checkedBytes);
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return "TorrentProgress{"
+                + "fileInfo=" + fileInfo
+                + ", pathToFileProgress=" + pathToFileProgress
+                + ", verifiedBytes=" + verifiedBytes
+                + ", completePieces=" + completePieces
+                + ", verifiedPieces=" + verifiedPieces
+                + ", pieceIndexToRequestedBlocks=" + pieceIndexToRequestedBlocks
+                + ", pieceIndexToAvailableBlocks=" + pieceIndexToAvailableBlocks
+                + ", partiallyMissingPieces=" + partiallyMissingPieces
+                + ", partiallyMissingPiecesWithUnrequestedBlocks=" + partiallyMissingPiecesWithUnrequestedBlocks
+                + ", completelyMissingPieces=" + completelyMissingPieces
+                + ", completelyMissingPiecesWithUnrequestedBlocks=" + completelyMissingPiecesWithUnrequestedBlocks
+                + ", checkedBytes=" + checkedBytes
+                + '}';
     }
 }

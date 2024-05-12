@@ -88,7 +88,7 @@ public class Client implements LocalServiceDiscoveryManager.Listener, TorrentHan
     }
 
     public void addTorrent(TorrentMetadata torrentMetaData, String name, Path saveDirectory) {
-        Torrent torrent = new Torrent(torrentMetaData, name, saveDirectory);
+        Torrent torrent = Torrent.createNew(torrentMetaData, name, saveDirectory);
         torrentRepository.addTorrent(torrent);
     }
 

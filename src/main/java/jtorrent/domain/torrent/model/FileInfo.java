@@ -18,7 +18,7 @@ public abstract class FileInfo {
     protected final List<FileMetadata> fileMetaData;
     protected final List<Sha1Hash> pieceHashes;
     protected final int pieceSize;
-    private final Sha1Hash infoHash;
+    protected final Sha1Hash infoHash;
 
     protected FileInfo(List<FileMetadata> fileMetaData, int pieceSize, List<Sha1Hash> pieceHashes, Sha1Hash infoHash) {
         this.fileMetaData = requireNonNull(fileMetaData);
@@ -115,6 +115,13 @@ public abstract class FileInfo {
 
     public List<FileMetadata> getFileMetaData() {
         return fileMetaData;
+    }
+
+    public FileMetadata getFileMetaData(Path path) {
+        return fileMetaData.stream()
+                .filter(file -> file.path().equals(path))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("File not found: " + path));
     }
 
     public List<Sha1Hash> getPieceHashes() {
