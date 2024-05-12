@@ -3,7 +3,6 @@ plugins {
     id 'application'
     id 'checkstyle'
     id 'org.openjfx.javafxplugin' version '0.0.14'
-    id 'org.gradlex.extra-java-module-info' version '1.4.1'
 }
 
 group 'jtorrent'
@@ -13,13 +12,7 @@ sourceCompatibility = '17'
 targetCompatibility = '17'
 
 application {
-    mainModule = 'jtorrent'
     mainClass = 'jtorrent.Main'
-    // Workaround for the following error:
-    // java.lang.IllegalAccessError: class ch.qos.logback.core.boolex.JaninoEventEvaluatorBase
-    // (in module ch.qos.logback.core) cannot access class org.codehaus.janino.ScriptEvaluator
-    // (in module org.codehaus.janino) because module ch.qos.logback.core does not read module org.codehaus.janino
-    applicationDefaultJvmArgs = ['--add-reads', 'ch.qos.logback.core=org.codehaus.janino']
 }
 
 repositories {
@@ -48,13 +41,6 @@ dependencies {
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.2'
 }
 
-extraJavaModuleInfo {
-    module('com.dampcake:bencode', 'com.dampcake.bencode', '1.4') {
-        exports('com.dampcake.bencode')
-    }
-}
-
 test {
     useJUnitPlatform()
-    jvmArgs = ['--add-reads', 'ch.qos.logback.core=org.codehaus.janino']
 }
