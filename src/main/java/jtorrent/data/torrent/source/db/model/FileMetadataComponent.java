@@ -99,6 +99,37 @@ public class FileMetadataComponent {
     }
 
     @Override
+    public int hashCode() {
+        int result = Long.hashCode(size);
+        result = 31 * result + path.hashCode();
+        result = 31 * result + firstPiece;
+        result = 31 * result + firstPieceStart;
+        result = 31 * result + lastPiece;
+        result = 31 * result + lastPieceEnd;
+        result = 31 * result + Long.hashCode(start);
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        FileMetadataComponent that = (FileMetadataComponent) o;
+        return size == that.size
+                && firstPiece == that.firstPiece
+                && firstPieceStart == that.firstPieceStart
+                && lastPiece == that.lastPiece
+                && lastPieceEnd == that.lastPieceEnd
+                && start == that.start
+                && path.equals(that.path);
+    }
+
+    @Override
     public String toString() {
         return "FileMetadataComponent{"
                 + "size=" + size

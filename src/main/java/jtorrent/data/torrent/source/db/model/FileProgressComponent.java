@@ -38,6 +38,24 @@ public class FileProgressComponent {
     }
 
     @Override
+    public int hashCode() {
+        return Arrays.hashCode(verifiedPieces);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        FileProgressComponent that = (FileProgressComponent) o;
+        return Arrays.equals(verifiedPieces, that.verifiedPieces);
+    }
+
+    @Override
     public String toString() {
         return "FileProgressComponent{"
                 + ", verifiedPieces=" + Arrays.toString(verifiedPieces)

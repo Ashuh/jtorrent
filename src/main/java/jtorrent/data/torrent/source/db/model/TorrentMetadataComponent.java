@@ -84,6 +84,33 @@ public class TorrentMetadataComponent {
     }
 
     @Override
+    public int hashCode() {
+        int result = trackers.hashCode();
+        result = 31 * result + creationDate.hashCode();
+        result = 31 * result + comment.hashCode();
+        result = 31 * result + createdBy.hashCode();
+        result = 31 * result + fileInfo.hashCode();
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        TorrentMetadataComponent that = (TorrentMetadataComponent) o;
+        return trackers.equals(that.trackers)
+                && creationDate.equals(that.creationDate)
+                && comment.equals(that.comment)
+                && createdBy.equals(that.createdBy)
+                && fileInfo.equals(that.fileInfo);
+    }
+
+    @Override
     public String toString() {
         return "TorrentMetadataComponent{"
                 + "trackers=" + trackers

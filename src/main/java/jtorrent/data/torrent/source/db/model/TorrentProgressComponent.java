@@ -75,6 +75,29 @@ public class TorrentProgressComponent {
     }
 
     @Override
+    public int hashCode() {
+        int result = pathToFileProgress.hashCode();
+        result = 31 * result + pieceToReceivedBlocks.hashCode();
+        result = 31 * result + Arrays.hashCode(verifiedPieces);
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        TorrentProgressComponent that = (TorrentProgressComponent) o;
+        return pathToFileProgress.equals(that.pathToFileProgress)
+                && pieceToReceivedBlocks.equals(that.pieceToReceivedBlocks)
+                && Arrays.equals(verifiedPieces, that.verifiedPieces);
+    }
+
+    @Override
     public String toString() {
         return "TorrentProgressComponent{"
                 + "pathToFileProgress=" + pathToFileProgress

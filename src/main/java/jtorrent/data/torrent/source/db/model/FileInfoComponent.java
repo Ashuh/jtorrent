@@ -3,6 +3,8 @@ package jtorrent.data.torrent.source.db.model;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.IntStream;
 
 import org.hibernate.annotations.Formula;
 
@@ -129,6 +131,35 @@ public class FileInfoComponent {
 
     public byte[] getInfoHash() {
         return infoHash;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hashCode(directory);
+        result = 31 * result + fileMetadata.hashCode();
+        result = 31 * result + pieceHashes.hashCode();
+        result = 31 * result + pieceSize;
+        result = 31 * result + Arrays.hashCode(infoHash);
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        FileInfoComponent that = (FileInfoComponent) o;
+        return pieceSize == that.pieceSize
+                && Objects.equals(directory, that.directory)
+                && fileMetadata.equals(that.fileMetadata)
+                && pieceHashes.size() == that.pieceHashes.size()
+                && IntStream.range(0, pieceHashes.size())
+                    .allMatch(i -> Arrays.equals(pieceHashes.get(i), that.pieceHashes.get(i)))
+                && Arrays.equals(infoHash, that.infoHash);
     }
 
     @Override

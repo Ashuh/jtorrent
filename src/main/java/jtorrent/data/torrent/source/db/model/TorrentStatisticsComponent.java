@@ -37,6 +37,26 @@ public class TorrentStatisticsComponent {
     }
 
     @Override
+    public int hashCode() {
+        int result = Long.hashCode(downloaded);
+        result = 31 * result + Long.hashCode(uploaded);
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        TorrentStatisticsComponent that = (TorrentStatisticsComponent) o;
+        return downloaded == that.downloaded && uploaded == that.uploaded;
+    }
+
+    @Override
     public String toString() {
         return "TorrentStatisticsComponent{"
                 + "downloaded=" + downloaded
