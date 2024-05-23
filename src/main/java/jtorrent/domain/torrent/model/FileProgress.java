@@ -31,6 +31,12 @@ public class FileProgress {
         return new FileProgress(fileInfo, fileMetaData, 0, new BitSet());
     }
 
+    /**
+     * @param fileInfo       the file info for the torrent
+     * @param fileMetaData   the metadata for the file
+     * @param verifiedPieces a bitset containing the verified pieces indices for the entire torrent, i.e.,
+     *                       indices are global, not relative to the file
+     */
     public static FileProgress createExisting(FileInfo fileInfo, FileMetadata fileMetaData,
             BitSet verifiedPieces) {
         long verifiedBytes = IntStream.range(fileMetaData.firstPiece(), fileMetaData.lastPiece() + 1)
