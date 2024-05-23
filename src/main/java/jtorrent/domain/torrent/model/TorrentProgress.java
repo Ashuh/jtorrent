@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.IntStream;
 
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.subjects.BehaviorSubject;
@@ -83,15 +84,23 @@ public class TorrentProgress {
         BitSet partiallyMissingPieces = new BitSet();
         BitSet completelyMissingPieces = new BitSet();
 
-        pieceIndexToAvailableBlocks.forEach((piece, availableBlocks) -> {
-            if (availableBlocks.cardinality() == fileInfo.getNumBlocks(piece)) {
-                completePieces.set(piece);
-            } else if (availableBlocks.cardinality() > 0) {
-                partiallyMissingPieces.set(piece);
-            } else {
-                completelyMissingPieces.set(piece);
-            }
-        });
+        IntStream.range(0, fileInfo.getNumPieces())
+                .forEach(piece -> {
+                    final int numAvailableBlocks;
+                    if (pieceIndexToAvailableBlocks.containsKey(piece)) {
+                        numAvailableBlocks = pieceIndexToAvailableBlocks.get(piece).cardinality();
+                    } else {
+                        numAvailableBlocks = 0;
+                    }
+
+                    if (numAvailableBlocks == fileInfo.getNumBlocks(piece)) {
+                        completePieces.set(piece);
+                    } else if (numAvailableBlocks > 0) {
+                        partiallyMissingPieces.set(piece);
+                    } else {
+                        completelyMissingPieces.set(piece);
+                    }
+                });
 
         BitSet partiallyMissingPiecesWithUnrequestedBlocks = (BitSet) partiallyMissingPieces.clone();
         BitSet completelyMissingPiecesWithUnrequestedBlocks = (BitSet) completelyMissingPieces.clone();
