@@ -87,6 +87,10 @@ public abstract class FileInfo {
     }
 
     public int getPieceSize(int piece) {
+        if (piece < 0 || piece >= getNumPieces()) {
+            throw new IllegalArgumentException("Invalid piece index: " + piece);
+        }
+
         if (piece == getNumPieces() - 1) {
             int remainder = (int) (getTotalFileSize() % pieceSize);
             return remainder == 0 ? pieceSize : remainder;
