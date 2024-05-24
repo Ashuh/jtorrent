@@ -1,4 +1,4 @@
-package jtorrent.data.torrent.model.exception;
+package jtorrent.data.torrent.source.file.model.exception;
 
 public class MappingException extends RuntimeException {
 

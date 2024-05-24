@@ -1,4 +1,4 @@
-package jtorrent.data.torrent.model;
+package jtorrent.data.torrent.source.file.model;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;

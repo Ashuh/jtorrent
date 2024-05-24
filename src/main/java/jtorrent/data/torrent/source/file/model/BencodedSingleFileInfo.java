@@ -1,4 +1,4 @@
-package jtorrent.data.torrent.model;
+package jtorrent.data.torrent.source.file.model;
 
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import jtorrent.data.torrent.model.util.MapUtil;
+import jtorrent.data.torrent.source.file.model.util.MapUtil;
 import jtorrent.domain.common.util.Sha1Hash;
 import jtorrent.domain.torrent.model.FileInfo;
 import jtorrent.domain.torrent.model.FileMetadata;

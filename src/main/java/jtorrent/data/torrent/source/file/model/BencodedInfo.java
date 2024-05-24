@@ -1,4 +1,4 @@
-package jtorrent.data.torrent.model;
+package jtorrent.data.torrent.source.file.model;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;

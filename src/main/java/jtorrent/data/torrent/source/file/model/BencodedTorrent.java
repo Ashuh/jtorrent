@@ -1,9 +1,9 @@
-package jtorrent.data.torrent.model;
+package jtorrent.data.torrent.source.file.model;
 
-import static jtorrent.data.torrent.model.util.MapUtil.getValueAsList;
-import static jtorrent.data.torrent.model.util.MapUtil.getValueAsLong;
-import static jtorrent.data.torrent.model.util.MapUtil.getValueAsMap;
-import static jtorrent.data.torrent.model.util.MapUtil.getValueAsString;
+import static jtorrent.data.torrent.source.file.model.util.MapUtil.getValueAsList;
+import static jtorrent.data.torrent.source.file.model.util.MapUtil.getValueAsLong;
+import static jtorrent.data.torrent.source.file.model.util.MapUtil.getValueAsMap;
+import static jtorrent.data.torrent.source.file.model.util.MapUtil.getValueAsString;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 
 import com.dampcake.bencode.BencodeInputStream;
 
-import jtorrent.data.torrent.model.exception.MappingException;
+import jtorrent.data.torrent.source.file.model.exception.MappingException;
 import jtorrent.domain.common.util.bencode.BencodedObject;
 import jtorrent.domain.torrent.model.FileInfo;
 import jtorrent.domain.torrent.model.TorrentMetadata;

@@ -20,13 +20,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import jtorrent.data.torrent.model.BencodedFile;
-import jtorrent.data.torrent.model.BencodedInfo;
-import jtorrent.data.torrent.model.BencodedMultiFileInfo;
-import jtorrent.data.torrent.model.BencodedSingleFileInfo;
-import jtorrent.data.torrent.model.BencodedTorrent;
 import jtorrent.data.torrent.source.db.dao.TorrentDao;
 import jtorrent.data.torrent.source.db.model.TorrentEntity;
+import jtorrent.data.torrent.source.file.model.BencodedFile;
+import jtorrent.data.torrent.source.file.model.BencodedInfo;
+import jtorrent.data.torrent.source.file.model.BencodedMultiFileInfo;
+import jtorrent.data.torrent.source.file.model.BencodedSingleFileInfo;
+import jtorrent.data.torrent.source.file.model.BencodedTorrent;
 import jtorrent.domain.common.util.ContinuousMergedInputStream;
 import jtorrent.domain.common.util.Sha1Hash;
 import jtorrent.domain.common.util.rx.MutableRxObservableList;
