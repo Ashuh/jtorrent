@@ -49,7 +49,7 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
         this.state = requireNonNull(state);
         this.stateSubject = BehaviorSubject.createDefault(state);
 
-        torrentMetaData.trackers().stream()
+        torrentMetaData.trackerTiers().get(0).stream()
                 .map(TrackerFactory::fromUri)
                 .collect(Collectors.toCollection(() -> trackers));
     }

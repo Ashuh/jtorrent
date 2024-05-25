@@ -2,22 +2,31 @@ package jtorrent.data.torrent.source.db.model;
 
 import java.net.URI;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.Collections;
-import java.util.Set;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.Embedded;
+import jakarta.persistence.OrderColumn;
 import jtorrent.domain.torrent.model.FileInfo;
 import jtorrent.domain.torrent.model.TorrentMetadata;
 
 @Embeddable
 public class TorrentMetadataComponent {
 
+    private static final String TRACKER_SEPARATOR = " ";
+
+    /**
+     * The list of tracker tiers. Each tier is a String made up of tracker URLs separated by a space.
+     * This is a workaround to the fact that JPA does not support nested collections.
+     */
+    @OrderColumn
     @ElementCollection
-    private final Set<String> trackers;
+    private final List<String> trackers;
 
     @Column(nullable = false)
     private final LocalDateTime creationDate;
@@ -32,10 +41,10 @@ public class TorrentMetadataComponent {
     private final FileInfoComponent fileInfo;
 
     protected TorrentMetadataComponent() {
-        this(Collections.emptySet(), LocalDateTime.MIN, "", "", new FileInfoComponent());
+        this(Collections.emptyList(), LocalDateTime.MIN, "", "", new FileInfoComponent());
     }
 
-    public TorrentMetadataComponent(Set<String> trackers, LocalDateTime creationDate, String comment, String createdBy,
+    public TorrentMetadataComponent(List<String> trackers, LocalDateTime creationDate, String comment, String createdBy,
             FileInfoComponent fileInfo) {
         this.trackers = trackers;
         this.creationDate = creationDate;
@@ -45,25 +54,31 @@ public class TorrentMetadataComponent {
     }
 
     public static TorrentMetadataComponent fromDomain(TorrentMetadata torrentMetadata) {
-        Set<String> trackers = torrentMetadata.trackers().stream()
-                .map(URI::toString)
-                .collect(Collectors.toSet());
+        List<String> trackerTiers = torrentMetadata.trackerTiers().stream()
+                .map(tier -> tier.stream()
+                        .map(URI::toString)
+                        .collect(Collectors.joining(TRACKER_SEPARATOR))
+                )
+                .toList();
         LocalDateTime creationDate = torrentMetadata.creationDate();
         String comment = torrentMetadata.comment();
         String createdBy = torrentMetadata.createdBy();
         FileInfoComponent fileInfo = FileInfoComponent.fromDomain(torrentMetadata.fileInfo());
-        return new TorrentMetadataComponent(trackers, creationDate, comment, createdBy, fileInfo);
+        return new TorrentMetadataComponent(trackerTiers, creationDate, comment, createdBy, fileInfo);
     }
 
     public TorrentMetadata toDomain() {
-        Set<URI> domainTrackers = trackers.stream()
-                .map(URI::create)
-                .collect(Collectors.toSet());
+        List<List<URI>> domainTrackers = trackers.stream()
+                .map(tier -> Arrays.stream(tier.split(TRACKER_SEPARATOR))
+                        .map(URI::create)
+                        .toList()
+                )
+                .toList();
         FileInfo domainFileInfo = fileInfo.toDomain();
         return new TorrentMetadata(domainTrackers, creationDate, comment, createdBy, domainFileInfo);
     }
 
-    public Set<String> getTrackers() {
+    public List<String> getTrackers() {
         return trackers;
     }
 
