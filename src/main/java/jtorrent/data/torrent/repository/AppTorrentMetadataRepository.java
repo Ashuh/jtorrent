@@ -33,7 +33,7 @@ public class AppTorrentMetadataRepository implements TorrentMetadataRepository {
     }
 
     /**
-     * Create a new {@link TorrentMetadata} instance with the current time as the creation date.
+     * Creates a new {@link TorrentMetadata} instance with the current time as the creation date.
      *
      * @param trackerUrls list of tiers, each containing a list of tracker URLs
      * @param comment     comment about the torrent
@@ -42,7 +42,7 @@ public class AppTorrentMetadataRepository implements TorrentMetadataRepository {
      * @return a new {@link TorrentMetadata} instance
      */
     @Override
-    public TorrentMetadata createNewTorrent(Path source, List<List<String>> trackerUrls, String comment,
+    public TorrentMetadata createTOrrentMetadata(Path source, List<List<String>> trackerUrls, String comment,
             String createdBy, int pieceSize) throws IOException {
         return BencodedTorrentFactory.create(source, trackerUrls, comment, createdBy, pieceSize).toDomain();
     }

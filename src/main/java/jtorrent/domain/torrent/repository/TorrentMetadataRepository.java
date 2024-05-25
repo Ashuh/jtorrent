@@ -16,6 +16,6 @@ public interface TorrentMetadataRepository {
 
     void saveTorrentMetadata(TorrentMetadata torrentMetadata, Path savePath) throws IOException;
 
-    TorrentMetadata createNewTorrent(Path source, List<List<String>> trackerUrls, String comment, String createdBy,
+    TorrentMetadata createTOrrentMetadata(Path source, List<List<String>> trackerUrls, String comment, String createdBy,
             int pieceSize) throws IOException;
 }

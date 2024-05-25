@@ -183,7 +183,7 @@ public class Client implements LocalServiceDiscoveryManager.Listener, TorrentHan
 
     public void createNewTorrent(Path savePath, Path source, List<List<String>> trackerUrls, String comment,
             int pieceSize) throws IOException {
-        TorrentMetadata torrentMetadata = torrentMetadataRepository.createNewTorrent(source, trackerUrls, comment,
+        TorrentMetadata torrentMetadata = torrentMetadataRepository.createTOrrentMetadata(source, trackerUrls, comment,
                 "JTorrent", pieceSize);
         torrentMetadataRepository.saveTorrentMetadata(torrentMetadata, savePath);
     }
