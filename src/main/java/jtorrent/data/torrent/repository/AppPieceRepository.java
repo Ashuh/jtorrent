@@ -15,9 +15,9 @@ import jtorrent.domain.torrent.model.FileMetadata;
 import jtorrent.domain.torrent.model.Torrent;
 import jtorrent.domain.torrent.repository.PieceRepository;
 
-public class FilePieceRepository implements PieceRepository {
+public class AppPieceRepository implements PieceRepository {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(FilePieceRepository.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(AppPieceRepository.class);
     private static final String READ_ONLY_MODE = "r";
     private static final String READ_WRITE_MODE = "rw";
 

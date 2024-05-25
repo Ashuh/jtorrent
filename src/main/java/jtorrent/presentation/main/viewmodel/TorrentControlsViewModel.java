@@ -75,11 +75,11 @@ public class TorrentControlsViewModel {
 
     public TorrentMetadata loadTorrentContents(String urlString) throws IOException {
         URL url = new URL(urlString);
-        return client.loadTorrent(url);
+        return client.loadTorrentMetadata(url);
     }
 
     public TorrentMetadata loadTorrentContents(File file) throws IOException {
-        return client.loadTorrent(file);
+        return client.loadTorrentMetadata(file);
     }
 
     public void addTorrent(TorrentMetadata torrentMetadata, AddNewTorrentDialog.Result result) {
