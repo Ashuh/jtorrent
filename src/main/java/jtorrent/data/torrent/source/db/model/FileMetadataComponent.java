@@ -65,8 +65,7 @@ public class FileMetadataComponent {
                 firstPieceStart,
                 lastPiece,
                 lastPieceEnd,
-                start,
-                start + size - 1
+                start
         );
     }
 

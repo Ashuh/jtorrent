@@ -254,7 +254,6 @@ class BencodedTorrentTest {
                                 .setLastPiece(0)
                                 .setLastPieceEnd(99)
                                 .setStart(0)
-                                .setEnd(99)
                                 .build()
                 ))
                 .setInfoHash(new Sha1Hash(info.getInfoHash()))
@@ -308,7 +307,6 @@ class BencodedTorrentTest {
                                 .setLastPiece(0)
                                 .setLastPieceEnd(99)
                                 .setStart(0)
-                                .setEnd(99)
                                 .build(),
                         new FileMetadataBuilder()
                                 .setLength(200)
@@ -318,7 +316,6 @@ class BencodedTorrentTest {
                                 .setLastPiece(2)
                                 .setLastPieceEnd(99)
                                 .setStart(100)
-                                .setEnd(299)
                                 .build()
                 ))
                 .setInfoHash(new Sha1Hash(info.getInfoHash()))
@@ -542,7 +539,6 @@ class BencodedTorrentTest {
         private int lastPiece;
         private int lastPieceEnd;
         private long start;
-        private long end;
 
         public FileMetadataBuilder setLength(int length) {
             this.length = length;
@@ -579,13 +575,8 @@ class BencodedTorrentTest {
             return this;
         }
 
-        public FileMetadataBuilder setEnd(long end) {
-            this.end = end;
-            return this;
-        }
-
         public FileMetadata build() {
-            return new FileMetadata(length, path, firstPiece, firstPieceStart, lastPiece, lastPieceEnd, start, end);
+            return new FileMetadata(length, path, firstPiece, firstPieceStart, lastPiece, lastPieceEnd, start);
         }
     }
 }
