@@ -30,11 +30,11 @@ public class BencodedTorrentFactory {
         if (Files.isDirectory(source)) {
             return buildBencodedMultiFileInfo(source, pieceSize);
         } else {
-            return buildBencondedSingleFileInfo(source, pieceSize);
+            return buildBencodedSingleFileInfo(source, pieceSize);
         }
     }
 
-    private static BencodedSingleFileInfo buildBencondedSingleFileInfo(Path source, int pieceSize) throws IOException {
+    private static BencodedSingleFileInfo buildBencodedSingleFileInfo(Path source, int pieceSize) throws IOException {
         if (Files.isDirectory(source)) {
             throw new IllegalArgumentException("Source must be a file");
         }
