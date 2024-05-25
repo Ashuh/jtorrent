@@ -59,13 +59,13 @@ public class FileMetadataComponent {
 
     public FileMetadata toDomain() {
         return new FileMetadata(
-                size,
                 Path.of(path),
+                start,
+                size,
                 firstPiece,
                 firstPieceStart,
                 lastPiece,
-                lastPieceEnd,
-                start
+                lastPieceEnd
         );
     }
 

@@ -576,7 +576,7 @@ class BencodedTorrentTest {
         }
 
         public FileMetadata build() {
-            return new FileMetadata(length, path, firstPiece, firstPieceStart, lastPiece, lastPieceEnd, start);
+            return new FileMetadata(path, start, length, firstPiece, firstPieceStart, lastPiece, lastPieceEnd);
         }
     }
 }

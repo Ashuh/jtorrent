@@ -60,7 +60,7 @@ public class BencodedSingleFileInfo extends BencodedInfo {
         long fileEnd = length - 1;
         int lastPieceEnd = (int) (fileEnd % pieceLength);
 
-        return new FileMetadata(length, filePath, 0, 0, lastPiece, lastPieceEnd, 0);
+        return new FileMetadata(filePath, 0, length, 0, 0, lastPiece, lastPieceEnd);
     }
 
     @Override

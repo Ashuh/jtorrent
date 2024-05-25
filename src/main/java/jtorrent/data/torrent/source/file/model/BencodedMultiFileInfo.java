@@ -94,8 +94,8 @@ public class BencodedMultiFileInfo extends BencodedInfo {
             prevLastPieceEnd = lastPieceEnd;
 
             Path filePath = Path.of(String.join("/", sanitizePath(file.getPath())));
-            FileMetadata fileMetadataItem = new FileMetadata(fileSize, filePath, firstPiece,
-                    firstPieceStart, lastPiece, lastPieceEnd, fileStart);
+            FileMetadata fileMetadataItem = new FileMetadata(filePath, fileStart, fileSize, firstPiece,
+                    firstPieceStart, lastPiece, lastPieceEnd);
             fileMetaData.add(fileMetadataItem);
         }
 
