@@ -43,7 +43,11 @@ public class FileProgress {
                 .filter(verifiedPieces::get)
                 .mapToLong(piece -> getPieceBytesInFile(fileInfo, fileMetaData, piece))
                 .sum();
-        return new FileProgress(fileInfo, fileMetaData, verifiedBytes, verifiedPieces);
+        BitSet relativeVerifiedPieces = new BitSet();
+        IntStream.range(fileMetaData.firstPiece(), fileMetaData.lastPiece() + 1)
+                .filter(verifiedPieces::get)
+                .forEach(piece -> relativeVerifiedPieces.set(piece - fileMetaData.firstPiece()));
+        return new FileProgress(fileInfo, fileMetaData, verifiedBytes, relativeVerifiedPieces);
     }
 
     private static long getPieceBytesInFile(FileInfo fileInfo, FileMetadata fileMetaData, int piece) {
