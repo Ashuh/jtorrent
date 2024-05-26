@@ -12,6 +12,7 @@ import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Embeddable;
+import jakarta.persistence.Lob;
 import jtorrent.domain.torrent.model.FileInfo;
 import jtorrent.domain.torrent.model.FileMetadata;
 import jtorrent.domain.torrent.model.FileProgress;
@@ -24,6 +25,7 @@ public class TorrentProgressComponent {
     @CollectionTable
     private final Map<Integer, BitSet> pieceToReceivedBlocks;
 
+    @Lob
     @Column(nullable = false)
     private final byte[] verifiedPieces;
 
