@@ -4,14 +4,13 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.IntStream;
 
 import org.hibernate.annotations.Formula;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Embeddable;
-import jakarta.persistence.FetchType;
+import jakarta.persistence.Lob;
 import jakarta.persistence.OrderColumn;
 import jtorrent.domain.common.util.Sha1Hash;
 import jtorrent.domain.torrent.model.FileInfo;
@@ -29,9 +28,8 @@ public class FileInfoComponent {
     @ElementCollection
     private final List<FileMetadataComponent> fileMetadata;
 
-    @OrderColumn
-    @ElementCollection(fetch = FetchType.EAGER)
-    private final List<byte[]> pieceHashes;
+    @Lob
+    private final byte[] pieceHashes;
 
     @Column(nullable = false)
     private final int pieceSize;
@@ -40,10 +38,10 @@ public class FileInfoComponent {
     private final byte[] infoHash;
 
     protected FileInfoComponent() {
-        this(null, Collections.emptyList(), Collections.emptyList(), 0, null);
+        this(null, Collections.emptyList(), new byte[0], 0, null);
     }
 
-    public FileInfoComponent(String directory, List<FileMetadataComponent> fileMetadata, List<byte[]> pieceHashes,
+    public FileInfoComponent(String directory, List<FileMetadataComponent> fileMetadata, byte[] pieceHashes,
             int pieceSize, byte[] infoHash) {
         this.directory = directory;
         this.fileMetadata = fileMetadata;
@@ -64,9 +62,8 @@ public class FileInfoComponent {
         List<FileMetadataComponent> fileMetadata = singleFileInfo.getFileMetaData().stream()
                 .map(FileMetadataComponent::fromDomain)
                 .toList();
-        List<byte[]> pieceHashes = singleFileInfo.getPieceHashes().stream()
-                .map(Sha1Hash::getBytes)
-                .toList();
+        byte[] pieceHashes = Sha1Hash.concatHashes(singleFileInfo.getPieceHashes());
+        Sha1Hash.concatHashes(singleFileInfo.getPieceHashes());
         int pieceSize = singleFileInfo.getPieceSize();
         byte[] infoHash = singleFileInfo.getInfoHash().getBytes();
         return new FileInfoComponent(null, fileMetadata, pieceHashes, pieceSize, infoHash);
@@ -77,12 +74,10 @@ public class FileInfoComponent {
         List<FileMetadataComponent> fileMetadata = multiFileInfo.getFileMetaData().stream()
                 .map(FileMetadataComponent::fromDomain)
                 .toList();
-        List<byte[]> pieceHashes = multiFileInfo.getPieceHashes().stream()
-                .map(Sha1Hash::getBytes)
-                .toList();
+        byte[] pieceHashes = Sha1Hash.concatHashes(multiFileInfo.getPieceHashes());
         int pieceSize = multiFileInfo.getPieceSize();
         byte[] infoHash = multiFileInfo.getInfoHash().getBytes();
-        return new FileInfoComponent(directory, fileMetadata, pieceHashes, pieceSize, infoHash);
+        return new FileInfoComponent(directory,  List.of(), pieceHashes, pieceSize, infoHash);
     }
 
     public FileInfo toDomain() {
@@ -95,9 +90,7 @@ public class FileInfoComponent {
 
     private SingleFileInfo toSingleFileInfo() {
         FileMetadata domainFileMetadata = fileMetadata.get(0).toDomain();
-        List<Sha1Hash> domainPieceHashes = pieceHashes.stream()
-                .map(Sha1Hash::new)
-                .toList();
+        List<Sha1Hash> domainPieceHashes = Sha1Hash.splitHashes(pieceHashes);
         Sha1Hash domainInfoHash = new Sha1Hash(infoHash);
         return new SingleFileInfo(domainFileMetadata, pieceSize, domainPieceHashes, domainInfoHash);
     }
@@ -106,9 +99,7 @@ public class FileInfoComponent {
         List<FileMetadata> domainFileMetadata = fileMetadata.stream()
                 .map(FileMetadataComponent::toDomain)
                 .toList();
-        List<Sha1Hash> domainPieceHashes = pieceHashes.stream()
-                .map(Sha1Hash::new)
-                .toList();
+        List<Sha1Hash> domainPieceHashes = Sha1Hash.splitHashes(pieceHashes);
         Sha1Hash domainInfoHash = new Sha1Hash(infoHash);
         return new MultiFileInfo(directory, domainFileMetadata, pieceSize, domainPieceHashes, domainInfoHash);
     }
@@ -121,7 +112,7 @@ public class FileInfoComponent {
         return fileMetadata;
     }
 
-    public List<byte[]> getPieceHashes() {
+    public byte[] getPieceHashes() {
         return pieceHashes;
     }
 
@@ -137,7 +128,7 @@ public class FileInfoComponent {
     public int hashCode() {
         int result = Objects.hashCode(directory);
         result = 31 * result + fileMetadata.hashCode();
-        result = 31 * result + pieceHashes.hashCode();
+        result = 31 * result + Arrays.hashCode(pieceHashes);
         result = 31 * result + pieceSize;
         result = 31 * result + Arrays.hashCode(infoHash);
         return result;
@@ -156,9 +147,7 @@ public class FileInfoComponent {
         return pieceSize == that.pieceSize
                 && Objects.equals(directory, that.directory)
                 && fileMetadata.equals(that.fileMetadata)
-                && pieceHashes.size() == that.pieceHashes.size()
-                && IntStream.range(0, pieceHashes.size())
-                    .allMatch(i -> Arrays.equals(pieceHashes.get(i), that.pieceHashes.get(i)))
+                && Arrays.equals(pieceHashes, that.pieceHashes)
                 && Arrays.equals(infoHash, that.infoHash);
     }
 
@@ -167,7 +156,7 @@ public class FileInfoComponent {
         return "FileInfoComponent{"
                 + "directory='" + directory + '\''
                 + ", fileMetadata=" + fileMetadata
-                + ", pieceHashes=" + pieceHashes.stream().map(Arrays::toString).toList()
+                + ", pieceHashes=" + Arrays.toString(pieceHashes)
                 + ", pieceSize=" + pieceSize
                 + ", infoHash=" + Arrays.toString(infoHash)
                 + '}';
