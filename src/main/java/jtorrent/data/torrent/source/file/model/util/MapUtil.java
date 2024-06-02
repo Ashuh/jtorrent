@@ -1,4 +1,4 @@
-package jtorrent.data.torrent.model.util;
+package jtorrent.data.torrent.source.file.model.util;
 
 import java.nio.ByteBuffer;
 import java.util.Collections;

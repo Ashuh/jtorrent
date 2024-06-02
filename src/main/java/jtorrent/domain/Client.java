@@ -29,6 +29,7 @@ import jtorrent.domain.torrent.handler.TorrentHandler;
 import jtorrent.domain.torrent.model.Torrent;
 import jtorrent.domain.torrent.model.TorrentMetadata;
 import jtorrent.domain.torrent.repository.PieceRepository;
+import jtorrent.domain.torrent.repository.TorrentMetadataRepository;
 import jtorrent.domain.torrent.repository.TorrentRepository;
 
 public class Client implements LocalServiceDiscoveryManager.Listener, TorrentHandler.Listener,
@@ -41,13 +42,15 @@ public class Client implements LocalServiceDiscoveryManager.Listener, TorrentHan
     private final DhtClient dhtManager;
     private final Map<Sha1Hash, TorrentHandler> infoHashToTorrentHandler = new HashMap<>();
     private final TorrentRepository torrentRepository;
+    private final TorrentMetadataRepository torrentMetadataRepository;
     private final PieceRepository pieceRepository;
     private final HandleInboundConnectionsTask handleInboundConnectionsTask = new HandleInboundConnectionsTask();
 
-    public Client(TorrentRepository torrentRepository, PieceRepository pieceRepository,
-            InboundConnectionListener inboundConnectionListener,
+    public Client(TorrentRepository torrentRepository, TorrentMetadataRepository torrentMetadataRepository,
+            PieceRepository pieceRepository, InboundConnectionListener inboundConnectionListener,
             LocalServiceDiscoveryManager localServiceDiscoveryManager, DhtClient dhtClient) {
         this.torrentRepository = torrentRepository;
+        this.torrentMetadataRepository = torrentMetadataRepository;
         this.pieceRepository = pieceRepository;
 
         this.inboundConnectionListener = inboundConnectionListener;
@@ -85,10 +88,11 @@ public class Client implements LocalServiceDiscoveryManager.Listener, TorrentHan
         localServiceDiscoveryManager.stop();
         dhtManager.stop();
         infoHashToTorrentHandler.values().forEach(TorrentHandler::stop);
+        torrentRepository.persistTorrents();
     }
 
     public void addTorrent(TorrentMetadata torrentMetaData, String name, Path saveDirectory) {
-        Torrent torrent = new Torrent(torrentMetaData, name, saveDirectory);
+        Torrent torrent = Torrent.createNew(torrentMetaData, name, saveDirectory);
         torrentRepository.addTorrent(torrent);
     }
 
@@ -96,12 +100,12 @@ public class Client implements LocalServiceDiscoveryManager.Listener, TorrentHan
         torrentRepository.removeTorrent(torrent);
     }
 
-    public TorrentMetadata loadTorrent(File file) throws IOException {
-        return torrentRepository.loadTorrent(file);
+    public TorrentMetadata loadTorrentMetadata(File file) throws IOException {
+        return torrentMetadataRepository.getTorrentMetadata(file);
     }
 
-    public TorrentMetadata loadTorrent(URL url) throws IOException {
-        return torrentRepository.loadTorrent(url);
+    public TorrentMetadata loadTorrentMetadata(URL url) throws IOException {
+        return torrentMetadataRepository.getTorrentMetadata(url);
     }
 
     public void startTorrent(Torrent torrent) {
@@ -179,9 +183,9 @@ public class Client implements LocalServiceDiscoveryManager.Listener, TorrentHan
 
     public void createNewTorrent(Path savePath, Path source, List<List<String>> trackerUrls, String comment,
             int pieceSize) throws IOException {
-        TorrentMetadata torrentMetadata = torrentRepository.createNewTorrent(source, trackerUrls, comment,
+        TorrentMetadata torrentMetadata = torrentMetadataRepository.createTOrrentMetadata(source, trackerUrls, comment,
                 "JTorrent", pieceSize);
-        torrentRepository.saveTorrent(torrentMetadata, savePath);
+        torrentMetadataRepository.saveTorrentMetadata(torrentMetadata, savePath);
     }
 
     public Torrent getTorrent(Sha1Hash infoHash) {

@@ -24,9 +24,10 @@ public class SingleFileInfo extends FileInfo {
     @Override
     public String toString() {
         return "SingleFileInfo{"
-                + "fileWithPieceInfos=" + fileMetaData
+                + "fileMetaData=" + fileMetaData
                 + ", pieceHashes=" + pieceHashes
                 + ", pieceSize=" + pieceSize
-                + "} ";
+                + ", infoHash=" + infoHash
+                + '}';
     }
 }

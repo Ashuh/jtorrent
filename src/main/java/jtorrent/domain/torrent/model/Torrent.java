@@ -3,11 +3,11 @@ package jtorrent.domain.torrent.model;
 import static jtorrent.domain.common.util.ValidationUtil.requireNonNull;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.BitSet;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -26,7 +26,7 @@ import jtorrent.domain.tracker.model.factory.TrackerFactory;
 public class Torrent implements TrackerHandler.TorrentProgressProvider {
 
     private final TorrentMetadata torrentMetaData;
-    private final TorrentStatistics torrentStatistics = new TorrentStatistics();
+    private final TorrentStatistics torrentStatistics;
     private final TorrentProgress torrentProgress;
     private final Set<Tracker> trackers = new HashSet<>();
     private final MutableRxObservableSet<Peer> peers = new MutableRxObservableSet<>(new HashSet<>());
@@ -36,22 +36,28 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
     private String name;
     private Path saveDirectory;
 
-    private State state = State.STOPPED;
-    private final BehaviorSubject<State> stateSubject = BehaviorSubject.createDefault(state);
+    private State state;
+    private final BehaviorSubject<State> stateSubject;
 
-    public Torrent(TorrentMetadata torrentMetaData) {
-        // TODO: use default downloads folder?
-        this(torrentMetaData, torrentMetaData.fileInfo().getName(), Paths.get("download").toAbsolutePath());
-    }
-
-    public Torrent(TorrentMetadata torrentMetaData, String name, Path saveDirectory) {
+    public Torrent(TorrentMetadata torrentMetaData, TorrentStatistics torrentStatistics,
+            TorrentProgress torrentProgress, String name, Path saveDirectory, State state) {
         this.torrentMetaData = requireNonNull(torrentMetaData);
-        this.torrentProgress = new TorrentProgress(torrentMetaData.fileInfo());
+        this.torrentStatistics = requireNonNull(torrentStatistics);
+        this.torrentProgress = requireNonNull(torrentProgress);
         this.name = name;
-        this.saveDirectory = saveDirectory;
-        torrentMetaData.trackers().stream()
+        this.saveDirectory = requireNonNull(saveDirectory);
+        this.state = requireNonNull(state);
+        this.stateSubject = BehaviorSubject.createDefault(state);
+
+        torrentMetaData.trackerTiers().get(0).stream()
                 .map(TrackerFactory::fromUri)
                 .collect(Collectors.toCollection(() -> trackers));
+    }
+
+    public static Torrent createNew(TorrentMetadata torrentMetaData, String name, Path saveDirectory) {
+        TorrentStatistics torrentStatistics = TorrentStatistics.createNew();
+        TorrentProgress torrentProgress = TorrentProgress.createNew(torrentMetaData.fileInfo());
+        return new Torrent(torrentMetaData, torrentStatistics, torrentProgress, name, saveDirectory, State.STOPPED);
     }
 
     public Path getSaveDirectory() {
@@ -135,7 +141,7 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
         return torrentMetaData.fileInfo().getFileMetaData()
                 .stream()
                 .map(fileMetaData -> new FileMetadataWithState(fileMetaData,
-                        torrentProgress.getFileState(fileMetaData.path())))
+                        torrentProgress.getFileProgress(fileMetaData.path())))
                 .toList();
     }
 
@@ -318,11 +324,62 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
         return stateSubject;
     }
 
+    public TorrentMetadata getMetadata() {
+        return torrentMetaData;
+    }
+
+    public TorrentStatistics getStatistics() {
+        return torrentStatistics;
+    }
+
+    public TorrentProgress getProgress() {
+        return torrentProgress;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        Torrent torrent = (Torrent) o;
+        return torrentMetaData.equals(torrent.torrentMetaData)
+                && torrentStatistics.equals(torrent.torrentStatistics)
+                && torrentProgress.equals(torrent.torrentProgress)
+                && trackers.equals(torrent.trackers)
+                && peers.equals(torrent.peers)
+                && Objects.equals(name, torrent.name)
+                && saveDirectory.equals(torrent.saveDirectory)
+                && state == torrent.state;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = torrentMetaData.hashCode();
+        result = 31 * result + torrentStatistics.hashCode();
+        result = 31 * result + torrentProgress.hashCode();
+        result = 31 * result + trackers.hashCode();
+        result = 31 * result + peers.hashCode();
+        result = 31 * result + Objects.hashCode(name);
+        result = 31 * result + saveDirectory.hashCode();
+        result = 31 * result + state.hashCode();
+        return result;
+    }
+
     @Override
     public String toString() {
         return "Torrent{"
-                + "trackers=" + trackers
+                + "torrentMetaData=" + torrentMetaData
+                + ", torrentStatistics=" + torrentStatistics
+                + ", torrentProgress=" + torrentProgress
+                + ", trackers=" + trackers
+                + ", peers=" + peers
                 + ", name='" + name + '\''
+                + ", saveDirectory=" + saveDirectory
+                + ", state=" + state
                 + '}';
     }
 
@@ -332,5 +389,4 @@ public class Torrent implements TrackerHandler.TorrentProgressProvider {
         DOWNLOADING,
         SEEDING
     }
-
 }

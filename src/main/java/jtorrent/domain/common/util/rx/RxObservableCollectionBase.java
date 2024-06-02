@@ -95,4 +95,9 @@ public abstract class RxObservableCollectionBase<E, T extends Collection<E>, V> 
         RxObservableCollectionBase<?, ?, ?> that = (RxObservableCollectionBase<?, ?, ?>) o;
         return Objects.equals(collection, that.collection);
     }
+
+    @Override
+    public String toString() {
+        return collection.toString();
+    }
 }

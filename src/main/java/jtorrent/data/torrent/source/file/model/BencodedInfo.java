@@ -1,8 +1,7 @@
-package jtorrent.data.torrent.model;
+package jtorrent.data.torrent.source.file.model;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -30,16 +29,6 @@ public abstract class BencodedInfo extends BencodedObject {
         this.pieceLength = pieceLength;
         this.pieces = pieces;
         this.name = name;
-    }
-
-    protected List<Sha1Hash> getDomainPieceHashes() {
-        List<Sha1Hash> pieceHashes = new ArrayList<>();
-        for (int i = 0; i < pieces.length; i += Sha1Hash.HASH_SIZE) {
-            byte[] pieceHash = new byte[Sha1Hash.HASH_SIZE];
-            System.arraycopy(pieces, i, pieceHash, 0, Sha1Hash.HASH_SIZE);
-            pieceHashes.add(new Sha1Hash(pieceHash));
-        }
-        return pieceHashes;
     }
 
     public int getNumPieces() {

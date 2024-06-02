@@ -1,4 +1,4 @@
-package jtorrent.data.torrent.model;
+package jtorrent.data.torrent.source.file.model;
 
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import jtorrent.data.torrent.model.util.MapUtil;
+import jtorrent.data.torrent.source.file.model.util.MapUtil;
 import jtorrent.domain.common.util.Sha1Hash;
 import jtorrent.domain.torrent.model.FileInfo;
 import jtorrent.domain.torrent.model.FileMetadata;
@@ -51,7 +51,7 @@ public class BencodedSingleFileInfo extends BencodedInfo {
     @Override
     public FileInfo toDomain() {
         FileMetadata fileMetaData = buildFileMetaData();
-        return new SingleFileInfo(fileMetaData, pieceLength, getDomainPieceHashes(), new Sha1Hash(getInfoHash()));
+        return new SingleFileInfo(fileMetaData, pieceLength, Sha1Hash.splitHashes(pieces), new Sha1Hash(getInfoHash()));
     }
 
     private FileMetadata buildFileMetaData() {
@@ -60,8 +60,7 @@ public class BencodedSingleFileInfo extends BencodedInfo {
         long fileEnd = length - 1;
         int lastPieceEnd = (int) (fileEnd % pieceLength);
 
-        return new FileMetadata(length, filePath, 0, 0,
-                lastPiece, lastPieceEnd, 0, fileEnd);
+        return new FileMetadata(filePath, 0, length, 0, 0, lastPiece, lastPieceEnd);
     }
 
     @Override

@@ -1,9 +1,9 @@
-package jtorrent.data.torrent.model;
+package jtorrent.data.torrent.source.file.model;
 
-import static jtorrent.data.torrent.model.util.MapUtil.getValueAsList;
-import static jtorrent.data.torrent.model.util.MapUtil.getValueAsLong;
-import static jtorrent.data.torrent.model.util.MapUtil.getValueAsMap;
-import static jtorrent.data.torrent.model.util.MapUtil.getValueAsString;
+import static jtorrent.data.torrent.source.file.model.util.MapUtil.getValueAsList;
+import static jtorrent.data.torrent.source.file.model.util.MapUtil.getValueAsLong;
+import static jtorrent.data.torrent.source.file.model.util.MapUtil.getValueAsMap;
+import static jtorrent.data.torrent.source.file.model.util.MapUtil.getValueAsString;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -13,16 +13,14 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.dampcake.bencode.BencodeInputStream;
 
-import jtorrent.data.torrent.model.exception.MappingException;
+import jtorrent.data.torrent.source.file.model.exception.MappingException;
 import jtorrent.domain.common.util.bencode.BencodedObject;
 import jtorrent.domain.torrent.model.FileInfo;
 import jtorrent.domain.torrent.model.TorrentMetadata;
@@ -103,12 +101,13 @@ public class BencodedTorrent extends BencodedObject {
     public static BencodedTorrent fromDomain(TorrentMetadata torrentMetadata) {
         Long creationDate = torrentMetadata.creationDate().toEpochSecond(OffsetDateTime.now().getOffset());
         // TODO: proper handling of tracker groups
-        String announce = torrentMetadata.trackers().iterator().next().toString();
-        List<List<String>> announceList =
-                List.of(torrentMetadata.trackers().stream()
+        String announce = torrentMetadata.trackerTiers().get(0).get(0).toString();
+        List<List<String>> announceList = torrentMetadata.trackerTiers().stream()
+                .map(tier -> tier.stream()
                         .map(URI::toString)
                         .toList()
-                );
+                )
+                .toList();
         BencodedInfo info = BencodedInfoFactory.fromDomain(torrentMetadata.fileInfo());
         return new BencodedTorrent(creationDate, announce, announceList, torrentMetadata.comment(),
                 torrentMetadata.createdBy(), info);
@@ -152,14 +151,16 @@ public class BencodedTorrent extends BencodedObject {
 
     public TorrentMetadata toDomain() {
         try {
-            Set<URI> trackers = new HashSet<>();
-            trackers.add(URI.create(announce));
+            final List<List<URI>> trackers;
 
-            if (announceList != null) {
-                announceList.stream()
-                        .flatMap(List::stream)
-                        .map(URI::create)
-                        .collect(Collectors.toCollection(() -> trackers));
+            if (announceList != null && !announceList.isEmpty()) {
+                trackers = announceList.stream()
+                        .map(tier -> tier.stream()
+                                        .map(URI::create)
+                                        .toList()
+                        ).toList();
+            } else {
+                trackers = List.of(List.of(URI.create(announce)));
             }
 
             LocalDateTime creationDateTime = LocalDateTime.ofEpochSecond(creationDate, 0,

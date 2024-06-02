@@ -64,12 +64,12 @@ public class MainViewModel {
     }
 
     public TorrentMetadata loadTorrent(File file) throws IOException {
-        return client.loadTorrent(file);
+        return client.loadTorrentMetadata(file);
     }
 
     public TorrentMetadata loadTorrent(String urlString) throws IOException {
         URL url = new URL(urlString);
-        return client.loadTorrent(url);
+        return client.loadTorrentMetadata(url);
     }
 
     public void addTorrent(TorrentMetadata torrentMetadata, AddNewTorrentDialog.Result result) {

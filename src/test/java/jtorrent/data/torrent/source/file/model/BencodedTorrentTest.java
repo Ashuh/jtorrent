@@ -1,4 +1,4 @@
-package jtorrent.data.torrent.model;
+package jtorrent.data.torrent.source.file.model;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -16,7 +16,6 @@ import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
@@ -239,7 +238,7 @@ class BencodedTorrentTest {
         TorrentMetadata actual = bencodedTorrent.toDomain();
 
         TorrentMetadata expected = new TorrentMetadataBuilder()
-                .setTrackers(Set.of(URI.create("udp://tracker.example.com:80/announce")))
+                .setTrackers(List.of(List.of(URI.create("udp://tracker.example.com:80/announce"))))
                 .setCreationDate(LocalDateTime.ofEpochSecond(123456789L, 0, OffsetDateTime.now().getOffset()))
                 .setComment("comment")
                 .setCreatedBy("created by")
@@ -255,7 +254,6 @@ class BencodedTorrentTest {
                                 .setLastPiece(0)
                                 .setLastPieceEnd(99)
                                 .setStart(0)
-                                .setEnd(99)
                                 .build()
                 ))
                 .setInfoHash(new Sha1Hash(info.getInfoHash()))
@@ -292,7 +290,7 @@ class BencodedTorrentTest {
         TorrentMetadata actual = bencodedTorrent.toDomain();
 
         TorrentMetadata expected = new TorrentMetadataBuilder()
-                .setTrackers(Set.of(URI.create("udp://tracker.example.com:80/announce")))
+                .setTrackers(List.of(List.of(URI.create("udp://tracker.example.com:80/announce"))))
                 .setCreationDate(LocalDateTime.ofEpochSecond(123456789L, 0, OffsetDateTime.now().getOffset()))
                 .setComment("comment")
                 .setCreatedBy("created by")
@@ -309,7 +307,6 @@ class BencodedTorrentTest {
                                 .setLastPiece(0)
                                 .setLastPieceEnd(99)
                                 .setStart(0)
-                                .setEnd(99)
                                 .build(),
                         new FileMetadataBuilder()
                                 .setLength(200)
@@ -319,7 +316,6 @@ class BencodedTorrentTest {
                                 .setLastPiece(2)
                                 .setLastPieceEnd(99)
                                 .setStart(100)
-                                .setEnd(299)
                                 .build()
                 ))
                 .setInfoHash(new Sha1Hash(info.getInfoHash()))
@@ -458,7 +454,7 @@ class BencodedTorrentTest {
 
     private static class TorrentMetadataBuilder {
 
-        private Set<URI> trackers = Collections.emptySet();
+        private List<List<URI>> trackers = Collections.emptyList();
         private LocalDateTime creationDate = LocalDateTime.ofEpochSecond(0, 0, ZoneOffset.UTC);
         private String comment = "";
         private String createdBy = "";
@@ -469,7 +465,7 @@ class BencodedTorrentTest {
         private List<FileMetadata> fileMetadata = Collections.emptyList();
         private Sha1Hash infoHash = new Sha1Hash(new byte[20]);
 
-        public TorrentMetadataBuilder setTrackers(Set<URI> trackers) {
+        public TorrentMetadataBuilder setTrackers(List<List<URI>> trackers) {
             this.trackers = trackers;
             return this;
         }
@@ -543,7 +539,6 @@ class BencodedTorrentTest {
         private int lastPiece;
         private int lastPieceEnd;
         private long start;
-        private long end;
 
         public FileMetadataBuilder setLength(int length) {
             this.length = length;
@@ -580,13 +575,8 @@ class BencodedTorrentTest {
             return this;
         }
 
-        public FileMetadataBuilder setEnd(long end) {
-            this.end = end;
-            return this;
-        }
-
         public FileMetadata build() {
-            return new FileMetadata(length, path, firstPiece, firstPieceStart, lastPiece, lastPieceEnd, start, end);
+            return new FileMetadata(path, start, length, firstPiece, firstPieceStart, lastPiece, lastPieceEnd);
         }
     }
 }

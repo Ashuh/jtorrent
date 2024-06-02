@@ -2,6 +2,7 @@ package jtorrent.domain.common.util;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.List;
 
 public class Sha1Hash extends Bit160Value {
@@ -47,6 +48,20 @@ public class Sha1Hash extends Bit160Value {
             hash[i] = (byte) Integer.parseInt(hexString.substring(i * 2, i * 2 + 2), 16);
         }
         return new Sha1Hash(hash);
+    }
+
+    public static List<Sha1Hash> splitHashes(byte[] hashesConcat) {
+        if (hashesConcat.length % HASH_SIZE != 0) {
+            throw new IllegalArgumentException("Invalid concatenated hashes length");
+        }
+
+        List<Sha1Hash> pieceHashes = new ArrayList<>();
+        for (int i = 0; i < hashesConcat.length; i += Sha1Hash.HASH_SIZE) {
+            byte[] pieceHash = new byte[Sha1Hash.HASH_SIZE];
+            System.arraycopy(hashesConcat, i, pieceHash, 0, Sha1Hash.HASH_SIZE);
+            pieceHashes.add(new Sha1Hash(pieceHash));
+        }
+        return pieceHashes;
     }
 
     public static byte[] concatHashes(List<Sha1Hash> hashes) {

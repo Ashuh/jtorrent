@@ -88,4 +88,22 @@ public class HttpTracker implements Tracker {
     private String encodeValue(String value) {
         return URLEncoder.encode(value, StandardCharsets.ISO_8859_1);
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        HttpTracker that = (HttpTracker) o;
+        return uri.equals(that.uri);
+    }
+
+    @Override
+    public int hashCode() {
+        return uri.hashCode();
+    }
 }
