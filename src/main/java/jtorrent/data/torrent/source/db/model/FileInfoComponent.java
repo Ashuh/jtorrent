@@ -77,7 +77,7 @@ public class FileInfoComponent {
         byte[] pieceHashes = Sha1Hash.concatHashes(multiFileInfo.getPieceHashes());
         int pieceSize = multiFileInfo.getPieceSize();
         byte[] infoHash = multiFileInfo.getInfoHash().getBytes();
-        return new FileInfoComponent(directory,  List.of(), pieceHashes, pieceSize, infoHash);
+        return new FileInfoComponent(directory, fileMetadata, pieceHashes, pieceSize, infoHash);
     }
 
     public FileInfo toDomain() {
