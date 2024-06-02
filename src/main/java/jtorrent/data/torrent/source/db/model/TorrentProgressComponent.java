@@ -1,16 +1,19 @@
 package jtorrent.data.torrent.source.db.model;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.BitSet;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
-import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.Lob;
 import jtorrent.domain.torrent.model.FileInfo;
@@ -21,27 +24,43 @@ import jtorrent.domain.torrent.model.TorrentProgress;
 @Embeddable
 public class TorrentProgressComponent {
 
-    @ElementCollection
-    @CollectionTable
-    private final Map<Integer, BitSet> pieceToReceivedBlocks;
-
     @Lob
     @Column(nullable = false)
     private final byte[] verifiedPieces;
 
+    @Lob
+    @Column(nullable = false)
+    private byte[] pieceToReceivedBlocks;
+
     protected TorrentProgressComponent() {
-        this(Collections.emptyMap(), new byte[0]);
+        this(new byte[0], new byte[0]);
     }
 
-    public TorrentProgressComponent(Map<Integer, BitSet> pieceToReceivedBlocks, byte[] verifiedPieces) {
+    public TorrentProgressComponent(byte[] pieceToReceivedBlocks, byte[] verifiedPieces) {
         this.pieceToReceivedBlocks = pieceToReceivedBlocks;
         this.verifiedPieces = verifiedPieces;
     }
 
     public static TorrentProgressComponent fromDomain(TorrentProgress torrentProgress) {
+        byte[] pieceToReceivedBlocks = serializeMap(torrentProgress.getReceivedBlocks());
         byte[] verifiedPieces = torrentProgress.getVerifiedPieces().toByteArray();
-        Map<Integer, BitSet> pieceToReceivedBlocks = torrentProgress.getReceivedBlocks();
         return new TorrentProgressComponent(pieceToReceivedBlocks, verifiedPieces);
+    }
+
+    private static byte[] serializeMap(Map<Integer, BitSet> map) {
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+             DataOutputStream dos = new DataOutputStream(baos)) {
+            dos.writeInt(map.size());
+            for (Map.Entry<Integer, BitSet> entry : map.entrySet()) {
+                dos.writeInt(entry.getKey());
+                byte[] bitsetBytes = entry.getValue().toByteArray();
+                dos.writeInt(bitsetBytes.length);
+                dos.write(bitsetBytes);
+            }
+            return baos.toByteArray();
+        } catch (IOException e) {
+            throw new AssertionError(e);
+        }
     }
 
     public TorrentProgress toDomain(FileInfo fileInfo) {
@@ -55,22 +74,42 @@ public class TorrentProgressComponent {
                                         domainVerifiedPieces)
                         )
                 );
+        Map<Integer, BitSet> domainPieceToReceivedBlocks = deserializeMap(pieceToReceivedBlocks);
         return TorrentProgress.createExisting(fileInfo, domainFileProgress, domainVerifiedPieces,
-                pieceToReceivedBlocks);
+                domainPieceToReceivedBlocks);
     }
 
-    public Map<Integer, BitSet> getPieceToReceivedBlocks() {
-        return pieceToReceivedBlocks;
+    private static Map<Integer, BitSet> deserializeMap(byte[] bytes) {
+        try (ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
+             DataInputStream dis = new DataInputStream(bais)) {
+            int size = dis.readInt();
+            Map<Integer, BitSet> map = new HashMap<>(size);
+            for (int i = 0; i < size; i++) {
+                int key = dis.readInt();
+                int length = dis.readInt();
+                byte[] bitsetBytes = new byte[length];
+                dis.readFully(bitsetBytes);
+                BitSet bitSet = BitSet.valueOf(bitsetBytes);
+                map.put(key, bitSet);
+            }
+            return map;
+        } catch (IOException e) {
+            throw new AssertionError(e);
+        }
     }
 
     public byte[] getVerifiedPieces() {
         return verifiedPieces;
     }
 
+    public byte[] getPieceToReceivedBlocks() {
+        return pieceToReceivedBlocks;
+    }
+
     @Override
     public int hashCode() {
-        int result = pieceToReceivedBlocks.hashCode();
-        result = 31 * result + Arrays.hashCode(verifiedPieces);
+        int result = Arrays.hashCode(verifiedPieces);
+        result = 31 * result + Arrays.hashCode(pieceToReceivedBlocks);
         return result;
     }
 
@@ -84,14 +123,14 @@ public class TorrentProgressComponent {
         }
 
         TorrentProgressComponent that = (TorrentProgressComponent) o;
-        return pieceToReceivedBlocks.equals(that.pieceToReceivedBlocks)
-                && Arrays.equals(verifiedPieces, that.verifiedPieces);
+        return Arrays.equals(verifiedPieces, that.verifiedPieces)
+                && Arrays.equals(pieceToReceivedBlocks, that.pieceToReceivedBlocks);
     }
 
     @Override
     public String toString() {
         return "TorrentProgressComponent{"
-                + ", pieceToReceivedBlocks=" + pieceToReceivedBlocks
+                + ", pieceToReceivedBlocks=" + Arrays.toString(pieceToReceivedBlocks)
                 + ", verifiedPieces=" + Arrays.toString(verifiedPieces)
                 + '}';
     }
