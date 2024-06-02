@@ -32,7 +32,6 @@ class TorrentProgressComponentTest {
                 .set(field("lastPiece"), 4)
                 .set(field("lastPieceEnd"), 8)
                 .set(field("start"), 0)
-                .set(field("end"), 48)
                 .create();
 
         SingleFileInfo fileInfo = Instancio.of(SingleFileInfo.class)
