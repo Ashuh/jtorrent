@@ -127,6 +127,7 @@ public class TorrentHandler implements TrackerHandler.Listener, PeerHandler.Even
         torrent.resetCheckedBytes();
         synchronized (pieceStateLock) {
             IntStream.range(0, torrent.getNumPieces())
+                    .parallel()
                     .forEach(piece -> {
                         if (isPieceChecksumValid(piece)) {
                             torrent.setPieceVerified(piece);
