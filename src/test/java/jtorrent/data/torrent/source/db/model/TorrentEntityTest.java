@@ -60,7 +60,6 @@ class TorrentEntityTest {
                 .set(field("lastPiece"), 9)
                 .set(field("lastPieceEnd"), 9)
                 .set(field("start"), 0)
-                .set(field("end"), 99)
                 .create();
 
         SingleFileInfo fileInfo = Instancio.of(SingleFileInfo.class)
@@ -71,9 +70,10 @@ class TorrentEntityTest {
                 .create();
 
         Torrent expected = Instancio.of(Torrent.class)
-                .assign(valueOf(field(TorrentMetadata.class, "trackers"))
+                .assign(valueOf(field(TorrentMetadata.class, "trackerTiers"))
                         .to(field(Torrent.class, "trackers"))
-                        .as(trackers -> ((Set<URI>) trackers)
+                        .as(trackerTiers -> ((List<List<URI>>) trackerTiers)
+                                .get(0)
                                 .stream()
                                 .map(TrackerFactory::fromUri)
                                 .collect(Collectors.toSet())
@@ -116,7 +116,6 @@ class TorrentEntityTest {
                 .set(field("lastPiece"), 9)
                 .set(field("lastPieceEnd"), 9)
                 .set(field("start"), 0)
-                .set(field("end"), 99)
                 .create();
 
         FileMetadata fileMetadata2 = Instancio.of(FileMetadata.class)
@@ -127,7 +126,6 @@ class TorrentEntityTest {
                 .set(field("lastPiece"), 19)
                 .set(field("lastPieceEnd"), 9)
                 .set(field("start"), 100)
-                .set(field("end"), 199)
                 .create();
 
         MultiFileInfo fileInfo = Instancio.of(MultiFileInfo.class)
@@ -143,9 +141,10 @@ class TorrentEntityTest {
                 .create();
 
         Torrent expected = Instancio.of(Torrent.class)
-                .assign(valueOf(field(TorrentMetadata.class, "trackers"))
+                .assign(valueOf(field(TorrentMetadata.class, "trackerTiers"))
                         .to(field(Torrent.class, "trackers"))
-                        .as(trackers -> ((Set<URI>) trackers)
+                        .as(trackerTiers -> ((List<List<URI>>) trackerTiers)
+                                .get(0)
                                 .stream()
                                 .map(TrackerFactory::fromUri)
                                 .collect(Collectors.toSet())
