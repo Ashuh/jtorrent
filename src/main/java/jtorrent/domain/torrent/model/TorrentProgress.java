@@ -44,7 +44,7 @@ public class TorrentProgress {
         this.checkedBytesSubject = BehaviorSubject.createDefault(checkedBytes);
         this.completePieces = completePieces;
         this.verifiedPieces = verifiedPieces;
-        this.verifiedPiecesSubject = BehaviorSubject.createDefault(verifiedPieces);
+        this.verifiedPiecesSubject = BehaviorSubject.createDefault((BitSet) verifiedPieces.clone());
         this.pieceIndexToAvailableBlocks = pieceIndexToAvailableBlocks;
         this.partiallyMissingPieces = partiallyMissingPieces;
         this.partiallyMissingPiecesWithUnrequestedBlocks = partiallyMissingPiecesWithUnrequestedBlocks;
